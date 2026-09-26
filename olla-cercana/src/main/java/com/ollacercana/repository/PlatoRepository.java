@@ -72,6 +72,18 @@ public class PlatoRepository {
     }
 
     /**
+     * Platos de una cocinera especifica en un estado dado para la RN-28
+     * que es el limite por cocinera y para mis platos en el perfil.
+     */
+
+    public List<Plato> findByCocineraIdAndEstado(UUID cocineraId, EstadoPlato estado) {
+        return platos.stream()
+                .filter(p -> cocineraId != null && cocineraId.equals(p.getCocineraId()))
+                .filter(p -> p.getEstado() == estado)
+                .toList();
+    }
+
+    /**
      * RN-02: platos activos y vigentes (fecha de expiración > ahora).
      * RN-03: con porciones disponibles > 0.
      */
@@ -84,13 +96,25 @@ public class PlatoRepository {
     }
 
     /**
-     * RN-28: cuenta cuántos platos activos vigentes hay.
+     * Cuenta platos activos vigentes en todo el sistema.
      */
     public long countActivosVigentes(EstadoPlato estado, LocalDateTime ahora) {
         return platos.stream()
-            .filter(p -> p.getEstado() == estado)
-            .filter(p -> p.getFechaExpiracion() != null && p.getFechaExpiracion().isAfter(ahora))
-            .count();
+                .filter(p -> p.getEstado() == estado)
+                .filter(p -> p.getFechaExpiracion() != null && p.getFechaExpiracion().isAfter(ahora))
+                .count();
+    }
+
+    /**
+     * Corrige el bug de RN-28: cuenta los platos activos vigentes
+     * de una cocinera específica, no de todo el sistema.
+     */
+    public long countActivosVigentesPorCocinera(UUID cocineraId, EstadoPlato estado, LocalDateTime ahora) {
+        return platos.stream()
+                .filter(p -> cocineraId != null && cocineraId.equals(p.getCocineraId()))
+                .filter(p -> p.getEstado() == estado)
+                .filter(p -> p.getFechaExpiracion() != null && p.getFechaExpiracion().isAfter(ahora))
+                .count();
     }
 
     /**
@@ -98,8 +122,8 @@ public class PlatoRepository {
      */
     public List<Plato> findParaExpirar(List<EstadoPlato> estados, LocalDateTime ahora) {
         return platos.stream()
-            .filter(p -> estados.contains(p.getEstado()))
-            .filter(p -> p.getFechaExpiracion() != null && !p.getFechaExpiracion().isAfter(ahora))
-            .toList();
+                .filter(p -> estados.contains(p.getEstado()))
+                .filter(p -> p.getFechaExpiracion() != null && !p.getFechaExpiracion().isAfter(ahora))
+                .toList();
     }
 }
