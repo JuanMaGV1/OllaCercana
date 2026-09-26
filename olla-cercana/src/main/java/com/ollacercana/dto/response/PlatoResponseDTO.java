@@ -20,7 +20,10 @@ public record PlatoResponseDTO(
     Integer porcionesDisponibles,
     BigDecimal precioPorcion,
     EstadoPlato estado,
+    LocalDateTime horaDisponibilidad,
     LocalDateTime fechaPublicacion,
     LocalDateTime fechaExpiracion,
-    String puntoEntrega
+    String puntoEntrega,
+    Double latitud,
+    Double longitud
 ) {}

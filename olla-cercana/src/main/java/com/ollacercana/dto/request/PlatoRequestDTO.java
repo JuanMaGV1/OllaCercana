@@ -36,6 +36,16 @@ public record PlatoRequestDTO(
     @DecimalMax(value = "50000.00", message = "El precio máximo es $50.000")
     BigDecimal precioPorcion,
 
+    @NotNull(message = "La hora de disponibilidad es obligatoria")
+    @Future(message = "La hora de disponibilidad debe ser posterior al momento actual")
+    LocalDateTime horaDisponibilidad,
+
     @NotBlank(message = "El punto de entrega es obligatorio")
-    String puntoEntrega
+    String puntoEntrega,
+
+    @NotNull(message = "La latitud es obligatoria")
+    Double latitud,
+
+    @NotNull(message = "La longitud es obligatoria")
+    Double longitud
 ) {}
