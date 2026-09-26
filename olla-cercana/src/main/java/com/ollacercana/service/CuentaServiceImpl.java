@@ -1,6 +1,8 @@
 package com.ollacercana.service;
 
 import com.ollacercana.domain.Cuenta;
+import com.ollacercana.domain.EstadoCuenta;
+import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.mapper.CuentaEntityMapper;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.validator.ICuentaValidator;
@@ -20,7 +22,6 @@ public class CuentaServiceImpl implements ICuentaService {
     private final CuentaEntityMapper cuentaEntityMapper;
     private final ICuentaValidator cuentaValidator;
 
-
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
@@ -28,7 +29,6 @@ public class CuentaServiceImpl implements ICuentaService {
     public Cuenta registrar(Cuenta cuenta) {
         log.info("Iniciando proceso de registro de cuenta para correo: {}",
                 cuenta.getIdentidad() != null ? cuenta.getIdentidad().getCorreo() : "N/A");
-
 
         if (cuenta.getIdentidad() != null) {
             cuentaValidator.validarCorreoUnico(cuenta.getIdentidad().getCorreo());
@@ -38,19 +38,37 @@ public class CuentaServiceImpl implements ICuentaService {
         if (cuenta.getCredenciales() != null) {
             cuentaValidator.validarPasswordSegura(cuenta.getCredenciales().getContrasenaHash());
 
-
             String passwordPlana = cuenta.getCredenciales().getContrasenaHash();
             String passwordHasheada = passwordEncoder.encode(passwordPlana);
             cuenta.getCredenciales().setContrasenaHash(passwordHasheada);
         }
-
 
         Cuenta entidad = cuentaEntityMapper.toEntity(cuenta);
         Cuenta guardada = cuentaRepository.save(entidad);
 
         log.info("Cuenta registrada exitosamente con ID: {}", guardada.getId());
 
-
         return cuentaEntityMapper.toDomain(guardada);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Cuenta autenticar(String identificador, String password) {
+        // 1. Buscar por correo o celular
+        Cuenta cuenta = cuentaRepository.findByIdentificador(identificador)
+                .orElseThrow(() -> new ConflictoException("Credenciales inválidas"));
+
+        // 2. Validar si la cuenta está bloqueada
+        if (cuenta.getEstado() == EstadoCuenta.BLOQUEADO) {
+            throw new ConflictoException("La cuenta se encuentra bloqueada");
+        }
+
+        // 3. Comparar el hash con BCrypt
+        if (cuenta.getCredenciales() == null ||
+                !passwordEncoder.matches(password, cuenta.getCredenciales().getContrasenaHash())) {
+            throw new ConflictoException("Credenciales inválidas");
+        }
+
+        return cuenta;
     }
 }
