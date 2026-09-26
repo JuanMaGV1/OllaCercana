@@ -50,6 +50,16 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(com.ollacercana.exception.ConflictoException.class)
+    public ResponseEntity<Map<String, Object>> handleConflicto(com.ollacercana.exception.ConflictoException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(com.ollacercana.exception.ReglaDeNegocioException.class)
+    public ResponseEntity<Map<String, Object>> handleReglaDeNegocio(com.ollacercana.exception.ReglaDeNegocioException ex) {
+        return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String mensaje) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
