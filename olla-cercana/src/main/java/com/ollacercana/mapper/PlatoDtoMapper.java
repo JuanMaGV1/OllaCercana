@@ -42,23 +42,22 @@ public class PlatoDtoMapper {
         if (plato == null) return null;
 
         return new PlatoResponseDTO(
-            plato.getId(),
-            plato.getCocineraId(),
-            plato.getNombre(),
-            plato.getDescripcion(),
-            plato.getFotoUrl(),
-            plato.getTipoComida(),
-            plato.getRestricciones(),
-            plato.getPorcionesTotales(),
-            plato.getPorcionesDisponibles(),
-            plato.getPrecioPorcion(),
-            plato.getEstado(),
-            plato.getHoraDisponibilidad(),
-            plato.getFechaPublicacion(),
-            plato.getFechaExpiracion(),
-            plato.getLatitud(),
-            plato.getLongitud(),
-            plato.getPuntoEntrega()
+                plato.getId(),
+                plato.getNombre(),
+                plato.getDescripcion(),
+                plato.getFotoUrl(),
+                plato.getTipoComida(),
+                plato.getRestricciones(),
+                plato.getPorcionesTotales(),
+                plato.getPorcionesDisponibles(),
+                plato.getPrecioPorcion(),
+                plato.getEstado(),
+                plato.getHoraDisponibilidad(),
+                plato.getFechaPublicacion(),
+                plato.getFechaExpiracion(),
+                plato.getPuntoEntrega(),
+                plato.getLatitud(),
+                plato.getLongitud()
         );
     }
 }
