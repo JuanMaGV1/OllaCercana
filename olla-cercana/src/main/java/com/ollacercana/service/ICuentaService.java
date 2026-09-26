@@ -11,4 +11,5 @@ public interface ICuentaService {
      * @return Objeto de dominio guardado y persistido
      */
     Cuenta registrar(Cuenta cuenta);
+    Cuenta autenticar(String identificador, String password);
 }
