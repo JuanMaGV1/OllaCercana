@@ -3,20 +3,25 @@ spring:
     name: olla-cercana
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/olla_cercana
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:h2:mem:olla_cercana;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
 
   jpa:
     hibernate:
-      ddl-auto: update          # dev: update | prod: validate | test: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-    open-in-view: false         # buena práctica: evita warnings y lazy loading accidental
+        dialect: org.hibernate.dialect.H2Dialect
+    open-in-view: false
 
 springdoc:
   swagger-ui:
