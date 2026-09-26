@@ -15,6 +15,7 @@ import java.util.UUID;
 public class Plato {
 
     private UUID id;
+    private UUID cocineraId;
     private String nombre;
     private String descripcion;
     private String fotoUrl;
@@ -24,8 +25,11 @@ public class Plato {
     private Integer porcionesComprometidas;
     private BigDecimal precioPorcion;
     private EstadoPlato estado;
+    private LocalDateTime horaDisponibilidad;
     private LocalDateTime fechaPublicacion;
     private LocalDateTime fechaExpiracion;
+    private Double latitud;
+    private Double longitud;
     private String puntoEntrega;
     private Integer version;
 
@@ -44,6 +48,10 @@ public class Plato {
      * NOTA: el id lo asigna el repositorio en memoria, NO el dominio.
      */
     public void publicar() {
+        if (this.cocineraId == null) {
+            throw new IllegalStateException("Un plato no puede publicarse sin una cocinera asociada");
+        }
+
         this.estado = EstadoPlato.ACTIVO;
         this.porcionesComprometidas = 0;
         this.fechaPublicacion = LocalDateTime.now();
