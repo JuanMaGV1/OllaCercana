@@ -22,12 +22,14 @@ public class PlatoValidator {
     private static final BigDecimal MULTIPLO = new BigDecimal("100");
 
     private final PlatoRepository platoRepository;
+    private final CocineraQueryPort cocineraQueryPort;
 
     public void validarParaPublicar(Plato plato) {
+        validarCocineraHabilitada(plato.getCocineraId()); //Escenario 2 del HU-04
         validarRangoPrecio(plato.getPrecioPorcion());       // RN-27
         validarRangoPorciones(plato.getPorcionesTotales()); // RN-27
         validarMultiploDe100(plato.getPrecioPorcion());     // RN-27
-        validarLimitePlatosActivos();                        // RN-28
+        validarLimitePlatosActivos(plato.getCocineraId());  // RN-28
         validarRestricciones(plato);                         // RN-30
     }
 
@@ -38,6 +40,22 @@ public class PlatoValidator {
     }
 
     // ============ Validaciones privadas ============
+
+    private void validarCocineraHabilitada(java.util.UUID cocineraId) {
+        if (cocineraId == null) {
+            throw new BusinessRuleException("El plato debe tener una cocinera asociada.")
+        }
+
+        if (CocineraQueryPort.estaVerificada(cocinaraId)){
+            throw new BusinessRuleException("Debes verificar tu telefono antes de publicar un plato")
+        }
+
+        if (CocineraQueryPort.estaPausada(cocinaraId)){
+            throw new BusinessRuleException("Tu perfil esta pausado, no puedes publicar platos.")
+        }
+    }
+
+
 
     private void validarRangoPrecio(BigDecimal precio) {
         if (precio == null) {
