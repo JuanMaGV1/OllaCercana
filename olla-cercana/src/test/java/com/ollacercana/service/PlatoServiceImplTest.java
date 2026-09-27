@@ -31,7 +31,6 @@ import static org.mockito.Mockito.*;
 
 /**
  * OC-94: pruebas unitarias de PlatoServiceImpl.crear() — 5 escenarios.
- * Las pruebas de ajustarDisponibilidad() viven en su propia clase, no aquí.
  */
 @ExtendWith(MockitoExtension.class)
 class PlatoServiceImplTest {
@@ -84,7 +83,7 @@ class PlatoServiceImplTest {
     void crear_conDatosValidosYCocineraHabilitada_debePublicarPlato() {
         when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
         when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
-        when(platoRepository.countActivosVigentesPorCocinera(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
+        when(platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
                 .thenReturn(0L);
 
         Plato guardado = platoService.crear(platoValido());
@@ -114,7 +113,7 @@ class PlatoServiceImplTest {
     void crear_conTresPlatosActivosVigentes_debeLanzarConflicto() {
         when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
         when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
-        when(platoRepository.countActivosVigentesPorCocinera(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
+        when(platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
                 .thenReturn(3L);
 
         assertThrows(LimitePlatosActivosExcedidoException.class,
@@ -157,7 +156,7 @@ class PlatoServiceImplTest {
     void crear_debeCalcularFechaExpiracionExactamente4hDespuesDeLaPublicacion() {
         when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
         when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
-        when(platoRepository.countActivosVigentesPorCocinera(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
+        when(platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
                 .thenReturn(0L);
 
         Plato guardado = platoService.crear(platoValido());

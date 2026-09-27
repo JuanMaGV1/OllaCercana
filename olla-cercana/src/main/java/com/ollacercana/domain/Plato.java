@@ -8,9 +8,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * OC-87: entidad de persistencia de Plato.
- */
 @Entity
 @Table(name = "platos")
 @Getter
@@ -21,23 +18,14 @@ import java.util.UUID;
 public class Plato {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "cocinera_id", nullable = false)
     private UUID cocineraId;
-
-    @Column(nullable = false, length = 60)
     private String nombre;
-
-    @Column(nullable = false, length = 300)
     private String descripcion;
-
-    @Column(name = "foto_url", nullable = false)
     private String fotoUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_comida", nullable = false)
     private TipoComida tipoComida;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -46,34 +34,21 @@ public class Plato {
     @Column(name = "restriccion")
     private List<RestriccionAlimentaria> restricciones;
 
-    @Column(name = "porciones_totales", nullable = false)
     private Integer porcionesTotales;
-
-    @Column(name = "porciones_comprometidas")
     private Integer porcionesComprometidas;
-
-    @Column(name = "precio_porcion", nullable = false)
     private BigDecimal precioPorcion;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private EstadoPlato estado;
 
-    @Column(name = "hora_disponibilidad")
     private LocalDateTime horaDisponibilidad;
-
-    @Column(name = "fecha_publicacion")
     private LocalDateTime fechaPublicacion;
-
-    @Column(name = "fecha_expiracion")
     private LocalDateTime fechaExpiracion;
-
     private Double latitud;
     private Double longitud;
-
-    @Column(name = "punto_entrega")
     private String puntoEntrega;
 
+    @Version
     private Integer version;
 
     // ============ Reglas de negocio (RN) ============
@@ -98,7 +73,6 @@ public class Plato {
         this.porcionesComprometidas = 0;
         this.fechaPublicacion = LocalDateTime.now();
         this.fechaExpiracion = this.fechaPublicacion.plusHours(4);
-        this.version = 0;
     }
 
     /**
@@ -167,6 +141,9 @@ public class Plato {
         recalcularEstado();
     }
 
+    /**
+     * HU-24: ajusta manualmente la disponibilidad (aumentar, disminuir, marcar agotado).
+     */
     public void ajustarDisponibilidad(TipoAjustePorciones tipo, Integer cantidad) {
 
         int comprometidasSeguras = this.porcionesComprometidas == null ? 0 : this.porcionesComprometidas;
@@ -178,9 +155,7 @@ public class Plato {
         }
 
         recalcularEstado();
-        this.version = (this.version == null ? 0 : this.version) + 1;
     }
-
 
     public boolean estaVigente() {
         return this.fechaExpiracion != null && LocalDateTime.now().isBefore(this.fechaExpiracion);

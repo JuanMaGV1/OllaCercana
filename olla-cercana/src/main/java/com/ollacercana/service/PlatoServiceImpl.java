@@ -2,18 +2,17 @@ package com.ollacercana.service;
 
 import com.ollacercana.domain.Plato;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.mapper.PlatoEntityMapper;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-/**
- * OC-92: crear() valida, calcula fecha de expiración = ahora + 4h (RN-02).
- */
 @Service
 @RequiredArgsConstructor
 public class PlatoServiceImpl implements PlatoService {
@@ -24,11 +23,12 @@ public class PlatoServiceImpl implements PlatoService {
 
     @Override
     public Plato crear(Plato plato) {
-        // Valida cocinera habilitada, RN-27 (precio/porciones), RN-28 (max 3 activos), RN-30 (restricciones)
         validator.validarParaPublicar(plato);
-
-        // RN-02: fija estado ACTIVO, fechaPublicacion y fechaExpiracion (+4h)
         plato.publicar();
+
+        if (plato.getId() == null) {
+            plato.setId(UUID.randomUUID());
+        }
 
         Plato entidad = entityMapper.toEntity(plato);
         Plato guardado = repository.save(entidad);
@@ -49,8 +49,18 @@ public class PlatoServiceImpl implements PlatoService {
         validator.validarAjusteDisponibilidad(plato, request);
 
         plato.ajustarDisponibilidad(request.tipo(), request.cantidad());
+        plato.setVersion(request.version());
 
-        return repository.save(plato);
+        try {
+            return repository.saveAndFlush(plato);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new ConflictoVersionException(
+                    plato.getVersion(),
+                    plato.getPorcionesTotales(),
+                    plato.getPorcionesComprometidas(),
+                    plato.getEstado().name()
+            );
+        }
     }
 
     @Override

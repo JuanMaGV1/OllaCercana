@@ -2,24 +2,12 @@ package com.ollacercana.validator;
 
 import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
-import com.ollacercana.exception.PlatoSinCocineraException;
-import com.ollacercana.exception.CocineraNoVerificadaException;
-import com.ollacercana.exception.CocineraPausadaException;
-import com.ollacercana.exception.PlatoExpiradoException;
-import com.ollacercana.exception.PrecioObligatorioException;
-import com.ollacercana.exception.PrecioFueraDeRangoException;
-import com.ollacercana.exception.PorcionesFueraDeRangoException;
-import com.ollacercana.exception.PrecioNoMultiploException;
-import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
-import com.ollacercana.exception.LimiteRestriccionesExcedidoException;
+import com.ollacercana.domain.TipoAjustePorciones;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.exception.*;
 import com.ollacercana.repository.PlatoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import com.ollacercana.domain.TipoAjustePorciones;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.exception.ConflictoVersionException;
-import com.ollacercana.exception.CantidadAjusteInvalidaException;
-import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,12 +29,12 @@ public class PlatoValidator {
     private final CocineraQueryPort cocineraQueryPort;
 
     public void validarParaPublicar(Plato plato) {
-        validarCocineraHabilitada(plato.getCocineraId()); //Escenario 2 del HU-04
-        validarRangoPrecio(plato.getPrecioPorcion());       // RN-27
-        validarRangoPorciones(plato.getPorcionesTotales()); // RN-27
-        validarMultiploDe100(plato.getPrecioPorcion());     // RN-27
-        validarLimitePlatosActivos(plato.getCocineraId());  // RN-28
-        validarRestricciones(plato);                         // RN-30
+        validarCocineraHabilitada(plato.getCocineraId());
+        validarRangoPrecio(plato.getPrecioPorcion());
+        validarRangoPorciones(plato.getPorcionesTotales());
+        validarMultiploDe100(plato.getPrecioPorcion());
+        validarLimitePlatosActivos(plato.getCocineraId());
+        validarRestricciones(plato);
     }
 
     public void validarParaAjustar(Plato plato) {
@@ -55,15 +43,10 @@ public class PlatoValidator {
         }
     }
 
+    /**
+     * HU-24.
+     */
     public void validarAjusteDisponibilidad(Plato plato, AjusteDisponibilidadRequest request) {
-        if (!plato.getVersion().equals(request.version())) {
-            throw new ConflictoVersionException(
-                    plato.getVersion(),
-                    plato.getPorcionesTotales(),
-                    plato.getPorcionesComprometidas(),
-                    plato.getEstado().name()
-            );
-        }
 
         if (request.tipo() != TipoAjustePorciones.MARCAR_AGOTADO) {
             if (request.cantidad() == null || request.cantidad() <= 0) {
@@ -86,11 +69,9 @@ public class PlatoValidator {
         if (cocineraId == null) {
             throw new PlatoSinCocineraException();
         }
-
         if (!cocineraQueryPort.estaVerificada(cocineraId)) {
             throw new CocineraNoVerificadaException();
         }
-
         if (cocineraQueryPort.estaPausada(cocineraId)) {
             throw new CocineraPausadaException();
         }
@@ -118,7 +99,8 @@ public class PlatoValidator {
     }
 
     private void validarLimitePlatosActivos(UUID cocineraId) {
-        long activos = platoRepository.countActivosVigentesPorCocinera(cocineraId, EstadoPlato.ACTIVO, LocalDateTime.now());
+        long activos = platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(
+                cocineraId, EstadoPlato.ACTIVO, LocalDateTime.now());
         if (activos >= MAX_PLATOS_ACTIVOS) {
             throw new LimitePlatosActivosExcedidoException(MAX_PLATOS_ACTIVOS);
         }

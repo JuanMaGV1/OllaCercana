@@ -13,9 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-/**
- * OC-93: POST/GET/PUT/DELETE de /api/v1/platos, con @Valid y códigos HTTP correctos.
- */
 @Tag(name = "Platos", description = "Gestión de ofertas de comida casera")
 @RequestMapping("/api/v1/platos")
 public interface PlatoApi {
@@ -25,8 +22,7 @@ public interface PlatoApi {
             @ApiResponse(responseCode = "201", description = "Plato publicado exitosamente"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos (validación de formulario)"),
             @ApiResponse(responseCode = "404", description = "Cocinera no encontrada"),
-            @ApiResponse(responseCode = "409", description = "Conflicto de regla de negocio: límite de 3 platos activos, " +
-                    "cocinera no verificada o pausada"),
+            @ApiResponse(responseCode = "409", description = "Límite de 3 platos activos, cocinera no verificada o pausada"),
             @ApiResponse(responseCode = "422", description = "Precio, porciones o restricciones fuera de los rangos permitidos")
     })
     @PostMapping
@@ -46,12 +42,11 @@ public interface PlatoApi {
     @Operation(summary = "Ajustar la disponibilidad de un plato (HU-24)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Plato actualizado"),
-            @ApiResponse(responseCode = "400", description = "Cantidad de ajuste inválida"),
             @ApiResponse(responseCode = "404", description = "Plato no encontrado"),
-            @ApiResponse(responseCode = "409", description = "Conflicto de versión (edición concurrente) o " +
-                    "reducción por debajo de porciones comprometidas")
+            @ApiResponse(responseCode = "409", description = "Conflicto de versión (edición concurrente)"),
+            @ApiResponse(responseCode = "422", description = "Cantidad inválida o reducción por debajo de comprometidas")
     })
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}/disponibilidad")
     ResponseEntity<PlatoResponseDTO> actualizar(
             @PathVariable UUID id,
             @Valid @RequestBody AjusteDisponibilidadRequest request
