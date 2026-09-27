@@ -24,12 +24,6 @@ public class Plato {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // NOTA (pendiente con el equipo): OC-87 pide relación N:1 con Cuenta,
-    // pero hoy no es viable como @ManyToOne real: Cuenta.id es Long y este
-    // módulo (header X-Cocinera-Id, CocineraQueryPort) trabaja con UUID
-    // porque la autenticación real aún es un mock (ver JwtService, "Pendiente
-    // Sprint 3"). Se deja como columna simple hasta que se defina con el
-    // equipo cómo se homologan los identificadores.
     @Column(name = "cocinera_id", nullable = false)
     private UUID cocineraId;
 
