@@ -1,4 +1,4 @@
-package com.ollacercana.controller;
+package com.ollacercana.controller.docs;
 
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.dto.request.PlatoRequestDTO;
