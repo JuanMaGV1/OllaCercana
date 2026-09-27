@@ -1,24 +1,21 @@
 package com.ollacercana.repository;
 
 import com.ollacercana.domain.PerfilCocinera;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public class PerfilCocineraRepository {
+public interface PerfilCocineraRepository extends JpaRepository<PerfilCocinera, UUID> {
 
-    private final Map<UUID, PerfilCocinera> perfiles = new HashMap<>();
+    Optional<PerfilCocinera> findByCuentaId(Long cuentaId);
 
-    public PerfilCocinera registrar(PerfilCocinera perfil) {
-        perfiles.put(perfil.id(), perfil);
-        return perfil;
-    }
+    List<PerfilCocinera> findByEsDestacadaTrue();
 
-    public Optional<PerfilCocinera> findById(UUID id) {
-        return Optional.ofNullable(perfiles.get(id));
-    }
+    boolean existsByNumeroNequi(String numeroNequi);
+
+    boolean existsByNumeroDaviplata(String numeroDaviplata);
 }
