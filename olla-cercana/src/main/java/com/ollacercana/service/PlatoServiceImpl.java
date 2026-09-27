@@ -1,53 +1,63 @@
 package com.ollacercana.service;
 
 import com.ollacercana.domain.Plato;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
-import com.ollacercana.mapper.PlatoDtoMapper;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.exception.PlatoNoEncontradoException;
+import com.ollacercana.mapper.PlatoEntityMapper;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.exception.PlatoNoEncontradoException;
 
 import java.util.UUID;
 
+/**
+ * OC-92: crear() valida, calcula fecha de expiración = ahora + 4h (RN-02).
+ */
 @Service
 @RequiredArgsConstructor
 public class PlatoServiceImpl implements PlatoService {
 
-    private final PlatoDtoMapper mapper;
-    private final PlatoValidator validator;
     private final PlatoRepository repository;
+    private final PlatoEntityMapper entityMapper;
+    private final PlatoValidator validator;
 
     @Override
-    public PlatoResponseDTO crear(PlatoRequestDTO request, UUID cocineraId) {
-        Plato plato = mapper.toDomain(request);
-        plato.setCocineraId(cocineraId);
-
-        // Valida RN-27 (precio/porciones), RN-28 (max 3 activos), RN-30 (restricciones)
+    public Plato crear(Plato plato) {
+        // Valida cocinera habilitada, RN-27 (precio/porciones), RN-28 (max 3 activos), RN-30 (restricciones)
         validator.validarParaPublicar(plato);
 
         // RN-02: fija estado ACTIVO, fechaPublicacion y fechaExpiracion (+4h)
         plato.publicar();
 
-        Plato guardado = repository.save(plato);
-
-        return mapper.toResponse(guardado);
+        Plato entidad = entityMapper.toEntity(plato);
+        Plato guardado = repository.save(entidad);
+        return entityMapper.toDomain(guardado);
     }
 
     @Override
-    public PlatoResponseDTO ajustarDisponibilidad(UUID platoId, AjusteDisponibilidadRequest request) {
+    public Plato obtenerPorId(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new PlatoNoEncontradoException(id));
+    }
+
+    @Override
+    public Plato ajustarDisponibilidad(UUID platoId, AjusteDisponibilidadRequest request) {
         Plato plato = repository.findById(platoId)
                 .orElseThrow(() -> new PlatoNoEncontradoException(platoId));
 
-        // Valida version, cantidad y reduccion por debajo de comprometidas
         validator.validarAjusteDisponibilidad(plato, request);
 
         plato.ajustarDisponibilidad(request.tipo(), request.cantidad());
 
-        Plato actualizado = repository.save(plato);
-        return mapper.toResponse(actualizado);
+        return repository.save(plato);
+    }
+
+    @Override
+    public void eliminar(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new PlatoNoEncontradoException(id);
+        }
+        repository.deleteById(id);
     }
 }

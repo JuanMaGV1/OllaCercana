@@ -10,21 +10,21 @@ import java.util.List;
 import java.util.UUID;
 
 public record PlatoResponseDTO(
-    UUID id,
-    UUID cocineraId,
-    String nombre,
-    String descripcion,
-    String fotoUrl,
-    TipoComida tipoComida,
-    List<RestriccionAlimentaria> restricciones,
-    Integer porcionesTotales,
-    Integer porcionesDisponibles,
-    BigDecimal precioPorcion,
-    EstadoPlato estado,
-    LocalDateTime horaDisponibilidad,
-    LocalDateTime fechaPublicacion,
-    LocalDateTime fechaExpiracion,
-    String puntoEntrega,
-    Double latitud,
-    Double longitud
+        UUID id,
+        UUID cocineraId,
+        String nombre,
+        String descripcion,
+        String fotoUrl,
+        TipoComida tipoComida,
+        List<RestriccionAlimentaria> restricciones,
+        Integer porcionesTotales,
+        Integer porcionesDisponibles,
+        BigDecimal precioPorcion,
+        EstadoPlato estado,
+        LocalDateTime horaDisponibilidad,
+        LocalDateTime fechaPublicacion,
+        LocalDateTime fechaExpiracion,
+        String puntoEntrega,
+        Double latitud,
+        Double longitud
 ) {}

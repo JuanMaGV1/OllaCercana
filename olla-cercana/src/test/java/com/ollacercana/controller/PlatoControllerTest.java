@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,7 +48,7 @@ class PlatoControllerTest {
         );
 
         mockMvc.perform(post("/api/v1/platos")
-                        .header("X-Cocinera-Id", UUID.randomUUID().toString())
+                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -77,5 +79,17 @@ class PlatoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void obtenerPorId_conPlatoInexistente_debeRetornar404() throws Exception {
+        mockMvc.perform(get("/api/v1/platos/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void eliminar_conPlatoInexistente_debeRetornar404() throws Exception {
+        mockMvc.perform(delete("/api/v1/platos/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
     }
 }

@@ -1,5 +1,6 @@
 package com.ollacercana.domain;
 
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -7,30 +8,78 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * OC-87: entidad de persistencia de Plato.
+ */
+@Entity
+@Table(name = "platos")
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Plato {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    // NOTA (pendiente con el equipo): OC-87 pide relación N:1 con Cuenta,
+    // pero hoy no es viable como @ManyToOne real: Cuenta.id es Long y este
+    // módulo (header X-Cocinera-Id, CocineraQueryPort) trabaja con UUID
+    // porque la autenticación real aún es un mock (ver JwtService, "Pendiente
+    // Sprint 3"). Se deja como columna simple hasta que se defina con el
+    // equipo cómo se homologan los identificadores.
+    @Column(name = "cocinera_id", nullable = false)
     private UUID cocineraId;
+
+    @Column(nullable = false, length = 60)
     private String nombre;
+
+    @Column(nullable = false, length = 300)
     private String descripcion;
+
+    @Column(name = "foto_url", nullable = false)
     private String fotoUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_comida", nullable = false)
     private TipoComida tipoComida;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "plato_restricciones", joinColumns = @JoinColumn(name = "plato_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "restriccion")
     private List<RestriccionAlimentaria> restricciones;
+
+    @Column(name = "porciones_totales", nullable = false)
     private Integer porcionesTotales;
+
+    @Column(name = "porciones_comprometidas")
     private Integer porcionesComprometidas;
+
+    @Column(name = "precio_porcion", nullable = false)
     private BigDecimal precioPorcion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private EstadoPlato estado;
+
+    @Column(name = "hora_disponibilidad")
     private LocalDateTime horaDisponibilidad;
+
+    @Column(name = "fecha_publicacion")
     private LocalDateTime fechaPublicacion;
+
+    @Column(name = "fecha_expiracion")
     private LocalDateTime fechaExpiracion;
+
     private Double latitud;
     private Double longitud;
+
+    @Column(name = "punto_entrega")
     private String puntoEntrega;
+
     private Integer version;
 
     // ============ Reglas de negocio (RN) ============
@@ -45,7 +94,6 @@ public class Plato {
 
     /**
      * RN-02: un plato expira a las 4 horas de publicación.
-     * NOTA: el id lo asigna el repositorio en memoria, NO el dominio.
      */
     public void publicar() {
         if (this.cocineraId == null) {
@@ -94,7 +142,7 @@ public class Plato {
         }
         if (cantidad > getPorcionesDisponibles()) {
             throw new IllegalStateException(
-                "No hay suficientes porciones disponibles. Disponibles: " + getPorcionesDisponibles()
+                    "No hay suficientes porciones disponibles. Disponibles: " + getPorcionesDisponibles()
             );
         }
         this.porcionesComprometidas += cantidad;
@@ -118,7 +166,7 @@ public class Plato {
         }
         if (nuevaCantidad < this.porcionesComprometidas) {
             throw new IllegalStateException(
-                "No puedes reducir por debajo de las porciones comprometidas: " + this.porcionesComprometidas
+                    "No puedes reducir por debajo de las porciones comprometidas: " + this.porcionesComprometidas
             );
         }
         this.porcionesTotales = nuevaCantidad;

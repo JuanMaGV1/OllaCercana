@@ -1,7 +1,6 @@
 package com.ollacercana.service;
 
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
+import com.ollacercana.domain.Plato;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 
 import java.util.UUID;
@@ -9,15 +8,22 @@ import java.util.UUID;
 public interface PlatoService {
 
     /**
-     * HU-04: publica un nuevo plato a nombre de la cocinera autenticada.
-     *
-     * @param request    datos del plato
-     * @param cocineraId id de la cocinera autenticada, resuelto por el controller
+     * OC-92 / HU-04: publica un nuevo plato. Recibe y devuelve el dominio;
      */
-    PlatoResponseDTO crear(PlatoRequestDTO request, UUID cocineraId);
+    Plato crear(Plato plato);
 
     /**
-     * HU-24: ajusta manualmente la disponibilidad de un plato ya sea aumentar, disminuir, marcar agotado.
+     * Consulta un plato por id.
      */
-    PlatoResponseDTO ajustarDisponibilidad(UUID platoId, AjusteDisponibilidadRequest request);
+    Plato obtenerPorId(UUID id);
+
+    /**
+     * HU-24: ajusta manualmente la disponibilidad de un plato (aumentar, disminuir, marcar agotado).
+     */
+    Plato ajustarDisponibilidad(UUID platoId, AjusteDisponibilidadRequest request);
+
+    /**
+     * Elimina un plato por id .
+     */
+    void eliminar(UUID id);
 }

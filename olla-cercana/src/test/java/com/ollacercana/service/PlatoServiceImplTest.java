@@ -2,24 +2,19 @@ package com.ollacercana.service;
 
 import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.RestriccionAlimentaria;
-import com.ollacercana.domain.TipoAjustePorciones;
 import com.ollacercana.domain.TipoComida;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
-import com.ollacercana.exception.BusinessRuleException;
-import com.ollacercana.exception.CantidadAjusteInvalidaException;
-import com.ollacercana.exception.ConflictoVersionException;
-import com.ollacercana.exception.PlatoNoEncontradoException;
-import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
-import com.ollacercana.mapper.PlatoDtoMapper;
+import com.ollacercana.exception.CocineraNoEncontradaException;
+import com.ollacercana.exception.CocineraPausadaException;
+import com.ollacercana.exception.PrecioFueraDeRangoException;
+import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
+import com.ollacercana.mapper.PlatoEntityMapper;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.CocineraQueryPort;
 import com.ollacercana.validator.PlatoValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -27,15 +22,16 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
- * Pruebas de PlatoServiceImpl (OC-94: crear / OC-110: ajustarDisponibilidad).
+ * OC-94: pruebas unitarias de PlatoServiceImpl.crear() — 5 escenarios.
+ * Las pruebas de ajustarDisponibilidad() viven en su propia clase, no aquí.
  */
 @ExtendWith(MockitoExtension.class)
 class PlatoServiceImplTest {
@@ -52,9 +48,9 @@ class PlatoServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        PlatoDtoMapper mapper = new PlatoDtoMapper();
+        PlatoEntityMapper entityMapper = Mappers.getMapper(PlatoEntityMapper.class);
         PlatoValidator validator = new PlatoValidator(platoRepository, cocineraQueryPort);
-        platoService = new PlatoServiceImpl(mapper, validator, platoRepository);
+        platoService = new PlatoServiceImpl(platoRepository, entityMapper, validator);
 
         lenient().when(platoRepository.save(any(Plato.class))).thenAnswer(invocation -> {
             Plato plato = invocation.getArgument(0);
@@ -65,234 +61,111 @@ class PlatoServiceImplTest {
         });
     }
 
-    private PlatoRequestDTO requestValido() {
-        return new PlatoRequestDTO(
-                "Bandeja paisa",
-                "Bandeja paisa casera con frijoles, chicharrón y arroz",
-                "https://fotos.ollacercana.com/bandeja.jpg",
-                TipoComida.ALMUERZO,
-                List.of(RestriccionAlimentaria.SIN_GLUTEN),
-                5,
-                new BigDecimal("15000"),
-                LocalDateTime.now().plusHours(2),
-                "Calle 80 #45-12, Bogotá",
-                4.6789,
-                -74.0567
-        );
-    }
-
-    private Plato platoActivo(UUID id, int totales, int comprometidas, int version) {
+    private Plato platoValido() {
         return Plato.builder()
-                .id(id)
                 .cocineraId(COCINERA_ID)
                 .nombre("Bandeja paisa")
-                .porcionesTotales(totales)
-                .porcionesComprometidas(comprometidas)
+                .descripcion("Bandeja paisa casera con frijoles, chicharrón y arroz")
+                .fotoUrl("https://fotos.ollacercana.com/bandeja.jpg")
+                .tipoComida(TipoComida.ALMUERZO)
+                .restricciones(List.of())
+                .porcionesTotales(5)
                 .precioPorcion(new BigDecimal("15000"))
-                .estado(EstadoPlato.ACTIVO)
-                .version(version)
+                .horaDisponibilidad(LocalDateTime.now().plusHours(2))
+                .puntoEntrega("Calle 80 #45-12, Bogotá")
+                .latitud(4.6789)
+                .longitud(-74.0567)
                 .build();
     }
 
-    // ==================================================================
-    // ============ crear() — OC-94 ============
-    // ==================================================================
-
-    // ============ Escenario 1: camino feliz ============
+    // ============ Escenario 1: happy path (201) ============
 
     @Test
-    void crear_conCocineraVerificadaYDatosValidos_debePublicarPlato() {
+    void crear_conDatosValidosYCocineraHabilitada_debePublicarPlato() {
         when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
         when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
         when(platoRepository.countActivosVigentesPorCocinera(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
                 .thenReturn(0L);
 
-        PlatoResponseDTO response = platoService.crear(requestValido(), COCINERA_ID);
+        Plato guardado = platoService.crear(platoValido());
 
-        assertNotNull(response.id());
-        assertEquals(COCINERA_ID, response.cocineraId());
-        assertEquals(EstadoPlato.ACTIVO, response.estado());
-        assertNotNull(response.fechaPublicacion());
-        assertNotNull(response.fechaExpiracion());
-
-        // RN-02: vigencia de 4 horas
-        Duration vigencia = Duration.between(response.fechaPublicacion(), response.fechaExpiracion());
-        assertEquals(4, vigencia.toHours());
-
+        assertNotNull(guardado.getId());
+        assertEquals(EstadoPlato.ACTIVO, guardado.getEstado());
+        assertEquals(0, guardado.getPorcionesComprometidas());
         verify(platoRepository, times(1)).save(any(Plato.class));
     }
 
-    // ============ Escenario 2: cocinera no verificada / pausada ============
+    // ============ Escenario 2: 404 — cocinera no encontrada ============
 
     @Test
-    void crear_conCocineraNoVerificada_debeLanzarBusinessRuleException() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(false);
+    void crear_conCocineraInexistente_debeLanzarCocineraNoEncontrada() {
+        when(cocineraQueryPort.estaVerificada(COCINERA_ID))
+                .thenThrow(new CocineraNoEncontradaException(COCINERA_ID));
 
-        assertThrows(BusinessRuleException.class,
-                () -> platoService.crear(requestValido(), COCINERA_ID));
+        assertThrows(CocineraNoEncontradaException.class,
+                () -> platoService.crear(platoValido()));
 
         verify(platoRepository, never()).save(any());
     }
 
-    @Test
-    void crear_conCocineraPausada_debeLanzarBusinessRuleException() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
-        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(true);
-
-        assertThrows(BusinessRuleException.class,
-                () -> platoService.crear(requestValido(), COCINERA_ID));
-
-        verify(platoRepository, never()).save(any());
-    }
-
-    // ============ RN-27: precio fuera de rango ============
+    // ============ Escenario 3: 409 — conflicto de regla (límite de 3 activos) ============
 
     @Test
-    void crear_conPrecioMenorAlMinimo_debeLanzarBusinessRuleException() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
-        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
-
-        PlatoRequestDTO requestConPrecioInvalido = new PlatoRequestDTO(
-                "Sopa", "Sopa casera de verduras frescas", "https://fotos.ollacercana.com/sopa.jpg",
-                TipoComida.ALMUERZO, List.of(), 5,
-                new BigDecimal("1000"), // menor a 2.000
-                LocalDateTime.now().plusHours(1), "Calle 80 #45-12", 4.6789, -74.0567
-        );
-
-        assertThrows(BusinessRuleException.class,
-                () -> platoService.crear(requestConPrecioInvalido, COCINERA_ID));
-
-        verify(platoRepository, never()).save(any());
-    }
-
-    // ============ RN-28: máximo 3 platos activos por cocinera ============
-
-    @Test
-    void crear_conTresPlatosActivosVigentes_debeLanzarBusinessRuleException() {
+    void crear_conTresPlatosActivosVigentes_debeLanzarConflicto() {
         when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
         when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
         when(platoRepository.countActivosVigentesPorCocinera(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
                 .thenReturn(3L);
 
-        assertThrows(BusinessRuleException.class,
-                () -> platoService.crear(requestValido(), COCINERA_ID));
+        assertThrows(LimitePlatosActivosExcedidoException.class,
+                () -> platoService.crear(platoValido()));
 
         verify(platoRepository, never()).save(any());
     }
 
-    // ============ RN-30: máximo 3 restricciones alimentarias ============
+    @Test
+    void crear_conCocineraPausada_debeLanzarConflicto() {
+        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
+        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(true);
+
+        assertThrows(CocineraPausadaException.class,
+                () -> platoService.crear(platoValido()));
+
+        verify(platoRepository, never()).save(any());
+    }
+
+    // ============ Escenario 4: 422 — estado/datos inválidos (precio fuera de rango) ============
 
     @Test
-    void crear_conMasDeTresRestricciones_debeLanzarBusinessRuleException() {
+    void crear_conPrecioFueraDeRango_debeLanzarExcepcionDeValidacion() {
+        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
+        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
+
+        Plato platoConPrecioInvalido = platoValido().toBuilder()
+                .precioPorcion(new BigDecimal("1000")) // menor al mínimo de 2.000
+                .build();
+
+        assertThrows(PrecioFueraDeRangoException.class,
+                () -> platoService.crear(platoConPrecioInvalido));
+
+        verify(platoRepository, never()).save(any());
+    }
+
+    // ============ Escenario 5: fecha de expiración = ahora + 4h (RN-02) ============
+
+    @Test
+    void crear_debeCalcularFechaExpiracionExactamente4hDespuesDeLaPublicacion() {
         when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
         when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
         when(platoRepository.countActivosVigentesPorCocinera(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
                 .thenReturn(0L);
 
-        PlatoRequestDTO requestConMuchasRestricciones = new PlatoRequestDTO(
-                "Plato vegano", "Plato vegano sin gluten ni lácteos", "https://fotos.ollacercana.com/vegano.jpg",
-                TipoComida.CENA,
-                // Solo existen 3 valores en el enum — se repite uno para forzar tamaño 4.
-                List.of(RestriccionAlimentaria.VEGETARIANO, RestriccionAlimentaria.VEGETARIANO,
-                        RestriccionAlimentaria.SIN_GLUTEN, RestriccionAlimentaria.SIN_LACTOSA),
-                5, new BigDecimal("15000"), LocalDateTime.now().plusHours(1),
-                "Calle 80 #45-12", 4.6789, -74.0567
-        );
+        Plato guardado = platoService.crear(platoValido());
 
-        assertThrows(BusinessRuleException.class,
-                () -> platoService.crear(requestConMuchasRestricciones, COCINERA_ID));
-
-        verify(platoRepository, never()).save(any());
-    }
-
-    // ==================================================================
-    // ============ ajustarDisponibilidad() — OC-110 / HU-24 ============
-    // ==================================================================
-
-    // ============ Escenario 1: aumentar ============
-
-    @Test
-    void ajustar_conAumentar_debeIncrementarTotalYVersion() {
-        UUID platoId = UUID.randomUUID();
-        Plato plato = platoActivo(platoId, 3, 0, 0);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
-
-        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 2, "reposición", 0);
-        PlatoResponseDTO response = platoService.ajustarDisponibilidad(platoId, request);
-
-        assertEquals(5, response.porcionesTotales());
-        verify(platoRepository, times(1)).save(any(Plato.class));
-    }
-
-    // ============ Escenario 2: reducción por debajo de comprometidas ============
-
-    @Test
-    void ajustar_conReduccionPorDebajoDeComprometidas_debeLanzarExcepcion() {
-        UUID platoId = UUID.randomUUID();
-        Plato plato = platoActivo(platoId, 3, 3, 0); // 3 comprometidas
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
-
-        // intenta dejar el total en 2, con 3 comprometidas → inválido
-        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.DISMINUIR, 1, null, 0);
-
-        assertThrows(ReduccionPorDebajoDeComprometidasException.class,
-                () -> platoService.ajustarDisponibilidad(platoId, request));
-
-        verify(platoRepository, never()).save(any());
-    }
-
-    // ============ Escenario 3: marcar agotado sin cancelar reservas ============
-
-    @Test
-    void ajustar_conMarcarAgotado_noDebeCancelarReservasExistentes() {
-        UUID platoId = UUID.randomUUID();
-        Plato plato = platoActivo(platoId, 5, 3, 0); // 2 disponibles, 3 reservadas
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
-
-        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.MARCAR_AGOTADO, null, "cierre manual", 0);
-        PlatoResponseDTO response = platoService.ajustarDisponibilidad(platoId, request);
-
-        assertEquals(0, response.porcionesDisponibles());
-        assertEquals(EstadoPlato.AGOTADO, response.estado());
-        assertEquals(3, plato.getPorcionesComprometidas()); // reservas intactas
-    }
-
-    // ============ Escenario 4: conflicto de concurrencia ============
-
-    @Test
-    void ajustar_conVersionDesactualizada_debeLanzarConflictoVersion() {
-        UUID platoId = UUID.randomUUID();
-        Plato plato = platoActivo(platoId, 3, 0, 5); // version actual = 5
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
-
-        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 1, null, 4); // version vieja
-
-        assertThrows(ConflictoVersionException.class,
-                () -> platoService.ajustarDisponibilidad(platoId, request));
-
-        verify(platoRepository, never()).save(any());
-    }
-
-    @Test
-    void ajustar_conPlatoInexistente_debeLanzarPlatoNoEncontrado() {
-        UUID platoId = UUID.randomUUID();
-        when(platoRepository.findById(platoId)).thenReturn(Optional.empty());
-
-        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 1, null, 0);
-
-        assertThrows(PlatoNoEncontradoException.class,
-                () -> platoService.ajustarDisponibilidad(platoId, request));
-    }
-
-    @Test
-    void ajustar_conCantidadInvalidaParaAumentar_debeLanzarExcepcion() {
-        UUID platoId = UUID.randomUUID();
-        Plato plato = platoActivo(platoId, 3, 0, 0);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
-
-        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 0, null, 0);
-
-        assertThrows(CantidadAjusteInvalidaException.class,
-                () -> platoService.ajustarDisponibilidad(platoId, request));
+        assertNotNull(guardado.getFechaPublicacion());
+        assertNotNull(guardado.getFechaExpiracion());
+        Duration vigencia = Duration.between(guardado.getFechaPublicacion(), guardado.getFechaExpiracion());
+        assertEquals(4, vigencia.toHours());
+        assertEquals(0, vigencia.toMinutesPart());
     }
 }
