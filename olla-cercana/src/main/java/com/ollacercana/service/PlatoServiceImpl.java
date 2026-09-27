@@ -8,6 +8,8 @@ import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.exception.PlatoNoEncontradoException;
 
 import java.util.UUID;
 
@@ -33,5 +35,19 @@ public class PlatoServiceImpl implements PlatoService {
         Plato guardado = repository.save(plato);
 
         return mapper.toResponse(guardado);
+    }
+
+    @Override
+    public PlatoResponseDTO ajustarDisponibilidad(UUID platoId, AjusteDisponibilidadRequest request) {
+        Plato plato = repository.findById(platoId)
+                .orElseThrow(() -> new PlatoNoEncontradoException(platoId));
+
+        // Valida version, cantidad y reduccion por debajo de comprometidas
+        validator.validarAjusteDisponibilidad(plato, request);
+
+        plato.ajustarDisponibilidad(request.tipo(), request.cantidad());
+
+        Plato actualizado = repository.save(plato);
+        return mapper.toResponse(actualizado);
     }
 }

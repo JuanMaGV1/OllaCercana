@@ -3,6 +3,7 @@ package com.ollacercana.repository;
 import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.domain.TipoComida;
+import com.ollacercana.exception.ConflictoVersionException;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -21,24 +22,33 @@ public class PlatoRepository {
     public Plato save(Plato plato) {
         if (plato.getId() == null) {
             plato.setId(UUID.randomUUID());
+            platos.add(plato);
+            return plato;
         }
 
-        // Si ya existe, lo reemplaza; si no, lo agrega
-        Optional<Plato> existente = findById(plato.getId());
-        if (existente.isPresent()) {
-            int index = platos.indexOf(existente.get());
+        Optional<Plato> existenteOpt = findById(plato.getId());
+        if (existenteOpt.isPresent()) {
+            Plato existente = existenteOpt.get();
+            if (!existente.getVersion().equals(plato.getVersion())) {
+                throw new ConflictoVersionException(
+                        existente.getVersion(),
+                        existente.getPorcionesTotales(),
+                        existente.getPorcionesComprometidas(),
+                        existente.getEstado().name()
+                );
+            }
+            int index = platos.indexOf(existente);
             platos.set(index, plato);
         } else {
             platos.add(plato);
         }
-
         return plato;
     }
 
     public Optional<Plato> findById(UUID id) {
         return platos.stream()
-            .filter(p -> p.getId().equals(id))
-            .findFirst();
+                .filter(p -> p.getId().equals(id))
+                .findFirst();
     }
 
     public List<Plato> findAll() {
@@ -61,21 +71,20 @@ public class PlatoRepository {
 
     public List<Plato> findByEstado(EstadoPlato estado) {
         return platos.stream()
-            .filter(p -> p.getEstado() == estado)
-            .toList();
+                .filter(p -> p.getEstado() == estado)
+                .toList();
     }
 
     public List<Plato> findByTipoComida(TipoComida tipo) {
         return platos.stream()
-            .filter(p -> p.getTipoComida() == tipo)
-            .toList();
+                .filter(p -> p.getTipoComida() == tipo)
+                .toList();
     }
 
     /**
      * Platos de una cocinera especifica en un estado dado para la RN-28
      * que es el limite por cocinera y para mis platos en el perfil.
      */
-
     public List<Plato> findByCocineraIdAndEstado(UUID cocineraId, EstadoPlato estado) {
         return platos.stream()
                 .filter(p -> cocineraId != null && cocineraId.equals(p.getCocineraId()))
@@ -89,15 +98,12 @@ public class PlatoRepository {
      */
     public List<Plato> findActivosVigentes(EstadoPlato estado, LocalDateTime ahora) {
         return platos.stream()
-            .filter(p -> p.getEstado() == estado)
-            .filter(p -> p.getFechaExpiracion() != null && p.getFechaExpiracion().isAfter(ahora))
-            .filter(p -> p.getPorcionesDisponibles() > 0)
-            .toList();
+                .filter(p -> p.getEstado() == estado)
+                .filter(p -> p.getFechaExpiracion() != null && p.getFechaExpiracion().isAfter(ahora))
+                .filter(p -> p.getPorcionesDisponibles() > 0)
+                .toList();
     }
 
-    /**
-     * Cuenta platos activos vigentes en todo el sistema.
-     */
     public long countActivosVigentes(EstadoPlato estado, LocalDateTime ahora) {
         return platos.stream()
                 .filter(p -> p.getEstado() == estado)
@@ -105,10 +111,6 @@ public class PlatoRepository {
                 .count();
     }
 
-    /**
-     * Corrige el bug de RN-28: cuenta los platos activos vigentes
-     * de una cocinera específica, no de todo el sistema.
-     */
     public long countActivosVigentesPorCocinera(UUID cocineraId, EstadoPlato estado, LocalDateTime ahora) {
         return platos.stream()
                 .filter(p -> cocineraId != null && cocineraId.equals(p.getCocineraId()))
@@ -117,9 +119,6 @@ public class PlatoRepository {
                 .count();
     }
 
-    /**
-     * Tarea programada: platos que deben expirar.
-     */
     public List<Plato> findParaExpirar(List<EstadoPlato> estados, LocalDateTime ahora) {
         return platos.stream()
                 .filter(p -> estados.contains(p.getEstado()))

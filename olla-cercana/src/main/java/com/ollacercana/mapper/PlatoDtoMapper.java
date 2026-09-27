@@ -43,6 +43,7 @@ public class PlatoDtoMapper {
 
         return new PlatoResponseDTO(
                 plato.getId(),
+                plato.getCocineraId(),
                 plato.getNombre(),
                 plato.getDescripcion(),
                 plato.getFotoUrl(),

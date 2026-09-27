@@ -3,10 +3,16 @@ package com.ollacercana.service;
 import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.domain.RestriccionAlimentaria;
+import com.ollacercana.domain.TipoAjustePorciones;
 import com.ollacercana.domain.TipoComida;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.dto.request.PlatoRequestDTO;
 import com.ollacercana.dto.response.PlatoResponseDTO;
 import com.ollacercana.exception.BusinessRuleException;
+import com.ollacercana.exception.CantidadAjusteInvalidaException;
+import com.ollacercana.exception.ConflictoVersionException;
+import com.ollacercana.exception.PlatoNoEncontradoException;
+import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
 import com.ollacercana.mapper.PlatoDtoMapper;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.CocineraQueryPort;
@@ -21,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Pruebas de PlatoServiceImpl (OC-94).
+ * Pruebas de PlatoServiceImpl (OC-94: crear / OC-110: ajustarDisponibilidad).
  */
 @ExtendWith(MockitoExtension.class)
 class PlatoServiceImplTest {
@@ -49,7 +56,7 @@ class PlatoServiceImplTest {
         PlatoValidator validator = new PlatoValidator(platoRepository, cocineraQueryPort);
         platoService = new PlatoServiceImpl(mapper, validator, platoRepository);
 
-        when(platoRepository.save(any(Plato.class))).thenAnswer(invocation -> {
+        lenient().when(platoRepository.save(any(Plato.class))).thenAnswer(invocation -> {
             Plato plato = invocation.getArgument(0);
             if (plato.getId() == null) {
                 plato.setId(UUID.randomUUID());
@@ -73,6 +80,23 @@ class PlatoServiceImplTest {
                 -74.0567
         );
     }
+
+    private Plato platoActivo(UUID id, int totales, int comprometidas, int version) {
+        return Plato.builder()
+                .id(id)
+                .cocineraId(COCINERA_ID)
+                .nombre("Bandeja paisa")
+                .porcionesTotales(totales)
+                .porcionesComprometidas(comprometidas)
+                .precioPorcion(new BigDecimal("15000"))
+                .estado(EstadoPlato.ACTIVO)
+                .version(version)
+                .build();
+    }
+
+    // ==================================================================
+    // ============ crear() — OC-94 ============
+    // ==================================================================
 
     // ============ Escenario 1: camino feliz ============
 
@@ -179,5 +203,96 @@ class PlatoServiceImplTest {
                 () -> platoService.crear(requestConMuchasRestricciones, COCINERA_ID));
 
         verify(platoRepository, never()).save(any());
+    }
+
+    // ==================================================================
+    // ============ ajustarDisponibilidad() — OC-110 / HU-24 ============
+    // ==================================================================
+
+    // ============ Escenario 1: aumentar ============
+
+    @Test
+    void ajustar_conAumentar_debeIncrementarTotalYVersion() {
+        UUID platoId = UUID.randomUUID();
+        Plato plato = platoActivo(platoId, 3, 0, 0);
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+
+        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 2, "reposición", 0);
+        PlatoResponseDTO response = platoService.ajustarDisponibilidad(platoId, request);
+
+        assertEquals(5, response.porcionesTotales());
+        verify(platoRepository, times(1)).save(any(Plato.class));
+    }
+
+    // ============ Escenario 2: reducción por debajo de comprometidas ============
+
+    @Test
+    void ajustar_conReduccionPorDebajoDeComprometidas_debeLanzarExcepcion() {
+        UUID platoId = UUID.randomUUID();
+        Plato plato = platoActivo(platoId, 3, 3, 0); // 3 comprometidas
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+
+        // intenta dejar el total en 2, con 3 comprometidas → inválido
+        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.DISMINUIR, 1, null, 0);
+
+        assertThrows(ReduccionPorDebajoDeComprometidasException.class,
+                () -> platoService.ajustarDisponibilidad(platoId, request));
+
+        verify(platoRepository, never()).save(any());
+    }
+
+    // ============ Escenario 3: marcar agotado sin cancelar reservas ============
+
+    @Test
+    void ajustar_conMarcarAgotado_noDebeCancelarReservasExistentes() {
+        UUID platoId = UUID.randomUUID();
+        Plato plato = platoActivo(platoId, 5, 3, 0); // 2 disponibles, 3 reservadas
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+
+        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.MARCAR_AGOTADO, null, "cierre manual", 0);
+        PlatoResponseDTO response = platoService.ajustarDisponibilidad(platoId, request);
+
+        assertEquals(0, response.porcionesDisponibles());
+        assertEquals(EstadoPlato.AGOTADO, response.estado());
+        assertEquals(3, plato.getPorcionesComprometidas()); // reservas intactas
+    }
+
+    // ============ Escenario 4: conflicto de concurrencia ============
+
+    @Test
+    void ajustar_conVersionDesactualizada_debeLanzarConflictoVersion() {
+        UUID platoId = UUID.randomUUID();
+        Plato plato = platoActivo(platoId, 3, 0, 5); // version actual = 5
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+
+        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 1, null, 4); // version vieja
+
+        assertThrows(ConflictoVersionException.class,
+                () -> platoService.ajustarDisponibilidad(platoId, request));
+
+        verify(platoRepository, never()).save(any());
+    }
+
+    @Test
+    void ajustar_conPlatoInexistente_debeLanzarPlatoNoEncontrado() {
+        UUID platoId = UUID.randomUUID();
+        when(platoRepository.findById(platoId)).thenReturn(Optional.empty());
+
+        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 1, null, 0);
+
+        assertThrows(PlatoNoEncontradoException.class,
+                () -> platoService.ajustarDisponibilidad(platoId, request));
+    }
+
+    @Test
+    void ajustar_conCantidadInvalidaParaAumentar_debeLanzarExcepcion() {
+        UUID platoId = UUID.randomUUID();
+        Plato plato = platoActivo(platoId, 3, 0, 0);
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+
+        var request = new AjusteDisponibilidadRequest(TipoAjustePorciones.AUMENTAR, 0, null, 0);
+
+        assertThrows(CantidadAjusteInvalidaException.class,
+                () -> platoService.ajustarDisponibilidad(platoId, request));
     }
 }

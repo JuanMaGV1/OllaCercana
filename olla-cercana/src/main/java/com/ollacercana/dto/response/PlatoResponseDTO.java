@@ -11,6 +11,7 @@ import java.util.UUID;
 
 public record PlatoResponseDTO(
     UUID id,
+    UUID cocineraId,
     String nombre,
     String descripcion,
     String fotoUrl,

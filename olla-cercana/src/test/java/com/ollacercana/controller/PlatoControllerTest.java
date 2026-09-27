@@ -12,7 +12,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,42 +32,50 @@ class PlatoControllerTest {
     @Test
     void publicar_debeRetornar201() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
-            "Arroz con pollo",
-            "Arroz con pollo criollo con ensalada",
-            "http://foto.com/arroz.jpg",
-            TipoComida.ALMUERZO,
-            List.of(RestriccionAlimentaria.SIN_GLUTEN),
-            10,
-            new BigDecimal("12000.00"),
-            "Portería Torre 1"
+                "Arroz con pollo",
+                "Arroz con pollo criollo con ensalada",
+                "http://foto.com/arroz.jpg",
+                TipoComida.ALMUERZO,
+                List.of(RestriccionAlimentaria.SIN_GLUTEN),
+                10,
+                new BigDecimal("12000.00"),
+                LocalDateTime.now().plusHours(2),
+                "Portería Torre 1",
+                4.6789,
+                -74.0567
         );
 
         mockMvc.perform(post("/api/v1/platos")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").exists())
-            .andExpect(jsonPath("$.nombre").value("Arroz con pollo"))
-            .andExpect(jsonPath("$.estado").value("ACTIVO"))
-            .andExpect(jsonPath("$.porcionesDisponibles").value(10));
+                        .header("X-Cocinera-Id", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.nombre").value("Arroz con pollo"))
+                .andExpect(jsonPath("$.estado").value("ACTIVO"))
+                .andExpect(jsonPath("$.porcionesDisponibles").value(10));
     }
 
     @Test
     void publicar_conDatosInvalidos_debeRetornar400() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
-            "ab",                    // muy corto
-            "corta",                 // muy corta
-            "",
-            null,                    // nulo
-            List.of(),
-            0,                       // inválido
-            new BigDecimal("100"),   // bajo el mínimo
-            ""
+                "ab",
+                "corta",
+                "",
+                null,
+                List.of(),
+                0,
+                new BigDecimal("100"),
+                null,
+                "",
+                null,
+                null
         );
 
         mockMvc.perform(post("/api/v1/platos")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest());
+                        .header("X-Cocinera-Id", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -125,6 +125,21 @@ public class Plato {
         recalcularEstado();
     }
 
+    public void ajustarDisponibilidad(TipoAjustePorciones tipo, Integer cantidad) {
+
+        int comprometidasSeguras = this.porcionesComprometidas == null ? 0 : this.porcionesComprometidas;
+
+        switch (tipo) {
+            case AUMENTAR -> this.porcionesTotales = this.porcionesTotales + cantidad;
+            case DISMINUIR -> this.porcionesTotales = this.porcionesTotales - cantidad;
+            case MARCAR_AGOTADO -> this.porcionesTotales = comprometidasSeguras;
+        }
+
+        recalcularEstado();
+        this.version = (this.version == null ? 0 : this.version) + 1;
+    }
+
+
     public boolean estaVigente() {
         return this.fechaExpiracion != null && LocalDateTime.now().isBefore(this.fechaExpiracion);
     }

@@ -15,6 +15,11 @@ import com.ollacercana.exception.LimiteRestriccionesExcedidoException;
 import com.ollacercana.repository.PlatoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.ollacercana.domain.TipoAjustePorciones;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.exception.ConflictoVersionException;
+import com.ollacercana.exception.CantidadAjusteInvalidaException;
+import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,7 +45,7 @@ public class PlatoValidator {
         validarRangoPrecio(plato.getPrecioPorcion());       // RN-27
         validarRangoPorciones(plato.getPorcionesTotales()); // RN-27
         validarMultiploDe100(plato.getPrecioPorcion());     // RN-27
-        validarLimitePlatosActivos();                       // RN-28
+        validarLimitePlatosActivos(plato.getCocineraId());  // RN-28
         validarRestricciones(plato);                         // RN-30
     }
 
@@ -50,7 +55,32 @@ public class PlatoValidator {
         }
     }
 
-    // ============ Validaciones privadas ============
+    public void validarAjusteDisponibilidad(Plato plato, AjusteDisponibilidadRequest request) {
+        if (!plato.getVersion().equals(request.version())) {
+            throw new ConflictoVersionException(
+                    plato.getVersion(),
+                    plato.getPorcionesTotales(),
+                    plato.getPorcionesComprometidas(),
+                    plato.getEstado().name()
+            );
+        }
+
+        if (request.tipo() != TipoAjustePorciones.MARCAR_AGOTADO) {
+            if (request.cantidad() == null || request.cantidad() <= 0) {
+                throw new CantidadAjusteInvalidaException();
+            }
+        }
+
+        if (request.tipo() == TipoAjustePorciones.DISMINUIR) {
+            int comprometidas = plato.getPorcionesComprometidas() == null ? 0 : plato.getPorcionesComprometidas();
+            int nuevoTotal = plato.getPorcionesTotales() - request.cantidad();
+            if (nuevoTotal < comprometidas) {
+                throw new ReduccionPorDebajoDeComprometidasException(comprometidas);
+            }
+        }
+    }
+
+    // Validaciones privadas
 
     private void validarCocineraHabilitada(UUID cocineraId) {
         if (cocineraId == null) {
@@ -87,8 +117,8 @@ public class PlatoValidator {
         }
     }
 
-    private void validarLimitePlatosActivos() {
-        long activos = platoRepository.countActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now());
+    private void validarLimitePlatosActivos(UUID cocineraId) {
+        long activos = platoRepository.countActivosVigentesPorCocinera(cocineraId, EstadoPlato.ACTIVO, LocalDateTime.now());
         if (activos >= MAX_PLATOS_ACTIVOS) {
             throw new LimitePlatosActivosExcedidoException(MAX_PLATOS_ACTIVOS);
         }
