@@ -1,7 +1,7 @@
 package com.ollacercana.service;
 
 import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.exception.BusinessRuleException;
+import com.ollacercana.exception.CocineraNoEncontradaException;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.validator.CocineraQueryPort;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +19,13 @@ public class PerfilCocineraQueryServiceImpl implements CocineraQueryPort {
     public boolean estaVerificada(UUID cocineraId) {
         return repository.findById(cocineraId)
                 .map(PerfilCocinera::verificada)
-                .orElseThrow(() -> new BusinessRuleException("Cocinera no encontrada: " + cocineraId));
+                .orElseThrow(() -> new CocineraNoEncontradaException(cocineraId));
     }
 
     @Override
     public boolean estaPausada(UUID cocineraId) {
         return repository.findById(cocineraId)
                 .map(PerfilCocinera::pausada)
-                .orElseThrow(() -> new BusinessRuleException("Cocinera no encontrada: " + cocineraId));
+                .orElseThrow(() -> new CocineraNoEncontradaException(cocineraId));
     }
 }

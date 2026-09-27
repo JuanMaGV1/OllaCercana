@@ -1,6 +1,7 @@
 package com.ollacercana.config;
 
 import com.ollacercana.exception.BusinessRuleException;
+import com.ollacercana.exception.CocineraNoEncontradaException;
 import com.ollacercana.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(CocineraNoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> handleCocineraNoEncontrada(CocineraNoEncontradaException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<Map<String, Object>> handleBusinessRule(BusinessRuleException ex) {
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
@@ -29,7 +35,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> errores = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(err ->
-            errores.put(err.getField(), err.getDefaultMessage())
+                errores.put(err.getField(), err.getDefaultMessage())
         );
 
         Map<String, Object> body = new HashMap<>();

@@ -3,103 +3,46 @@ package com.ollacercana.repository;
 import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.domain.TipoComida;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public class PlatoRepository {
+public interface PlatoRepository extends JpaRepository<Plato, UUID> {
 
-    private final List<Plato> platos = new ArrayList<>();
+    List<Plato> findByEstado(EstadoPlato estado);
 
-    // ============ CRUD básico ============
+    List<Plato> findByTipoComida(TipoComida tipo);
 
-    public Plato save(Plato plato) {
-        if (plato.getId() == null) {
-            plato.setId(UUID.randomUUID());
-        }
-
-        // Si ya existe, lo reemplaza; si no, lo agrega
-        Optional<Plato> existente = findById(plato.getId());
-        if (existente.isPresent()) {
-            int index = platos.indexOf(existente.get());
-            platos.set(index, plato);
-        } else {
-            platos.add(plato);
-        }
-
-        return plato;
-    }
-
-    public Optional<Plato> findById(UUID id) {
-        return platos.stream()
-            .filter(p -> p.getId().equals(id))
-            .findFirst();
-    }
-
-    public List<Plato> findAll() {
-        return new ArrayList<>(platos);
-    }
-
-    public boolean existsById(UUID id) {
-        return platos.stream().anyMatch(p -> p.getId().equals(id));
-    }
-
-    public void deleteById(UUID id) {
-        platos.removeIf(p -> p.getId().equals(id));
-    }
-
-    public void deleteAll() {
-        platos.clear();
-    }
-
-    // ============ Consultas con streams ============
-
-    public List<Plato> findByEstado(EstadoPlato estado) {
-        return platos.stream()
-            .filter(p -> p.getEstado() == estado)
-            .toList();
-    }
-
-    public List<Plato> findByTipoComida(TipoComida tipo) {
-        return platos.stream()
-            .filter(p -> p.getTipoComida() == tipo)
-            .toList();
-    }
+    /**
+     * Platos de una cocinera especifica en un estado dado para la RN-28
+     * y para "mis platos" en el perfil.
+     */
+    List<Plato> findByCocineraIdAndEstado(UUID cocineraId, EstadoPlato estado);
 
     /**
      * RN-02: platos activos y vigentes (fecha de expiración > ahora).
      * RN-03: con porciones disponibles > 0.
      */
-    public List<Plato> findActivosVigentes(EstadoPlato estado, LocalDateTime ahora) {
-        return platos.stream()
-            .filter(p -> p.getEstado() == estado)
-            .filter(p -> p.getFechaExpiracion() != null && p.getFechaExpiracion().isAfter(ahora))
-            .filter(p -> p.getPorcionesDisponibles() > 0)
-            .toList();
-    }
+    @Query("SELECT p FROM Plato p WHERE p.estado = :estado AND p.fechaExpiracion > :ahora " +
+            "AND (p.porcionesTotales - COALESCE(p.porcionesComprometidas, 0)) > 0")
+    List<Plato> findActivosVigentes(@Param("estado") EstadoPlato estado, @Param("ahora") LocalDateTime ahora);
 
     /**
-     * RN-28: cuenta cuántos platos activos vigentes hay.
+     * Cuenta platos activos vigentes en todo el sistema.
      */
-    public long countActivosVigentes(EstadoPlato estado, LocalDateTime ahora) {
-        return platos.stream()
-            .filter(p -> p.getEstado() == estado)
-            .filter(p -> p.getFechaExpiracion() != null && p.getFechaExpiracion().isAfter(ahora))
-            .count();
-    }
+    long countByEstadoAndFechaExpiracionAfter(EstadoPlato estado, LocalDateTime ahora);
+
+    /**
+     * Cuenta los platos activos vigentes de una cocinera específica (RN-28).
+     */
+    long countByCocineraIdAndEstadoAndFechaExpiracionAfter(UUID cocineraId, EstadoPlato estado, LocalDateTime ahora);
 
     /**
      * Tarea programada: platos que deben expirar.
      */
-    public List<Plato> findParaExpirar(List<EstadoPlato> estados, LocalDateTime ahora) {
-        return platos.stream()
-            .filter(p -> estados.contains(p.getEstado()))
-            .filter(p -> p.getFechaExpiracion() != null && !p.getFechaExpiracion().isAfter(ahora))
-            .toList();
-    }
+    List<Plato> findByEstadoInAndFechaExpiracionLessThanEqual(List<EstadoPlato> estados, LocalDateTime ahora);
 }

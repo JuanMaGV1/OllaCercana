@@ -1,93 +1,73 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoComida;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
-import com.ollacercana.exception.ResourceNotFoundException;
-import com.ollacercana.mapper.PlatoDtoMapper;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.exception.ConflictoVersionException;
+import com.ollacercana.exception.PlatoNoEncontradoException;
+import com.ollacercana.mapper.PlatoEntityMapper;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class PlatoServiceImpl implements PlatoService {
 
-    private final PlatoRepository platoRepository;
-    private final PlatoDtoMapper platoDtoMapper;
-    private final PlatoValidator platoValidator;
+    private final PlatoRepository repository;
+    private final PlatoEntityMapper entityMapper;
+    private final PlatoValidator validator;
 
     @Override
-    public PlatoResponseDTO publicar(PlatoRequestDTO request) {
-        log.info("Publicando nuevo plato: {}", request.nombre());
-
-        // 1. DTO → Dominio
-        Plato plato = platoDtoMapper.toDomain(request);
-
-        // 2. Validar reglas de negocio (RN-27, RN-28, RN-30)
-        platoValidator.validarParaPublicar(plato);
-
-        // 3. Aplicar regla de publicación (RN-02)
+    public Plato crear(Plato plato) {
+        validator.validarParaPublicar(plato);
         plato.publicar();
 
-        // 4. Persistir en memoria (el repo asigna el UUID)
-        Plato guardado = platoRepository.save(plato);
+        if (plato.getId() == null) {
+            plato.setId(UUID.randomUUID());
+        }
 
-        log.info("Plato publicado con id: {}", guardado.getId());
-        return platoDtoMapper.toResponse(guardado);
+        Plato entidad = entityMapper.toEntity(plato);
+        Plato guardado = repository.save(entidad);
+        return entityMapper.toDomain(guardado);
     }
 
     @Override
-    public PlatoResponseDTO obtenerPorId(UUID id) {
-        Plato plato = platoRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Plato", id));
-        return platoDtoMapper.toResponse(plato);
+    public Plato obtenerPorId(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new PlatoNoEncontradoException(id));
     }
 
     @Override
-    public List<PlatoResponseDTO> listarActivos() {
-        return platoRepository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now())
-            .stream()
-            .map(platoDtoMapper::toResponse)
-            .toList();
-    }
+    public Plato ajustarDisponibilidad(UUID platoId, AjusteDisponibilidadRequest request) {
+        Plato plato = repository.findById(platoId)
+                .orElseThrow(() -> new PlatoNoEncontradoException(platoId));
 
-    @Override
-    public List<PlatoResponseDTO> listarPorTipo(TipoComida tipo) {
-        return platoRepository.findByTipoComida(tipo).stream()
-            .map(platoDtoMapper::toResponse)
-            .toList();
-    }
+        validator.validarAjusteDisponibilidad(plato, request);
 
-    @Override
-    public PlatoResponseDTO ajustarPorciones(UUID id, int nuevaCantidad) {
-        log.info("Ajustando porciones del plato {} a {}", id, nuevaCantidad);
+        plato.ajustarDisponibilidad(request.tipo(), request.cantidad());
+        plato.setVersion(request.version());
 
-        Plato plato = platoRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Plato", id));
-
-        platoValidator.validarParaAjustar(plato);
-        plato.cambiarPorcionesTotales(nuevaCantidad);
-
-        Plato guardado = platoRepository.save(plato);
-        return platoDtoMapper.toResponse(guardado);
+        try {
+            return repository.saveAndFlush(plato);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new ConflictoVersionException(
+                    plato.getVersion(),
+                    plato.getPorcionesTotales(),
+                    plato.getPorcionesComprometidas(),
+                    plato.getEstado().name()
+            );
+        }
     }
 
     @Override
     public void eliminar(UUID id) {
-        if (!platoRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Plato", id);
+        if (!repository.existsById(id)) {
+            throw new PlatoNoEncontradoException(id);
         }
-        platoRepository.deleteById(id);
-        log.info("Plato eliminado: {}", id);
+        repository.deleteById(id);
     }
 }

@@ -1,80 +1,96 @@
 package com.ollacercana.domain;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PlatoTest {
 
-    private Plato crearPlato() {
-        return Plato.builder()
-            .nombre("Arroz con pollo")
-            .descripcion("Arroz con pollo criollo")
-            .fotoUrl("http://foto.com")
-            .tipoComida(TipoComida.ALMUERZO)
-            .porcionesTotales(10)
-            .precioPorcion(new BigDecimal("12000.00"))
-            .puntoEntrega("Portería")
-            .build();
+    private Plato plato;
+
+    @BeforeEach
+    void setUp() {
+        plato = Plato.builder()
+                .id(UUID.randomUUID())
+                .cocineraId(UUID.randomUUID())
+                .nombre("Bandeja paisa")
+                .porcionesTotales(5)
+                .porcionesComprometidas(0)
+                .precioPorcion(new BigDecimal("12000"))
+                .estado(EstadoPlato.ACTIVO)
+                .build();
     }
 
     @Test
-    void publicar_debeInicializarCampos() {
-        Plato plato = crearPlato();
-        plato.publicar();
-
-        assertEquals(EstadoPlato.ACTIVO, plato.getEstado());
-        assertEquals(0, plato.getPorcionesComprometidas());
-        assertNotNull(plato.getFechaPublicacion());
-        assertEquals(plato.getFechaPublicacion().plusHours(4), plato.getFechaExpiracion());
+    void disponibles_debeSerTotalesMenosComprometidas() {
+        plato.setPorcionesComprometidas(2);
+        assertThat(plato.getPorcionesDisponibles()).isEqualTo(3);
     }
 
     @Test
-    void comprometerPorciones_debeMarcarAgotado() {
-        Plato plato = crearPlato();
-        plato.publicar();
-        plato.comprometerPorciones(10);
-
-        assertEquals(0, plato.getPorcionesDisponibles());
-        assertEquals(EstadoPlato.AGOTADO, plato.getEstado());
+    void disponibles_debeSerTotalesCuandoComprometidasEsNull() {
+        plato.setPorcionesComprometidas(null);
+        assertThat(plato.getPorcionesDisponibles()).isEqualTo(5);
     }
 
     @Test
-    void comprometerPorciones_debeFallarSiNoHaySuficientes() {
-        Plato plato = crearPlato();
-        plato.publicar();
-
-        assertThrows(IllegalStateException.class, () -> plato.comprometerPorciones(20));
+    void disponibles_debeSerCeroCuandoTodasEstanComprometidas() {
+        plato.setPorcionesComprometidas(5);
+        assertThat(plato.getPorcionesDisponibles()).isEqualTo(0);
     }
 
     @Test
-    void liberarPorciones_debeReactivar() {
-        Plato plato = crearPlato();
-        plato.publicar();
-        plato.comprometerPorciones(10);
-        plato.liberarPorciones(5);
-
-        assertEquals(5, plato.getPorcionesDisponibles());
-        assertEquals(EstadoPlato.ACTIVO, plato.getEstado());
+    void comprometerPorciones_debeDescontarDeDisponibles() {
+        plato.comprometerPorciones(3);
+        assertThat(plato.getPorcionesComprometidas()).isEqualTo(3);
+        assertThat(plato.getPorcionesDisponibles()).isEqualTo(2);
     }
 
     @Test
-    void cambiarPorcionesTotales_debeValidarRango() {
-        Plato plato = crearPlato();
-        plato.publicar();
-
-        assertThrows(IllegalArgumentException.class, () -> plato.cambiarPorcionesTotales(0));
-        assertThrows(IllegalArgumentException.class, () -> plato.cambiarPorcionesTotales(50));
+    void comprometerPorciones_debeMarcarAgotadoCuandoLlegaACero() {
+        plato.comprometerPorciones(5);
+        assertThat(plato.getPorcionesDisponibles()).isEqualTo(0);
+        assertThat(plato.getEstado()).isEqualTo(EstadoPlato.AGOTADO);
     }
 
     @Test
-    void cambiarPorcionesTotales_debeFallarSiEsMenorALasComprometidas() {
-        Plato plato = crearPlato();
-        plato.publicar();
-        plato.comprometerPorciones(7);
+    void comprometerPorciones_debeLanzarExcepcionSiExcedeDisponibles() {
+        assertThatThrownBy(() -> plato.comprometerPorciones(6))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No hay suficientes porciones disponibles");
+    }
 
-        assertThrows(IllegalStateException.class, () -> plato.cambiarPorcionesTotales(5));
+    @Test
+    void comprometerPorciones_debeLanzarExcepcionSiCantidadEsCeroONegativa() {
+        assertThatThrownBy(() -> plato.comprometerPorciones(0))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void liberarPorciones_debeAumentarDisponibles() {
+        plato.comprometerPorciones(4);
+        plato.liberarPorciones(2);
+        assertThat(plato.getPorcionesComprometidas()).isEqualTo(2);
+        assertThat(plato.getPorcionesDisponibles()).isEqualTo(3);
+    }
+
+    @Test
+    void liberarPorciones_debeReactivarPlatoAgotado() {
+        plato.setEstado(EstadoPlato.AGOTADO);
+        plato.setPorcionesComprometidas(5);
+        plato.liberarPorciones(2);
+        assertThat(plato.getEstado()).isEqualTo(EstadoPlato.ACTIVO);
+    }
+
+    @Test
+    void liberarPorciones_noDebeQuedarNegativo() {
+        plato.comprometerPorciones(2);
+        plato.liberarPorciones(10);
+        assertThat(plato.getPorcionesComprometidas()).isEqualTo(0);
     }
 }
