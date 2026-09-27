@@ -1,6 +1,7 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.domain.Plato;
+import com.ollacercana.controller.docs.PlatoApi;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.dto.request.PlatoRequestDTO;
 import com.ollacercana.dto.response.PlatoResponseDTO;
