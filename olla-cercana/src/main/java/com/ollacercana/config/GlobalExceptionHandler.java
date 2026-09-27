@@ -3,6 +3,7 @@ package com.ollacercana.config;
 import com.ollacercana.exception.BusinessRuleException;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.exception.ReglaDeNegocioException;
+import com.ollacercana.exception.CocineraNoEncontradaException;
 import com.ollacercana.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(CocineraNoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> handleCocineraNoEncontrada(CocineraNoEncontradaException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(BusinessRuleException.class)

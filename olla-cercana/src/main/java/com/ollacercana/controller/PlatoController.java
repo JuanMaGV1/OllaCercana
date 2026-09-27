@@ -1,67 +1,52 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.domain.TipoComida;
+import com.ollacercana.domain.Plato;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.dto.request.PlatoRequestDTO;
 import com.ollacercana.dto.response.PlatoResponseDTO;
+import com.ollacercana.mapper.PlatoMapper;
 import com.ollacercana.service.PlatoService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
+/**
+ * OC-93: PlatoService trabaja únicamente con el dominio Plato.
+ */
 @RestController
-@RequestMapping("/api/v1/platos")
 @RequiredArgsConstructor
-@Tag(name = "Platos", description = "Gestión de platos caseros (OC-004, OC-005, OC-006)")
-public class PlatoController {
+public class PlatoController implements PlatoApi {
 
     private final PlatoService platoService;
+    private final PlatoMapper platoMapper;
 
-    @PostMapping
-    @Operation(summary = "Publicar un plato casero")
-    public ResponseEntity<PlatoResponseDTO> publicar(@Valid @RequestBody PlatoRequestDTO request) {
-        PlatoResponseDTO response = platoService.publicar(request);
-        return ResponseEntity
-            .created(URI.create("/api/v1/platos/" + response.id()))
-            .body(response);
+    @Override
+    public ResponseEntity<PlatoResponseDTO> crear(UUID cocineraId, PlatoRequestDTO request) {
+        Plato plato = platoMapper.toDomain(request);
+        plato.setCocineraId(cocineraId);
+
+        Plato guardado = platoService.crear(plato);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(platoMapper.toResponse(guardado));
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Obtener un plato por ID")
-    public ResponseEntity<PlatoResponseDTO> obtener(@PathVariable UUID id) {
-        return ResponseEntity.ok(platoService.obtenerPorId(id));
+    @Override
+    public ResponseEntity<PlatoResponseDTO> obtenerPorId(UUID id) {
+        Plato plato = platoService.obtenerPorId(id);
+        return ResponseEntity.ok(platoMapper.toResponse(plato));
     }
 
-    @GetMapping
-    @Operation(summary = "Listar platos activos y vigentes")
-    public ResponseEntity<List<PlatoResponseDTO>> listarActivos() {
-        return ResponseEntity.ok(platoService.listarActivos());
+    @Override
+    public ResponseEntity<PlatoResponseDTO> actualizar(UUID id, AjusteDisponibilidadRequest request) {
+        Plato actualizado = platoService.ajustarDisponibilidad(id, request);
+        return ResponseEntity.ok(platoMapper.toResponse(actualizado));
     }
 
-    @GetMapping("/tipo/{tipo}")
-    @Operation(summary = "Listar platos por tipo de comida")
-    public ResponseEntity<List<PlatoResponseDTO>> listarPorTipo(@PathVariable TipoComida tipo) {
-        return ResponseEntity.ok(platoService.listarPorTipo(tipo));
-    }
-
-    @PatchMapping("/{id}/porciones")
-    @Operation(summary = "Ajustar las porciones de un plato")
-    public ResponseEntity<PlatoResponseDTO> ajustarPorciones(
-        @PathVariable UUID id,
-        @RequestParam int cantidad
-    ) {
-        return ResponseEntity.ok(platoService.ajustarPorciones(id, cantidad));
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar un plato")
-    public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
+    @Override
+    public ResponseEntity<Void> eliminar(UUID id) {
         platoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }

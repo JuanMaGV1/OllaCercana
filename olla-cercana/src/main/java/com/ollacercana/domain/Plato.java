@@ -1,5 +1,6 @@
 package com.ollacercana.domain;
 
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -7,26 +8,47 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Entity
+@Table(name = "platos")
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Plato {
 
+    @Id
     private UUID id;
+
+    private UUID cocineraId;
     private String nombre;
     private String descripcion;
     private String fotoUrl;
+
+    @Enumerated(EnumType.STRING)
     private TipoComida tipoComida;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "plato_restricciones", joinColumns = @JoinColumn(name = "plato_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "restriccion")
     private List<RestriccionAlimentaria> restricciones;
+
     private Integer porcionesTotales;
     private Integer porcionesComprometidas;
     private BigDecimal precioPorcion;
+
+    @Enumerated(EnumType.STRING)
     private EstadoPlato estado;
+
+    private LocalDateTime horaDisponibilidad;
     private LocalDateTime fechaPublicacion;
     private LocalDateTime fechaExpiracion;
+    private Double latitud;
+    private Double longitud;
     private String puntoEntrega;
+
+    @Version
     private Integer version;
 
     // ============ Reglas de negocio (RN) ============
@@ -41,14 +63,16 @@ public class Plato {
 
     /**
      * RN-02: un plato expira a las 4 horas de publicación.
-     * NOTA: el id lo asigna el repositorio en memoria, NO el dominio.
      */
     public void publicar() {
+        if (this.cocineraId == null) {
+            throw new IllegalStateException("Un plato no puede publicarse sin una cocinera asociada");
+        }
+
         this.estado = EstadoPlato.ACTIVO;
         this.porcionesComprometidas = 0;
         this.fechaPublicacion = LocalDateTime.now();
         this.fechaExpiracion = this.fechaPublicacion.plusHours(4);
-        this.version = 0;
     }
 
     /**
@@ -86,7 +110,7 @@ public class Plato {
         }
         if (cantidad > getPorcionesDisponibles()) {
             throw new IllegalStateException(
-                "No hay suficientes porciones disponibles. Disponibles: " + getPorcionesDisponibles()
+                    "No hay suficientes porciones disponibles. Disponibles: " + getPorcionesDisponibles()
             );
         }
         this.porcionesComprometidas += cantidad;
@@ -110,10 +134,26 @@ public class Plato {
         }
         if (nuevaCantidad < this.porcionesComprometidas) {
             throw new IllegalStateException(
-                "No puedes reducir por debajo de las porciones comprometidas: " + this.porcionesComprometidas
+                    "No puedes reducir por debajo de las porciones comprometidas: " + this.porcionesComprometidas
             );
         }
         this.porcionesTotales = nuevaCantidad;
+        recalcularEstado();
+    }
+
+    /**
+     * HU-24: ajusta manualmente la disponibilidad (aumentar, disminuir, marcar agotado).
+     */
+    public void ajustarDisponibilidad(TipoAjustePorciones tipo, Integer cantidad) {
+
+        int comprometidasSeguras = this.porcionesComprometidas == null ? 0 : this.porcionesComprometidas;
+
+        switch (tipo) {
+            case AUMENTAR -> this.porcionesTotales = this.porcionesTotales + cantidad;
+            case DISMINUIR -> this.porcionesTotales = this.porcionesTotales - cantidad;
+            case MARCAR_AGOTADO -> this.porcionesTotales = comprometidasSeguras;
+        }
+
         recalcularEstado();
     }
 
