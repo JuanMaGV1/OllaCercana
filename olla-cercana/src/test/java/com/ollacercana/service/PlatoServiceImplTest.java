@@ -8,6 +8,7 @@ import com.ollacercana.exception.CocineraPausadaException;
 import com.ollacercana.exception.PrecioFueraDeRangoException;
 import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
 import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.CocineraQueryPort;
 import com.ollacercana.validator.PlatoValidator;
@@ -41,6 +42,9 @@ class PlatoServiceImplTest {
     @Mock
     private PlatoRepository platoRepository;
 
+    @Mock
+    private PerfilCocineraRepository perfilCocineraRepository;
+
     private PlatoServiceImpl platoService;
 
     private static final UUID COCINERA_ID = UUID.randomUUID();
@@ -49,7 +53,7 @@ class PlatoServiceImplTest {
     void setUp() {
         PlatoEntityMapper entityMapper = Mappers.getMapper(PlatoEntityMapper.class);
         PlatoValidator validator = new PlatoValidator(platoRepository, cocineraQueryPort);
-        platoService = new PlatoServiceImpl(platoRepository, entityMapper, validator);
+        platoService = new PlatoServiceImpl(platoRepository, entityMapper, validator, perfilCocineraRepository);
 
         lenient().when(platoRepository.save(any(Plato.class))).thenAnswer(invocation -> {
             Plato plato = invocation.getArgument(0);

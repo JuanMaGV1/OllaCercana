@@ -1,9 +1,10 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.domain.Plato;
 import com.ollacercana.controller.docs.PlatoApi;
+import com.ollacercana.domain.Plato;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.dto.request.PlatoRequestDTO;
+import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.dto.response.PlatoResponseDTO;
 import com.ollacercana.mapper.PlatoMapper;
 import com.ollacercana.service.PlatoService;
@@ -12,11 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
-/**
- * OC-93: PlatoService trabaja únicamente con el dominio Plato.
- */
 @RestController
 @RequiredArgsConstructor
 public class PlatoController implements PlatoApi {
@@ -28,9 +27,7 @@ public class PlatoController implements PlatoApi {
     public ResponseEntity<PlatoResponseDTO> crear(UUID cocineraId, PlatoRequestDTO request) {
         Plato plato = platoMapper.toDomain(request);
         plato.setCocineraId(cocineraId);
-
         Plato guardado = platoService.crear(plato);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(platoMapper.toResponse(guardado));
     }
 
@@ -44,6 +41,11 @@ public class PlatoController implements PlatoApi {
     public ResponseEntity<PlatoResponseDTO> actualizar(UUID id, AjusteDisponibilidadRequest request) {
         Plato actualizado = platoService.ajustarDisponibilidad(id, request);
         return ResponseEntity.ok(platoMapper.toResponse(actualizado));
+    }
+
+    @Override
+    public ResponseEntity<List<PlatoCercanoResponseDTO>> listarCercanos(Double latitud, Double longitud) {
+        return ResponseEntity.ok(platoService.buscarCercanos(latitud, longitud));
     }
 
     @Override

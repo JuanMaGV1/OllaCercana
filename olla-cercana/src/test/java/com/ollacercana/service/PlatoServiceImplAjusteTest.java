@@ -9,6 +9,7 @@ import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
 import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.validator.CocineraQueryPort;
 import com.ollacercana.validator.PlatoValidator;
@@ -30,7 +31,6 @@ import static org.mockito.Mockito.*;
 
 /**
  * Pruebas de PlatoServiceImpl.ajustarDisponibilidad() — HU-24
- * Separadas de PlatoServiceImplTest, que OC-94 reserva solo para crear().
  */
 @ExtendWith(MockitoExtension.class)
 class PlatoServiceImplAjusteTest {
@@ -41,13 +41,16 @@ class PlatoServiceImplAjusteTest {
     @Mock
     private PlatoRepository platoRepository;
 
+    @Mock
+    private PerfilCocineraRepository perfilCocineraRepository;
+
     private PlatoServiceImpl platoService;
 
     @BeforeEach
     void setUp() {
         PlatoEntityMapper entityMapper = Mappers.getMapper(PlatoEntityMapper.class);
         PlatoValidator validator = new PlatoValidator(platoRepository, cocineraQueryPort);
-        platoService = new PlatoServiceImpl(platoRepository, entityMapper, validator);
+        platoService = new PlatoServiceImpl(platoRepository, entityMapper, validator, perfilCocineraRepository);
 
         lenient().when(platoRepository.saveAndFlush(any(Plato.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

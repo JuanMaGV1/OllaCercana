@@ -2,11 +2,14 @@ package com.ollacercana.service;
 
 import com.ollacercana.domain.Plato;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface PlatoService {
 
+    List<PlatoCercanoResponseDTO> buscarCercanos(Double latitud, Double longitud);
     /**
      * OC-92 / HU-04: publica un nuevo plato. Recibe y devuelve el dominio;
      */

@@ -1,16 +1,24 @@
 package com.ollacercana.service;
 
+import com.ollacercana.domain.EstadoPlato;
+import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.util.GeoUtils;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,6 +28,7 @@ public class PlatoServiceImpl implements PlatoService {
     private final PlatoRepository repository;
     private final PlatoEntityMapper entityMapper;
     private final PlatoValidator validator;
+    private final PerfilCocineraRepository perfilCocineraRepository;
 
     @Override
     public Plato crear(Plato plato) {
@@ -69,5 +78,46 @@ public class PlatoServiceImpl implements PlatoService {
             throw new PlatoNoEncontradoException(id);
         }
         repository.deleteById(id);
+    }
+
+    @Override
+    public List<PlatoCercanoResponseDTO> buscarCercanos(Double latitudCliente, Double longitudCliente) {
+        // Consulta platos ACTIVOS, no expirados y con porciones disponibles > 0
+        List<Plato> platosActivos = repository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now());
+
+        return platosActivos.stream()
+                .map(plato -> {
+                    String conjunto = perfilCocineraRepository.findById(plato.getCocineraId())
+                            .map(PerfilCocinera::getConjuntoResidencial)
+                            .orElse("Conjunto Residencial");
+
+                    Integer distanciaRedondeada = null;
+                    if (latitudCliente != null && longitudCliente != null && plato.getLatitud() != null && plato.getLongitud() != null) {
+                        double distanciaMetros = GeoUtils.calcularDistanciaEnMetros(
+                                latitudCliente, longitudCliente,
+                                plato.getLatitud(), plato.getLongitud()
+                        );
+                        distanciaRedondeada = GeoUtils.redondearDistanciaMultiplo100(distanciaMetros);
+                    }
+
+                    return PlatoCercanoResponseDTO.builder()
+                            .id(plato.getId())
+                            .nombre(plato.getNombre())
+                            .fotoUrl(plato.getFotoUrl())
+                            .tipoComida(plato.getTipoComida())
+                            .restricciones(plato.getRestricciones())
+                            .precioPorcion(plato.getPrecioPorcion())
+                            .porcionesDisponibles(plato.getPorcionesDisponibles())
+                            .conjunto(conjunto)
+                            .distanciaAproximada(distanciaRedondeada)
+                            .tiempoRestante(GeoUtils.formatearTiempoRestante(plato.getFechaExpiracion()))
+                            .build();
+                })
+                // Si el cliente envió coordenadas, ordenamos por cercanía ascendente
+                .sorted(Comparator.comparing(
+                        PlatoCercanoResponseDTO::getDistanciaAproximada,
+                        Comparator.nullsLast(Integer::compareTo)
+                ))
+                .toList();
     }
 }
