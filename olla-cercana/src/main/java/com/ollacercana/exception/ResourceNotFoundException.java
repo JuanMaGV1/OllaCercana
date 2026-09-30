@@ -6,4 +6,8 @@ public class ResourceNotFoundException extends OllaCercanaException {
     public ResourceNotFoundException(String recurso, UUID id) {
         super(recurso + " no encontrado con id: " + id);
     }
+
+    protected ResourceNotFoundException(String mensaje) {
+        super(mensaje);
+    }
 }
