@@ -23,6 +23,11 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
     List<Reserva> findByEstadoAndFechaLimiteConfirmacionLessThanEqual(EstadoReserva estado, LocalDateTime ahora);
 
     /**
+     * HU-23 / OC-157: reservas en ese estado cuya decisión (confirmación) ocurrió hasta el límite dado.
+     */
+    List<Reserva> findByEstadoAndFechaDecisionLessThanEqual(EstadoReserva estado, LocalDateTime limite);
+
+    /**
      * RN-25 / OC-149: reservas creadas hace 7 minutos o más, aún vigentes y sin recordatorio.
      */
     @Query("SELECT r FROM Reserva r WHERE r.estado = :estado AND r.recordatorioEnviado = false " +

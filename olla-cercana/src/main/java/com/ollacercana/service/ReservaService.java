@@ -56,4 +56,22 @@ public interface ReservaService {
      * Si la cocinera ya respondió o el recordatorio ya se envió, no hace nada.
      */
     void enviarRecordatorio(UUID reservaId);
+
+    /**
+     * HU-23 / OC-156: cierra la transacción. Verifica que la reserva esté CONFIRMADA (422) y que no tenga
+     * un reporte ABIERTO (422, OC-158); la pasa a COMPLETADA, deja el chat en SOLO_LECTURA (RN-17, OC-159)
+     * y habilita la calificación.
+     */
+    Reserva completar(UUID reservaId, String comentario);
+
+    /**
+     * HU-23 / OC-157: ids de las reservas CONFIRMADAS que llevan 24 horas o más sin cierre.
+     */
+    List<UUID> buscarReservasParaCierreAutomatico();
+
+    /**
+     * HU-23 / OC-157: completa la reserva automáticamente y avisa a ambas partes.
+     * Si ya no está confirmada, aún no cumple las 24 horas o tiene un reporte abierto, no hace nada.
+     */
+    Reserva completarAutomaticamente(UUID reservaId);
 }

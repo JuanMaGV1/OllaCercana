@@ -13,7 +13,7 @@ import java.util.UUID;
 import static org.mockito.Mockito.*;
 
 /**
- * OC-148 / OC-149: las tareas programadas procesan cada reserva por separado.
+ * OC-148 / OC-149 / OC-157: las tareas programadas procesan cada reserva por separado.
  */
 @ExtendWith(MockitoExtension.class)
 class ReservaSchedulerTest {
@@ -60,5 +60,27 @@ class ReservaSchedulerTest {
 
         verify(reservaService, never()).expirar(any());
         verify(reservaService, never()).enviarRecordatorio(any());
+    }
+
+    @Test
+    void completarReservasSinCierre_debeCompletarCadaUnaAunqueUnaFalle() {
+        UUID primera = UUID.randomUUID();
+        UUID segunda = UUID.randomUUID();
+        when(reservaService.buscarReservasParaCierreAutomatico()).thenReturn(List.of(primera, segunda));
+        when(reservaService.completarAutomaticamente(primera)).thenThrow(new IllegalStateException("fallo simulado"));
+
+        scheduler.completarReservasSinCierre();
+
+        verify(reservaService).completarAutomaticamente(primera);
+        verify(reservaService).completarAutomaticamente(segunda);
+    }
+
+    @Test
+    void completarReservasSinCierre_sinReservas_noDebeHacerNada() {
+        when(reservaService.buscarReservasParaCierreAutomatico()).thenReturn(List.of());
+
+        scheduler.completarReservasSinCierre();
+
+        verify(reservaService, never()).completarAutomaticamente(any());
     }
 }

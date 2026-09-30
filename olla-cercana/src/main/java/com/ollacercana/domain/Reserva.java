@@ -1,6 +1,7 @@
 package com.ollacercana.domain;
 
 import com.ollacercana.exception.DecisionReservaInvalidaException;
+import com.ollacercana.exception.ReservaNoConfirmadaException;
 import com.ollacercana.exception.ReservaNoPendienteException;
 import com.ollacercana.exception.ReservaVencidaException;
 import jakarta.persistence.*;
@@ -27,6 +28,9 @@ public class Reserva {
     public static final int MINUTOS_PARA_RECORDATORIO = 7;
 
     public static final int MAX_CARACTERES_COMENTARIO = 150;
+
+    /** HU-23 Escenario 2: si una parte no confirma, la reserva se completa sola a las 24 horas. */
+    public static final int HORAS_PARA_CIERRE_AUTOMATICO = 24;
 
     @Id
     private UUID id;
@@ -81,6 +85,21 @@ public class Reserva {
     /** HU-12: al confirmar se habilita la coordinación de la entrega (chat). */
     private boolean chatHabilitado;
 
+    /** HU-23 / RN-17: ACTIVO al confirmar; SOLO_LECTURA cuando la reserva se completa. */
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private com.ollacercana.domain.EstadoChat estadoChat = com.ollacercana.domain.EstadoChat.INACTIVO;
+
+    /** HU-23: momento en que se cerró la transacción. */
+    private LocalDateTime fechaCompletada;
+
+    /** HU-23: comentario opcional al cerrar la transacción. */
+    @Column(length = MAX_CARACTERES_COMENTARIO)
+    private String comentarioCierre;
+
+    /** HU-23: al completarse la reserva comprador y cocinera pueden calificarse. */
+    private boolean calificacionHabilitada;
+
     @Version
     private Integer version;
 
@@ -133,6 +152,7 @@ public class Reserva {
         this.horaEstimadaEntrega = horaEstimada;
         this.fechaDecision = ahora;
         this.chatHabilitado = true;
+        this.estadoChat = com.ollacercana.domain.EstadoChat.ACTIVO;
     }
 
     /**
@@ -172,6 +192,43 @@ public class Reserva {
             throw new IllegalStateException("La reserva todavía está dentro del tiempo de confirmación");
         }
         this.estado = EstadoReserva.EXPIRADA;
+    }
+
+    /**
+     * HU-23 Escenario 1 / OC-156: cierra la transacción de una reserva CONFIRMADA.
+     * Pasa a COMPLETADA, el chat queda en solo lectura (RN-17) y se habilita la calificación.
+     * El bloqueo por reporte abierto lo valida quien llama (necesita consultar los reportes).
+     */
+    public void completar(String comentario, LocalDateTime ahora) {
+        verificarQueEstaConfirmada();
+
+        String comentarioLimpio = (comentario == null || comentario.isBlank()) ? null : comentario.trim();
+        if (comentarioLimpio != null && comentarioLimpio.length() > MAX_CARACTERES_COMENTARIO) {
+            throw new IllegalArgumentException(
+                    "El comentario no puede superar los " + MAX_CARACTERES_COMENTARIO + " caracteres");
+        }
+
+        this.estado = EstadoReserva.COMPLETADA;
+        this.estadoChat = com.ollacercana.domain.EstadoChat.SOLO_LECTURA;
+        this.calificacionHabilitada = true;
+        this.comentarioCierre = comentarioLimpio;
+        this.fechaCompletada = ahora;
+    }
+
+    /** HU-23 Escenario 4: solo una reserva CONFIRMADA se puede cerrar. */
+    public void verificarQueEstaConfirmada() {
+        if (this.estado != EstadoReserva.CONFIRMADA) {
+            throw new ReservaNoConfirmadaException(this.estado);
+        }
+    }
+
+    /**
+     * HU-23 Escenario 2 / OC-157: confirmada hace 24 horas o más y sin cierre.
+     */
+    public boolean cierreAutomaticoVencido(LocalDateTime ahora) {
+        return this.estado == EstadoReserva.CONFIRMADA
+                && this.fechaDecision != null
+                && !ahora.isBefore(this.fechaDecision.plusHours(HORAS_PARA_CIERRE_AUTOMATICO));
     }
 
     /**
