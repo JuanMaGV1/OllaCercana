@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 
 @Component
@@ -22,29 +23,44 @@ public class NotificacionInAppObservador implements ObservadorReserva {
 
     @Override
     public void notificar(EventoReserva evento) {
-        Notificacion notificacion = switch (evento.tipo()) {
-            case RESERVA_CONFIRMADA -> paraComprador(evento, TipoNotificacion.RESERVA_CONFIRMADA,
+        List<Notificacion> notificaciones = switch (evento.tipo()) {
+            case RESERVA_CONFIRMADA -> List.of(paraComprador(evento, TipoNotificacion.RESERVA_CONFIRMADA,
                     "¡Tu reserva fue confirmada!",
                     "La cocinera confirmó tu pedido. Hora estimada de entrega: " + horaEstimada(evento)
-                            + ". Ya puedes coordinar la entrega.");
-            case RESERVA_RECHAZADA -> paraComprador(evento, TipoNotificacion.RESERVA_RECHAZADA,
+                            + ". Ya puedes coordinar la entrega."));
+            case RESERVA_RECHAZADA -> List.of(paraComprador(evento, TipoNotificacion.RESERVA_RECHAZADA,
                     "Tu reserva fue rechazada",
                     "La cocinera no puede atender tu pedido. Motivo: " + motivo(evento)
-                            + ". Las porciones volvieron a estar disponibles.");
-            case RESERVA_EXPIRADA -> paraComprador(evento, TipoNotificacion.RESERVA_EXPIRADA,
+                            + ". Las porciones volvieron a estar disponibles."));
+            case RESERVA_EXPIRADA -> List.of(paraComprador(evento, TipoNotificacion.RESERVA_EXPIRADA,
                     "Tu reserva expiró",
                     "La cocinera no respondió a tiempo y la solicitud se canceló. "
-                            + "Puedes buscar otro plato cerca de ti.");
-            case RECORDATORIO_RESERVA -> paraCocinera(evento, TipoNotificacion.RECORDATORIO,
+                            + "Puedes buscar otro plato cerca de ti."));
+            case RECORDATORIO_RESERVA -> List.of(paraCocinera(evento, TipoNotificacion.RECORDATORIO,
                     "Tienes una solicitud sin responder",
                     "Te quedan " + evento.payload().getOrDefault("minutosRestantes", "pocos")
-                            + " minutos para confirmar o rechazar la reserva. Si no respondes, expirará automáticamente.");
-            default -> null;
+                            + " minutos para confirmar o rechazar la reserva. Si no respondes, expirará automáticamente."));
+            // HU-23: el cierre avisa a ambas partes e invita a calificar.
+            case RESERVA_COMPLETADA -> {
+                String mensaje = mensajeCierre(evento);
+                yield List.of(
+                        paraComprador(evento, TipoNotificacion.INVITACION_CALIFICAR,
+                                "Tu pedido fue completado", mensaje),
+                        paraCocinera(evento, TipoNotificacion.INVITACION_CALIFICAR,
+                                "Tu pedido fue completado", mensaje));
+            }
+            default -> List.of();
         };
 
-        if (notificacion != null) {
-            notificacionRepository.save(notificacion);
-        }
+        notificaciones.forEach(notificacionRepository::save);
+    }
+
+    private String mensajeCierre(EventoReserva evento) {
+        boolean automatica = Boolean.TRUE.equals(evento.payload().get("automatica"));
+        String origen = automatica
+                ? "Pasaron 24 horas desde la confirmación y la reserva se completó automáticamente. "
+                : "Se confirmó la entrega y el pago. ";
+        return origen + "El chat quedó en solo lectura. ¡Ya puedes calificar la experiencia!";
     }
 
     private Notificacion paraComprador(EventoReserva evento, TipoNotificacion tipo, String titulo, String mensaje) {

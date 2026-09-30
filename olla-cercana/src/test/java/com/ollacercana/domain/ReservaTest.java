@@ -1,6 +1,7 @@
 package com.ollacercana.domain;
 
 import com.ollacercana.exception.DecisionReservaInvalidaException;
+import com.ollacercana.exception.ReservaNoConfirmadaException;
 import com.ollacercana.exception.ReservaNoPendienteException;
 import com.ollacercana.exception.ReservaVencidaException;
 import org.junit.jupiter.api.Test;
@@ -178,5 +179,69 @@ class ReservaTest {
 
         assertTrue(reserva.perteneceACocinera(reserva.getCocineraId()));
         assertFalse(reserva.perteneceACocinera(UUID.randomUUID()));
+    }
+
+    // ============ HU-23: cierre de la transacción ============
+
+    private com.ollacercana.domain.Reserva reservaConfirmadaA(LocalDateTime confirmadaEn) {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(confirmadaEn.minusMinutes(2));
+        reserva.confirmar(confirmadaEn.plusHours(1), confirmadaEn);
+        return reserva;
+    }
+
+    @Test
+    void confirmar_debeActivarElChat() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA.minusMinutes(1));
+        assertEquals(com.ollacercana.domain.EstadoChat.INACTIVO, reserva.getEstadoChat());
+
+        reserva.confirmar(AHORA.plusHours(1), AHORA);
+
+        assertEquals(com.ollacercana.domain.EstadoChat.ACTIVO, reserva.getEstadoChat());
+    }
+
+    @Test
+    void completar_debePasarACompletadaConChatEnSoloLecturaYCalificacionHabilitada() {
+        com.ollacercana.domain.Reserva reserva = reservaConfirmadaA(AHORA);
+        LocalDateTime cierre = AHORA.plusHours(2);
+
+        reserva.completar("  Todo bien  ", cierre);
+
+        assertEquals(EstadoReserva.COMPLETADA, reserva.getEstado());
+        assertEquals(com.ollacercana.domain.EstadoChat.SOLO_LECTURA, reserva.getEstadoChat());
+        assertTrue(reserva.isCalificacionHabilitada());
+        assertEquals("Todo bien", reserva.getComentarioCierre());
+        assertEquals(cierre, reserva.getFechaCompletada());
+    }
+
+    @Test
+    void completar_reservaNoConfirmada_debeLanzarReservaNoConfirmada() {
+        com.ollacercana.domain.Reserva pendiente = reservaCreadaA(AHORA);
+
+        assertThrows(ReservaNoConfirmadaException.class, () -> pendiente.completar(null, AHORA));
+        assertEquals(EstadoReserva.PENDIENTE, pendiente.getEstado());
+        assertFalse(pendiente.isCalificacionHabilitada());
+    }
+
+    @Test
+    void completar_comentarioMayorA150_debeLanzarIllegalArgument() {
+        com.ollacercana.domain.Reserva reserva = reservaConfirmadaA(AHORA);
+        String largo = "x".repeat(com.ollacercana.domain.Reserva.MAX_CARACTERES_COMENTARIO + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> reserva.completar(largo, AHORA));
+        assertEquals(EstadoReserva.CONFIRMADA, reserva.getEstado());
+    }
+
+    @Test
+    void cierreAutomaticoVencido_soloDesdeLas24HorasDeLaConfirmacion() {
+        com.ollacercana.domain.Reserva reserva = reservaConfirmadaA(AHORA);
+
+        assertFalse(reserva.cierreAutomaticoVencido(AHORA.plusHours(23).plusMinutes(59)));
+        assertTrue(reserva.cierreAutomaticoVencido(AHORA.plusHours(24)));
+        assertTrue(reserva.cierreAutomaticoVencido(AHORA.plusHours(30)));
+    }
+
+    @Test
+    void cierreAutomaticoVencido_reservaNoConfirmada_esFalso() {
+        assertFalse(reservaCreadaA(AHORA.minusDays(3)).cierreAutomaticoVencido(AHORA));
     }
 }

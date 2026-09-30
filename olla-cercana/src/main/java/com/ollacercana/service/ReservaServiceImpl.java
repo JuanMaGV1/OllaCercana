@@ -1,5 +1,6 @@
 package com.ollacercana.service;
 
+import com.ollacercana.domain.EstadoReporte;
 import com.ollacercana.domain.EstadoReserva;
 import com.ollacercana.domain.EventoReserva;
 import com.ollacercana.domain.MotivoRechazo;
@@ -7,10 +8,12 @@ import com.ollacercana.domain.Reserva;
 import com.ollacercana.domain.TipoEvento;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
 import com.ollacercana.exception.AccesoDenegadoException;
+import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.exception.ReservaModificadaException;
 import com.ollacercana.exception.ReservaNoEncontradaException;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.repository.ReporteRepository;
 import com.ollacercana.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -34,6 +37,7 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
 
     private final ReservaRepository reservaRepository;
     private final PlatoRepository platoRepository;
+    private final ReporteRepository reporteRepository;
     private final PublicadorEventosReserva publicador;
 
     @Override
@@ -95,7 +99,7 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
         Reserva reserva = buscar(reservaId);
         LocalDateTime ahora = LocalDateTime.now();
 
-        // La cocinera pudo responder justo antes de que corriera la tarea programada.
+
         if (!reserva.estaPendiente() || !reserva.estaVencida(ahora)) {
             return reserva;
         }
@@ -140,7 +144,65 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
                 TipoEvento.RECORDATORIO_RESERVA, guardada, Map.of("minutosRestantes", minutosRestantes)));
     }
 
+    @Override
+    @Transactional
+    public Reserva completar(UUID reservaId, String comentario) {
+        Reserva reserva = buscar(reservaId);
+        // Escenario 4: si no está CONFIRMADA se rechaza antes de mirar cualquier otra cosa.
+        reserva.verificarQueEstaConfirmada();
+        verificarSinReporteAbierto(reserva);
+        return cerrar(reserva, comentario, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> buscarReservasParaCierreAutomatico() {
+        LocalDateTime limite = LocalDateTime.now().minusHours(Reserva.HORAS_PARA_CIERRE_AUTOMATICO);
+        return reservaRepository
+                .findByEstadoAndFechaDecisionLessThanEqual(EstadoReserva.CONFIRMADA, limite)
+                .stream()
+                .map(Reserva::getId)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public Reserva completarAutomaticamente(UUID reservaId) {
+        Reserva reserva = buscar(reservaId);
+
+
+        if (!reserva.cierreAutomaticoVencido(LocalDateTime.now())) {
+            return reserva;
+        }
+
+        if (tieneReporteAbierto(reserva)) {
+            log.info("La reserva {} tiene un reporte abierto; no se completa automáticamente", reservaId);
+            return reserva;
+        }
+        return cerrar(reserva, null, true);
+    }
+
     // ============ Lógica interna ============
+
+    private Reserva cerrar(Reserva reserva, String comentario, boolean automatica) {
+        reserva.completar(comentario, LocalDateTime.now());
+        Reserva guardada = guardar(reserva);
+
+        publicador.publicar(EventoReserva.de(
+                TipoEvento.RESERVA_COMPLETADA, guardada, Map.of("automatica", automatica)));
+        return guardada;
+    }
+
+    private void verificarSinReporteAbierto(Reserva reserva) {
+        if (tieneReporteAbierto(reserva)) {
+            throw new ReglaDeNegocioException(
+                    "No se puede cerrar la transacción: la reserva tiene un reporte abierto pendiente de moderación");
+        }
+    }
+
+    private boolean tieneReporteAbierto(Reserva reserva) {
+        return reporteRepository.existsByReservaIdAndEstado(reserva.getId(), EstadoReporte.ABIERTO);
+    }
 
     private Reserva confirmar(Reserva reserva, LocalDateTime horaEstimada) {
         // Las porciones ya se descontaron al crear la reserva: al confirmar se conservan.

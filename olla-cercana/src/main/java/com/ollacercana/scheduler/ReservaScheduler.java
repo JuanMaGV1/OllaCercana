@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Tareas programadas de HU-12. Cada reserva se procesa en su propia transacción
+ * Tareas programadas de HU-12 y HU-23. Cada reserva se procesa en su propia transacción
  * (llamando al servicio), así que si una falla las demás igual se procesan.
  */
 @Component
@@ -34,6 +34,23 @@ public class ReservaScheduler {
                 log.info("Reserva {} expirada por falta de respuesta (RN-04)", reservaId);
             } catch (RuntimeException e) {
                 log.warn("No se pudo expirar la reserva {}: {}", reservaId, e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * OC-157 / HU-23 Escenario 2: completa las reservas CONFIRMADAS que llevan 24 horas sin cierre
+     * y avisa a ambas partes. Se revisa cada 10 minutos (no hace falta mayor precisión para un plazo de 24 h).
+     */
+    @Scheduled(fixedRateString = "${ollacercana.reservas.intervalo-cierre-ms:600000}",
+            initialDelayString = "${ollacercana.reservas.intervalo-cierre-ms:600000}")
+    public void completarReservasSinCierre() {
+        for (UUID reservaId : reservaService.buscarReservasParaCierreAutomatico()) {
+            try {
+                reservaService.completarAutomaticamente(reservaId);
+                log.info("Reserva {} revisada para cierre automático a las 24 h (HU-23)", reservaId);
+            } catch (RuntimeException e) {
+                log.warn("No se pudo completar automáticamente la reserva {}: {}", reservaId, e.getMessage());
             }
         }
     }

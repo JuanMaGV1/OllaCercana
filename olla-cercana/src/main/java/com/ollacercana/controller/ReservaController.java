@@ -2,6 +2,7 @@ package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.ReservaApi;
 import com.ollacercana.domain.Reserva;
+import com.ollacercana.dto.request.CierreTransaccionRequestDTO;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
 import com.ollacercana.dto.response.ReservaResponseDTO;
 import com.ollacercana.mapper.ReservaMapper;
@@ -24,6 +25,12 @@ public class ReservaController implements ReservaApi {
     public ResponseEntity<ReservaResponseDTO> decidir(UUID id, UUID cocineraId, DecisionReservaRequestDTO request) {
         Reserva actualizada = reservaService.decidir(id, cocineraId, request);
         return ResponseEntity.ok(reservaMapper.toResponse(actualizada));
+    }
+
+    @Override
+    public ResponseEntity<ReservaResponseDTO> completar(UUID id, CierreTransaccionRequestDTO request) {
+        Reserva completada = reservaService.completar(id, request.comentario());
+        return ResponseEntity.ok(reservaMapper.toResponse(completada));
     }
 
     @Override

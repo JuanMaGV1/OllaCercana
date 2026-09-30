@@ -11,6 +11,7 @@ import com.ollacercana.exception.ReservaVencidaException;
 import com.ollacercana.observer.ObservadorReserva;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.repository.ReporteRepository;
 import com.ollacercana.repository.ReservaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ class ReservaServiceImplTest {
     private PlatoRepository platoRepository;
 
     @Mock
+    private ReporteRepository reporteRepository;
+
+    @Mock
     private ObservadorReserva observador;
 
     private com.ollacercana.service.ReservaServiceImpl reservaService;
@@ -54,7 +58,7 @@ class ReservaServiceImplTest {
     @BeforeEach
     void setUp() {
         PublicadorEventosReserva publicador = new PublicadorEventosReserva(List.of(observador));
-        reservaService = new com.ollacercana.service.ReservaServiceImpl(reservaRepository, platoRepository, publicador);
+        reservaService = new com.ollacercana.service.ReservaServiceImpl(reservaRepository, platoRepository, reporteRepository, publicador);
 
         lenient().when(reservaRepository.saveAndFlush(any(com.ollacercana.domain.Reserva.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

@@ -1,5 +1,6 @@
 package com.ollacercana.controller.docs;
 
+import com.ollacercana.dto.request.CierreTransaccionRequestDTO;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
 import com.ollacercana.dto.response.ErrorResponseDTO;
 import com.ollacercana.dto.response.ReservaResponseDTO;
@@ -59,6 +60,30 @@ public interface ReservaApi {
     ResponseEntity<List<ReservaResponseDTO>> listarPendientes(
             @Parameter(description = "Id del perfil de la cocinera", example = "11111111-1111-1111-1111-111111111111")
             @RequestHeader("X-Cocinera-Id") UUID cocineraId
+    );
+
+    @Operation(
+            summary = "Confirmar entrega y pago, y cerrar la transacción (HU-23)",
+            description = "La reserva CONFIRMADA pasa a COMPLETADA, el chat queda en SOLO_LECTURA (RN-17) y se habilita "
+                    + "la calificación. Si la reserva no está CONFIRMADA, o tiene un reporte ABIERTO, responde 422. "
+                    + "Si nadie cierra la transacción, se completa automáticamente 24 horas después de confirmarse."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reserva completada",
+                    content = @Content(schema = @Schema(implementation = ReservaResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Datos del cierre inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Reserva no encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "409", description = "La reserva fue modificada al mismo tiempo; reintenta",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))),
+            @ApiResponse(responseCode = "422", description = "La reserva no está CONFIRMADA o tiene un reporte abierto",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
+    })
+    @PostMapping("/{id}/completar")
+    ResponseEntity<ReservaResponseDTO> completar(
+            @Parameter(description = "Id de la reserva") @PathVariable UUID id,
+            @Valid @RequestBody CierreTransaccionRequestDTO request
     );
 
     @Operation(summary = "Consultar una reserva por id")
