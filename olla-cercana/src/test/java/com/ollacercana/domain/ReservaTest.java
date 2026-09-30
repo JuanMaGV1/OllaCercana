@@ -1,0 +1,182 @@
+package com.ollacercana.domain;
+
+import com.ollacercana.exception.DecisionReservaInvalidaException;
+import com.ollacercana.exception.ReservaNoPendienteException;
+import com.ollacercana.exception.ReservaVencidaException;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * HU-12: reglas de dominio de Reserva (RN-04 y RN-25).
+ */
+class ReservaTest {
+
+    private static final LocalDateTime AHORA = LocalDateTime.of(2026, 10, 1, 12, 0);
+
+    private Plato plato() {
+        return Plato.builder()
+                .id(UUID.randomUUID())
+                .cocineraId(UUID.randomUUID())
+                .nombre("Ajiaco")
+                .porcionesTotales(6)
+                .porcionesComprometidas(0)
+                .precioPorcion(new BigDecimal("16000"))
+                .estado(EstadoPlato.ACTIVO)
+                .build();
+    }
+
+    private com.ollacercana.domain.Reserva reservaCreadaA(LocalDateTime fechaCreacion) {
+        return com.ollacercana.domain.Reserva.crear(plato(), 7L, 2, MedioPago.NEQUI, "Sin cebolla", fechaCreacion);
+    }
+
+    @Test
+    void crear_debeQuedarPendienteConLimiteDe10MinutosYMontoCalculado() {
+        Plato plato = plato();
+        com.ollacercana.domain.Reserva reserva = com.ollacercana.domain.Reserva.crear(plato, 7L, 2, MedioPago.NEQUI, null, AHORA);
+
+        assertNotNull(reserva.getId());
+        assertEquals(com.ollacercana.domain.EstadoReserva.PENDIENTE, reserva.getEstado());
+        assertEquals(plato.getId(), reserva.getPlatoId());
+        assertEquals(plato.getCocineraId(), reserva.getCocineraId());
+        assertEquals(AHORA.plusMinutes(10), reserva.getFechaLimiteConfirmacion());
+        assertEquals(0, new BigDecimal("32000").compareTo(reserva.getMontoTotal()));
+        assertFalse(reserva.isChatHabilitado());
+        assertFalse(reserva.isRecordatorioEnviado());
+    }
+
+    @Test
+    void crear_sinPlatoOConCantidadInvalida_debeLanzarExcepcion() {
+        assertThrows(IllegalArgumentException.class,
+                () -> com.ollacercana.domain.Reserva.crear(null, 7L, 1, MedioPago.NEQUI, null, AHORA));
+        Plato plato = plato();
+        assertThrows(IllegalArgumentException.class,
+                () -> com.ollacercana.domain.Reserva.crear(plato, 7L, 0, MedioPago.NEQUI, null, AHORA));
+    }
+
+    @Test
+    void confirmar_debePasarAConfirmadaYHabilitarChat() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        reserva.confirmar(AHORA.plusMinutes(45), AHORA.plusMinutes(3));
+
+        assertEquals(com.ollacercana.domain.EstadoReserva.CONFIRMADA, reserva.getEstado());
+        assertEquals(AHORA.plusMinutes(45), reserva.getHoraEstimadaEntrega());
+        assertEquals(AHORA.plusMinutes(3), reserva.getFechaDecision());
+        assertTrue(reserva.isChatHabilitado());
+    }
+
+    @Test
+    void confirmar_sinHoraEstimadaOConHoraPasada_debeLanzarExcepcion() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        assertThrows(DecisionReservaInvalidaException.class, () -> reserva.confirmar(null, AHORA));
+        assertThrows(DecisionReservaInvalidaException.class, () -> reserva.confirmar(AHORA.minusMinutes(1), AHORA));
+        assertEquals(com.ollacercana.domain.EstadoReserva.PENDIENTE, reserva.getEstado());
+    }
+
+    @Test
+    void confirmar_despuesDeLos10Minutos_debeLanzarReservaVencida() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        assertThrows(ReservaVencidaException.class,
+                () -> reserva.confirmar(AHORA.plusHours(1), AHORA.plusMinutes(10)));
+    }
+
+    @Test
+    void confirmar_reservaYaGestionada_debeLanzarReservaNoPendiente() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+        reserva.rechazar(com.ollacercana.domain.MotivoRechazo.IMPREVISTO_PERSONAL, null, AHORA.plusMinutes(1));
+
+        assertThrows(ReservaNoPendienteException.class,
+                () -> reserva.confirmar(AHORA.plusHours(1), AHORA.plusMinutes(2)));
+    }
+
+    @Test
+    void rechazar_debePasarARechazadaYGuardarMotivo() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        reserva.rechazar(com.ollacercana.domain.MotivoRechazo.INGREDIENTES_INSUFICIENTES, "   ", AHORA.plusMinutes(2));
+
+        assertEquals(com.ollacercana.domain.EstadoReserva.RECHAZADA, reserva.getEstado());
+        assertEquals(com.ollacercana.domain.MotivoRechazo.INGREDIENTES_INSUFICIENTES, reserva.getMotivoRechazo());
+        assertNull(reserva.getComentarioRechazo());
+        assertFalse(reserva.isChatHabilitado());
+    }
+
+    @Test
+    void rechazar_conMotivoOtro_exigeComentario() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        assertThrows(DecisionReservaInvalidaException.class,
+                () -> reserva.rechazar(com.ollacercana.domain.MotivoRechazo.OTRO, null, AHORA.plusMinutes(1)));
+        assertThrows(DecisionReservaInvalidaException.class,
+                () -> reserva.rechazar(com.ollacercana.domain.MotivoRechazo.OTRO, "  ", AHORA.plusMinutes(1)));
+
+        reserva.rechazar(com.ollacercana.domain.MotivoRechazo.OTRO, "  Se me dañó la estufa ", AHORA.plusMinutes(1));
+        assertEquals("Se me dañó la estufa", reserva.getComentarioRechazo());
+    }
+
+    @Test
+    void rechazar_sinMotivoOConComentarioLargo_debeLanzarExcepcion() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+        String comentarioLargo = "a".repeat(151);
+
+        assertThrows(DecisionReservaInvalidaException.class,
+                () -> reserva.rechazar(null, null, AHORA.plusMinutes(1)));
+        assertThrows(DecisionReservaInvalidaException.class,
+                () -> reserva.rechazar(com.ollacercana.domain.MotivoRechazo.OTRO, comentarioLargo, AHORA.plusMinutes(1)));
+        assertEquals(com.ollacercana.domain.EstadoReserva.PENDIENTE, reserva.getEstado());
+    }
+
+    @Test
+    void expirar_conHoraLimitePasada_debePasarAExpirada() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        reserva.expirar(AHORA.plusMinutes(10));
+
+        assertEquals(com.ollacercana.domain.EstadoReserva.EXPIRADA, reserva.getEstado());
+    }
+
+    @Test
+    void expirar_antesDelLimiteOSiNoEstaPendiente_debeLanzarExcepcion() {
+        com.ollacercana.domain.Reserva vigente = reservaCreadaA(AHORA);
+        assertThrows(IllegalStateException.class, () -> vigente.expirar(AHORA.plusMinutes(9)));
+
+        com.ollacercana.domain.Reserva confirmada = reservaCreadaA(AHORA);
+        confirmada.confirmar(AHORA.plusHours(1), AHORA.plusMinutes(1));
+        assertThrows(ReservaNoPendienteException.class, () -> confirmada.expirar(AHORA.plusMinutes(11)));
+    }
+
+    @Test
+    void requiereRecordatorio_soloEntreLos7YLos10MinutosYUnaSolaVez() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        assertFalse(reserva.requiereRecordatorio(AHORA.plusMinutes(6)));
+        assertTrue(reserva.requiereRecordatorio(AHORA.plusMinutes(7)));
+        assertFalse(reserva.requiereRecordatorio(AHORA.plusMinutes(10)));
+
+        reserva.marcarRecordatorioEnviado();
+        assertFalse(reserva.requiereRecordatorio(AHORA.plusMinutes(8)));
+    }
+
+    @Test
+    void requiereRecordatorio_siYaRespondio_debeSerFalso() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+        reserva.confirmar(AHORA.plusHours(1), AHORA.plusMinutes(2));
+
+        assertFalse(reserva.requiereRecordatorio(AHORA.plusMinutes(8)));
+    }
+
+    @Test
+    void perteneceACocinera_debeCompararElIdDelPerfil() {
+        com.ollacercana.domain.Reserva reserva = reservaCreadaA(AHORA);
+
+        assertTrue(reserva.perteneceACocinera(reserva.getCocineraId()));
+        assertFalse(reserva.perteneceACocinera(UUID.randomUUID()));
+    }
+}
