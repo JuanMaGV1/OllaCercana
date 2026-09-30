@@ -1,7 +1,8 @@
 package com.ollacercana.security;
 
-import com.ollacercana.domain.Cuenta;
 import org.springframework.stereotype.Service;
+
+import com.ollacercana.model.domain.Cuenta;
 
 @Service
 public class JwtService {

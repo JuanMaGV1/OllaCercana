@@ -1,10 +1,11 @@
 package com.ollacercana.repository;
 
-import com.ollacercana.domain.Cuenta;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import com.ollacercana.model.domain.Cuenta;
 
 import java.util.Optional;
 

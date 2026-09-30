@@ -1,10 +1,10 @@
 package com.ollacercana.service;
 
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
-
 import java.util.List;
 import java.util.UUID;
+
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
 
 public interface IPerfilCocineraService {
     PerfilCocineraResponseDTO crearPerfil(PerfilCocineraRequestDTO request);

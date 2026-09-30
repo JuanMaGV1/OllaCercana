@@ -1,8 +1,9 @@
 package com.ollacercana.repository;
 
-import com.ollacercana.domain.EventoReserva;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.ollacercana.model.domain.EventoReserva;
 
 import java.util.UUID;
 

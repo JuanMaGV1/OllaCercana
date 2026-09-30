@@ -1,10 +1,10 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.domain.EventoReserva;
-import com.ollacercana.domain.Notificacion;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.domain.TipoEvento;
-import com.ollacercana.domain.TipoNotificacion;
+import com.ollacercana.model.domain.EventoReserva;
+import com.ollacercana.model.domain.Notificacion;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.domain.TipoEvento;
+import com.ollacercana.model.domain.TipoNotificacion;
 import com.ollacercana.repository.NotificacionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

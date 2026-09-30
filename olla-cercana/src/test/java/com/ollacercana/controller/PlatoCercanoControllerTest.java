@@ -1,6 +1,6 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.domain.*;
+import com.ollacercana.model.domain.*;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import org.junit.jupiter.api.BeforeEach;

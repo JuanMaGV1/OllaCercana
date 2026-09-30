@@ -1,7 +1,8 @@
 package com.ollacercana.repository;
 
-import com.ollacercana.domain.Notificacion;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.ollacercana.model.domain.Notificacion;
 
 import java.util.List;
 import java.util.UUID;

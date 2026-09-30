@@ -1,9 +1,5 @@
 package com.ollacercana.controller.docs;
 
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.dto.response.ErrorResponseDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,6 +10,11 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
+import com.ollacercana.model.dto.response.ErrorResponseDTO;
+import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
 
 import java.util.List;
 import java.util.Map;

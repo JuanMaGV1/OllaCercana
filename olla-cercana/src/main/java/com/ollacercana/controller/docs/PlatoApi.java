@@ -1,9 +1,5 @@
 package com.ollacercana.controller.docs;
 
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -15,6 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.model.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
+import com.ollacercana.model.dto.response.PlatoResponseDTO;
 
 import java.util.List;
 import java.util.UUID;

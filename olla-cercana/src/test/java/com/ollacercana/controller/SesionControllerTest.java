@@ -1,11 +1,12 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.LoginRequestDTO;
 import com.ollacercana.exception.ConflictoException;
+import com.ollacercana.model.domain.*;
+import com.ollacercana.model.dto.request.LoginRequestDTO;
 import com.ollacercana.security.JwtService;
 import com.ollacercana.service.ICuentaService;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

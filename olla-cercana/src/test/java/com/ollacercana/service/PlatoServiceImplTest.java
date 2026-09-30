@@ -1,15 +1,16 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoComida;
 import com.ollacercana.exception.CocineraNoEncontradaException;
 import com.ollacercana.exception.CocineraPausadaException;
 import com.ollacercana.exception.PrecioFueraDeRangoException;
 import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
 import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoComida;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.service.impl.PlatoServiceImpl;
 import com.ollacercana.validator.CocineraQueryPort;
 import com.ollacercana.validator.PlatoValidator;
 import org.junit.jupiter.api.BeforeEach;

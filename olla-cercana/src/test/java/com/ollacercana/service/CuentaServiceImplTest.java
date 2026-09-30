@@ -1,14 +1,15 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.Credenciales;
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.EstadoCuenta;
-import com.ollacercana.domain.Identidad;
-import com.ollacercana.domain.Rol;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.mapper.CuentaEntityMapper;
+import com.ollacercana.model.domain.Credenciales;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.EstadoCuenta;
+import com.ollacercana.model.domain.Identidad;
+import com.ollacercana.model.domain.Rol;
 import com.ollacercana.repository.CuentaRepository;
+import com.ollacercana.service.impl.CuentaServiceImpl;
 import com.ollacercana.validator.ICuentaValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

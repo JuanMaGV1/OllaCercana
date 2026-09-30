@@ -1,9 +1,10 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.domain.TipoComida;
-import com.ollacercana.domain.RestriccionAlimentaria;
+import com.ollacercana.model.domain.RestriccionAlimentaria;
+import com.ollacercana.model.domain.TipoComida;
+import com.ollacercana.model.dto.request.PlatoRequestDTO;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

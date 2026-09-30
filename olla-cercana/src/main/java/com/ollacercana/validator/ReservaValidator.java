@@ -1,11 +1,11 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.domain.EstadoReserva;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Plato;
 import com.ollacercana.exception.AutoReservaException;
 import com.ollacercana.exception.LimiteReservasPendientesException;
 import com.ollacercana.exception.PorcionesInsuficientesException;
+import com.ollacercana.model.domain.EstadoReserva;
+import com.ollacercana.model.domain.PerfilCocinera;
+import com.ollacercana.model.domain.Plato;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;

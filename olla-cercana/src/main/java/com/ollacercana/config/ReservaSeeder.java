@@ -1,9 +1,9 @@
 package com.ollacercana.config;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.MedioPago;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.Reserva;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.MedioPago;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.Reserva;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReservaRepository;
 import org.slf4j.Logger;

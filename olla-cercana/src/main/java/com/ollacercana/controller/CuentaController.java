@@ -1,11 +1,12 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.CuentaApi;
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.dto.request.RegistroRequestDTO;
-import com.ollacercana.dto.response.RegistroResponseDTO;
 import com.ollacercana.mapper.CuentaMapper;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.dto.request.RegistroRequestDTO;
+import com.ollacercana.model.dto.response.RegistroResponseDTO;
 import com.ollacercana.service.ICuentaService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

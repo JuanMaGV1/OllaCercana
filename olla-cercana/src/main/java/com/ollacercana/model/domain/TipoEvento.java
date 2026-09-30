@@ -1,0 +1,12 @@
+package com.ollacercana.model.domain;
+
+
+public enum TipoEvento {
+    RESERVA_CREADA,
+    RESERVA_CONFIRMADA,
+    RESERVA_RECHAZADA,
+    RESERVA_CANCELADA,
+    DISPONIBILIDAD_ACTUALIZADA,
+    NUEVO_MENSAJE_CHAT,
+    CALIFICACION_PUBLICADA
+}

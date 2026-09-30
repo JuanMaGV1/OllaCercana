@@ -1,7 +1,7 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
 
 import java.util.UUID;
 

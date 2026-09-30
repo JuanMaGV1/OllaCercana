@@ -1,8 +1,8 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.MotivoRechazo;
-import com.ollacercana.domain.Reserva;
-import com.ollacercana.dto.request.DecisionReservaRequestDTO;
+import com.ollacercana.model.domain.MotivoRechazo;
+import com.ollacercana.model.domain.Reserva;
+import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;

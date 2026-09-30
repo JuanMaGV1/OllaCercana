@@ -1,8 +1,9 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
+import com.ollacercana.model.domain.PerfilCocinera;
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -8,6 +8,7 @@ import com.ollacercana.repository.EventoReservaRepository;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReservaRepository;
+import com.ollacercana.service.impl.ReservaServiceImpl;
 import com.ollacercana.validator.ReservaValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -109,7 +110,7 @@ class ReservaServiceImplTest {
     @Mock
     private ObservadorReserva observador;
 
-    private com.ollacercana.service.ReservaServiceImpl reservaService;
+    private com.ollacercana.service.impl.ReservaServiceImpl reservaService;
 
     private static final UUID COCINERA_ID = UUID.randomUUID();
     private static final Long COMPRADOR_ID = 42L;

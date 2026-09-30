@@ -1,8 +1,9 @@
 package com.ollacercana.repository;
 
-import com.ollacercana.domain.EstadoReporte;
-import com.ollacercana.domain.Reporte;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.ollacercana.model.domain.EstadoReporte;
+import com.ollacercana.model.domain.Reporte;
 
 import java.util.UUID;
 

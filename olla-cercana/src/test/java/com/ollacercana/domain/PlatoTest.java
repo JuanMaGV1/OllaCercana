@@ -3,6 +3,9 @@ package com.ollacercana.domain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 

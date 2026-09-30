@@ -1,12 +1,13 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.MedioPago;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.exception.ConflictoException;
+import com.ollacercana.model.domain.MedioPago;
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
+import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.service.IPerfilCocineraService;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,8 +1,9 @@
 package com.ollacercana.repository;
 
-import com.ollacercana.domain.PerfilCocinera;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.ollacercana.model.domain.PerfilCocinera;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package com.ollacercana.config;
 
-import com.ollacercana.domain.*;
+import com.ollacercana.model.domain.*;
 import com.ollacercana.repository.PlatoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

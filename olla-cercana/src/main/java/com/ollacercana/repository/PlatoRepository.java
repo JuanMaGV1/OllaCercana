@@ -1,11 +1,12 @@
 package com.ollacercana.repository;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoComida;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoComida;
 
 import java.time.LocalDateTime;
 import java.util.List;

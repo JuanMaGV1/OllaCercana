@@ -1,13 +1,14 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.PlatoApi;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
 import com.ollacercana.mapper.PlatoMapper;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.model.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
+import com.ollacercana.model.dto.response.PlatoResponseDTO;
 import com.ollacercana.service.PlatoService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

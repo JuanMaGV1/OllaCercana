@@ -1,8 +1,5 @@
 package com.ollacercana.controller.docs;
 
-import com.ollacercana.dto.request.LoginRequestDTO;
-import com.ollacercana.dto.response.ErrorResponseDTO;
-import com.ollacercana.dto.response.LoginResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,6 +9,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import com.ollacercana.model.dto.request.LoginRequestDTO;
+import com.ollacercana.model.dto.response.ErrorResponseDTO;
+import com.ollacercana.model.dto.response.LoginResponseDTO;
 
 @Tag(name = "Sesiones", description = "API para gestión de sesiones y autenticación de usuarios")
 public interface SesionApi {

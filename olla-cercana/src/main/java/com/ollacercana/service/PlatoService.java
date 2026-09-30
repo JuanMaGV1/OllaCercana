@@ -1,8 +1,8 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.Plato;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
 
 import java.util.List;
 import java.util.UUID;

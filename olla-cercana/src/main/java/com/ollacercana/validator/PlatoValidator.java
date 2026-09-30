@@ -1,11 +1,12 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoAjustePorciones;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.exception.*;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoAjustePorciones;
+import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.repository.PlatoRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

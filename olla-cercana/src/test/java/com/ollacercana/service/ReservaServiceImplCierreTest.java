@@ -1,10 +1,10 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.*;
 import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.exception.ReservaModificadaException;
 import com.ollacercana.exception.ReservaNoConfirmadaException;
 import com.ollacercana.exception.ReservaNoEncontradaException;
+import com.ollacercana.model.domain.*;
 import com.ollacercana.observer.ObservadorReserva;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.PlatoRepository;
@@ -51,14 +51,14 @@ class ReservaServiceImplCierreTest {
     @Mock
     private ObservadorReserva observador;
 
-    private com.ollacercana.service.ReservaServiceImpl reservaService;
+    private com.ollacercana.service.impl.ReservaServiceImpl reservaService;
 
     @BeforeEach
     void setUp() {
         PublicadorEventosReserva publicador = new PublicadorEventosReserva(List.of(observador));
-        reservaService = new com.ollacercana.service.ReservaServiceImpl(reservaRepository, platoRepository, reporteRepository, publicador);
+        reservaService = new com.ollacercana.service.impl.ReservaServiceImpl(reservaRepository, platoRepository, reporteRepository, publicador);
 
-        lenient().when(reservaRepository.saveAndFlush(any(com.ollacercana.domain.Reserva.class)))
+        lenient().when(reservaRepository.saveAndFlush(any(com.ollacercana.model.domain.Reserva.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
@@ -78,16 +78,16 @@ class ReservaServiceImplCierreTest {
     }
 
     /** Reserva CONFIRMADA hace las horas indicadas (con chat ACTIVO), registrada en el repositorio simulado. */
-    private com.ollacercana.domain.Reserva reservaConfirmada(int horasDesdeConfirmacion) {
+    private com.ollacercana.model.domain.Reserva reservaConfirmada(int horasDesdeConfirmacion) {
         LocalDateTime confirmadaEn = LocalDateTime.now().minusHours(horasDesdeConfirmacion);
-        com.ollacercana.domain.Reserva reserva = com.ollacercana.domain.Reserva.crear(plato(), COMPRADOR_ID, 2, MedioPago.EFECTIVO, null, confirmadaEn.minusMinutes(2));
+        com.ollacercana.model.domain.Reserva reserva = com.ollacercana.model.domain.Reserva.crear(plato(), COMPRADOR_ID, 2, MedioPago.EFECTIVO, null, confirmadaEn.minusMinutes(2));
         reserva.confirmar(confirmadaEn.plusHours(1), confirmadaEn);
         lenient().when(reservaRepository.findById(reserva.getId())).thenReturn(Optional.of(reserva));
         return reserva;
     }
 
-    private com.ollacercana.domain.Reserva reservaEnEstado(EstadoReserva estado) {
-        com.ollacercana.domain.Reserva reserva = com.ollacercana.domain.Reserva.crear(plato(), COMPRADOR_ID, 2, MedioPago.EFECTIVO, null, LocalDateTime.now().minusMinutes(1));
+    private com.ollacercana.model.domain.Reserva reservaEnEstado(EstadoReserva estado) {
+        com.ollacercana.model.domain.Reserva reserva = com.ollacercana.model.domain.Reserva.crear(plato(), COMPRADOR_ID, 2, MedioPago.EFECTIVO, null, LocalDateTime.now().minusMinutes(1));
         reserva.setEstado(estado);
         lenient().when(reservaRepository.findById(reserva.getId())).thenReturn(Optional.of(reserva));
         return reserva;
@@ -104,14 +104,14 @@ class ReservaServiceImplCierreTest {
     @Test
     @DisplayName("Escenario 1: completar pasa a COMPLETADA, chat en SOLO_LECTURA y habilita la calificación")
     void completar_debeCompletarPonerChatEnSoloLecturaYHabilitarCalificacion() {
-        com.ollacercana.domain.Reserva reserva = reservaConfirmada(1);
-        assertEquals(com.ollacercana.domain.EstadoChat.ACTIVO, reserva.getEstadoChat());
-        when(reporteRepository.existsByReservaIdAndEstado(reserva.getId(), com.ollacercana.domain.EstadoReporte.ABIERTO)).thenReturn(false);
+        com.ollacercana.model.domain.Reserva reserva = reservaConfirmada(1);
+        assertEquals(com.ollacercana.model.domain.EstadoChat.ACTIVO, reserva.getEstadoChat());
+        when(reporteRepository.existsByReservaIdAndEstado(reserva.getId(), com.ollacercana.model.domain.EstadoReporte.ABIERTO)).thenReturn(false);
 
-        com.ollacercana.domain.Reserva completada = reservaService.completar(reserva.getId(), "Todo bien");
+        com.ollacercana.model.domain.Reserva completada = reservaService.completar(reserva.getId(), "Todo bien");
 
         assertEquals(EstadoReserva.COMPLETADA, completada.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.SOLO_LECTURA, completada.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.SOLO_LECTURA, completada.getEstadoChat());
         assertTrue(completada.isCalificacionHabilitada());
         assertEquals("Todo bien", completada.getComentarioCierre());
         assertNotNull(completada.getFechaCompletada());
@@ -120,16 +120,16 @@ class ReservaServiceImplCierreTest {
         verify(platoRepository, never()).save(any());
 
         EventoReserva evento = eventoPublicado();
-        assertEquals(com.ollacercana.domain.TipoEvento.RESERVA_COMPLETADA, evento.tipo());
+        assertEquals(com.ollacercana.model.domain.TipoEvento.RESERVA_COMPLETADA, evento.tipo());
         assertEquals(COMPRADOR_ID, evento.compradorId());
         assertEquals(false, evento.payload().get("automatica"));
     }
 
     @Test
     void completar_sinComentario_debeGuardarComentarioNulo() {
-        com.ollacercana.domain.Reserva reserva = reservaConfirmada(1);
+        com.ollacercana.model.domain.Reserva reserva = reservaConfirmada(1);
 
-        com.ollacercana.domain.Reserva completada = reservaService.completar(reserva.getId(), "   ");
+        com.ollacercana.model.domain.Reserva completada = reservaService.completar(reserva.getId(), "   ");
 
         assertEquals(EstadoReserva.COMPLETADA, completada.getEstado());
         assertNull(completada.getComentarioCierre());
@@ -153,7 +153,7 @@ class ReservaServiceImplCierreTest {
     @DisplayName("Escenario 4: PENDIENTE, RECHAZADA o EXPIRADA no se pueden cerrar")
     void completar_reservaNoConfirmada_debeLanzarReglaDeNegocioSinGuardar() {
         for (EstadoReserva estado : List.of(EstadoReserva.PENDIENTE, EstadoReserva.RECHAZADA, EstadoReserva.EXPIRADA)) {
-            com.ollacercana.domain.Reserva reserva = reservaEnEstado(estado);
+            com.ollacercana.model.domain.Reserva reserva = reservaEnEstado(estado);
             UUID id = reserva.getId();
 
             assertThrows(ReservaNoConfirmadaException.class, () -> reservaService.completar(id, null),
@@ -166,7 +166,7 @@ class ReservaServiceImplCierreTest {
 
     @Test
     void completar_reservaYaCompletada_debeLanzarReglaDeNegocio() {
-        com.ollacercana.domain.Reserva reserva = reservaEnEstado(EstadoReserva.COMPLETADA);
+        com.ollacercana.model.domain.Reserva reserva = reservaEnEstado(EstadoReserva.COMPLETADA);
         UUID id = reserva.getId();
 
         assertThrows(ReglaDeNegocioException.class, () -> reservaService.completar(id, null));
@@ -178,15 +178,15 @@ class ReservaServiceImplCierreTest {
     @Test
     @DisplayName("Escenario 3: con un reporte ABIERTO el cierre se bloquea (422) y la reserva no cambia")
     void completar_conReporteAbierto_debeLanzarReglaDeNegocioSinCambios() {
-        com.ollacercana.domain.Reserva reserva = reservaConfirmada(1);
+        com.ollacercana.model.domain.Reserva reserva = reservaConfirmada(1);
         UUID id = reserva.getId();
-        when(reporteRepository.existsByReservaIdAndEstado(id, com.ollacercana.domain.EstadoReporte.ABIERTO)).thenReturn(true);
+        when(reporteRepository.existsByReservaIdAndEstado(id, com.ollacercana.model.domain.EstadoReporte.ABIERTO)).thenReturn(true);
 
         ReglaDeNegocioException ex = assertThrows(ReglaDeNegocioException.class, () -> reservaService.completar(id, null));
 
         assertTrue(ex.getMessage().contains("reporte abierto"));
         assertEquals(EstadoReserva.CONFIRMADA, reserva.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.ACTIVO, reserva.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.ACTIVO, reserva.getEstadoChat());
         assertFalse(reserva.isCalificacionHabilitada());
         verify(reservaRepository, never()).saveAndFlush(any());
         verifyNoInteractions(observador);
@@ -194,10 +194,10 @@ class ReservaServiceImplCierreTest {
 
     @Test
     void completar_conflictoDeVersion_debeLanzarReservaModificada() {
-        com.ollacercana.domain.Reserva reserva = reservaConfirmada(1);
+        com.ollacercana.model.domain.Reserva reserva = reservaConfirmada(1);
         UUID id = reserva.getId();
-        when(reservaRepository.saveAndFlush(any(com.ollacercana.domain.Reserva.class)))
-                .thenThrow(new ObjectOptimisticLockingFailureException(com.ollacercana.domain.Reserva.class, id));
+        when(reservaRepository.saveAndFlush(any(com.ollacercana.model.domain.Reserva.class)))
+                .thenThrow(new ObjectOptimisticLockingFailureException(com.ollacercana.model.domain.Reserva.class, id));
 
         assertThrows(ReservaModificadaException.class, () -> reservaService.completar(id, null));
         verifyNoInteractions(observador);
@@ -207,7 +207,7 @@ class ReservaServiceImplCierreTest {
 
     @Test
     void buscarReservasParaCierreAutomatico_debeConsultarConfirmadasConLimiteDe24Horas() {
-        com.ollacercana.domain.Reserva vieja = reservaConfirmada(30);
+        com.ollacercana.model.domain.Reserva vieja = reservaConfirmada(30);
         when(reservaRepository.findByEstadoAndFechaDecisionLessThanEqual(eq(EstadoReserva.CONFIRMADA), any(LocalDateTime.class)))
                 .thenReturn(List.of(vieja));
         LocalDateTime antes = LocalDateTime.now().minusHours(24);
@@ -225,26 +225,26 @@ class ReservaServiceImplCierreTest {
     @Test
     @DisplayName("Escenario 2: a las 24 h sin cierre la reserva se completa sola y se notifica a ambas partes")
     void completarAutomaticamente_a24Horas_debeCompletarYPublicarEventoAutomatico() {
-        com.ollacercana.domain.Reserva reserva = reservaConfirmada(25);
-        when(reporteRepository.existsByReservaIdAndEstado(reserva.getId(), com.ollacercana.domain.EstadoReporte.ABIERTO)).thenReturn(false);
+        com.ollacercana.model.domain.Reserva reserva = reservaConfirmada(25);
+        when(reporteRepository.existsByReservaIdAndEstado(reserva.getId(), com.ollacercana.model.domain.EstadoReporte.ABIERTO)).thenReturn(false);
 
-        com.ollacercana.domain.Reserva completada = reservaService.completarAutomaticamente(reserva.getId());
+        com.ollacercana.model.domain.Reserva completada = reservaService.completarAutomaticamente(reserva.getId());
 
         assertEquals(EstadoReserva.COMPLETADA, completada.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.SOLO_LECTURA, completada.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.SOLO_LECTURA, completada.getEstadoChat());
         assertTrue(completada.isCalificacionHabilitada());
         verify(reservaRepository).saveAndFlush(reserva);
 
         EventoReserva evento = eventoPublicado();
-        assertEquals(com.ollacercana.domain.TipoEvento.RESERVA_COMPLETADA, evento.tipo());
+        assertEquals(com.ollacercana.model.domain.TipoEvento.RESERVA_COMPLETADA, evento.tipo());
         assertEquals(true, evento.payload().get("automatica"));
     }
 
     @Test
     void completarAutomaticamente_antesDe24Horas_noDebeHacerNada() {
-        com.ollacercana.domain.Reserva reserva = reservaConfirmada(23);
+        com.ollacercana.model.domain.Reserva reserva = reservaConfirmada(23);
 
-        com.ollacercana.domain.Reserva resultado = reservaService.completarAutomaticamente(reserva.getId());
+        com.ollacercana.model.domain.Reserva resultado = reservaService.completarAutomaticamente(reserva.getId());
 
         assertEquals(EstadoReserva.CONFIRMADA, resultado.getEstado());
         verify(reservaRepository, never()).saveAndFlush(any());
@@ -253,9 +253,9 @@ class ReservaServiceImplCierreTest {
 
     @Test
     void completarAutomaticamente_siYaSeCerro_noDebeHacerNada() {
-        com.ollacercana.domain.Reserva reserva = reservaEnEstado(EstadoReserva.COMPLETADA);
+        com.ollacercana.model.domain.Reserva reserva = reservaEnEstado(EstadoReserva.COMPLETADA);
 
-        com.ollacercana.domain.Reserva resultado = reservaService.completarAutomaticamente(reserva.getId());
+        com.ollacercana.model.domain.Reserva resultado = reservaService.completarAutomaticamente(reserva.getId());
 
         assertEquals(EstadoReserva.COMPLETADA, resultado.getEstado());
         verify(reservaRepository, never()).saveAndFlush(any());
@@ -264,13 +264,13 @@ class ReservaServiceImplCierreTest {
 
     @Test
     void completarAutomaticamente_conReporteAbierto_noDebeCompletar() {
-        com.ollacercana.domain.Reserva reserva = reservaConfirmada(48);
-        when(reporteRepository.existsByReservaIdAndEstado(reserva.getId(), com.ollacercana.domain.EstadoReporte.ABIERTO)).thenReturn(true);
+        com.ollacercana.model.domain.Reserva reserva = reservaConfirmada(48);
+        when(reporteRepository.existsByReservaIdAndEstado(reserva.getId(), com.ollacercana.model.domain.EstadoReporte.ABIERTO)).thenReturn(true);
 
-        com.ollacercana.domain.Reserva resultado = reservaService.completarAutomaticamente(reserva.getId());
+        com.ollacercana.model.domain.Reserva resultado = reservaService.completarAutomaticamente(reserva.getId());
 
         assertEquals(EstadoReserva.CONFIRMADA, resultado.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.ACTIVO, resultado.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.ACTIVO, resultado.getEstadoChat());
         verify(reservaRepository, never()).saveAndFlush(any());
         verifyNoInteractions(observador);
     }

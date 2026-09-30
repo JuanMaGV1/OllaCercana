@@ -1,8 +1,9 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.Plato;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.dto.response.PlatoResponseDTO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

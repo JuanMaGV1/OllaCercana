@@ -1,7 +1,8 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.Plato;
 import org.mapstruct.Mapper;
+
+import com.ollacercana.model.domain.Plato;
 
 /**
  * OC-89: mapper dominio <-> entidad de persistencia.

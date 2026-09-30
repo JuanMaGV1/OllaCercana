@@ -1,12 +1,13 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.CierreTransaccionRequestDTO;
+import com.ollacercana.model.domain.*;
+import com.ollacercana.model.dto.request.CierreTransaccionRequestDTO;
 import com.ollacercana.repository.NotificacionRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReporteRepository;
 import com.ollacercana.repository.ReservaRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,7 @@ class ReservaControllerCierreTest {
     private NotificacionRepository notificacionRepository;
 
     private Plato plato;
-    private com.ollacercana.domain.Reserva reserva;
+    private com.ollacercana.model.domain.Reserva reserva;
 
     @BeforeEach
     void setUp() {
@@ -79,7 +80,7 @@ class ReservaControllerCierreTest {
                 .build());
 
         LocalDateTime ahora = LocalDateTime.now();
-        com.ollacercana.domain.Reserva nueva = com.ollacercana.domain.Reserva.crear(plato, 42L, 2, MedioPago.EFECTIVO, "Sin cebolla", ahora.minusMinutes(1));
+        com.ollacercana.model.domain.Reserva nueva = com.ollacercana.model.domain.Reserva.crear(plato, 42L, 2, MedioPago.EFECTIVO, "Sin cebolla", ahora.minusMinutes(1));
         nueva.confirmar(ahora.plusMinutes(45), ahora);
         reserva = reservaRepository.save(nueva);
     }
@@ -106,9 +107,9 @@ class ReservaControllerCierreTest {
                 .andExpect(jsonPath("$.comentarioCierre").value("Todo llegó caliente"))
                 .andExpect(jsonPath("$.fechaCompletada").exists());
 
-        com.ollacercana.domain.Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
+        com.ollacercana.model.domain.Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
         assertEquals(EstadoReserva.COMPLETADA, guardada.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.SOLO_LECTURA, guardada.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.SOLO_LECTURA, guardada.getEstadoChat());
     }
 
     @Test
@@ -126,9 +127,9 @@ class ReservaControllerCierreTest {
     @Test
     @DisplayName("Escenario 3: con un reporte ABIERTO el cierre se bloquea con 422")
     void completar_conReporteAbierto_debeRetornar422() throws Exception {
-        reporteRepository.save(com.ollacercana.domain.Reporte.builder()
+        reporteRepository.save(com.ollacercana.model.domain.Reporte.builder()
                 .reservaId(reserva.getId())
-                .estado(com.ollacercana.domain.EstadoReporte.ABIERTO)
+                .estado(com.ollacercana.model.domain.EstadoReporte.ABIERTO)
                 .fechaCreacion(LocalDateTime.now())
                 .build());
 
@@ -136,17 +137,17 @@ class ReservaControllerCierreTest {
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.status").value(422));
 
-        com.ollacercana.domain.Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
+        com.ollacercana.model.domain.Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
         assertEquals(EstadoReserva.CONFIRMADA, guardada.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.ACTIVO, guardada.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.ACTIVO, guardada.getEstadoChat());
     }
 
     @Test
     @DisplayName("Un reporte RESUELTO ya no bloquea el cierre")
     void completar_conReporteResuelto_debeRetornar200() throws Exception {
-        reporteRepository.save(com.ollacercana.domain.Reporte.builder()
+        reporteRepository.save(com.ollacercana.model.domain.Reporte.builder()
                 .reservaId(reserva.getId())
-                .estado(com.ollacercana.domain.EstadoReporte.RESUELTO)
+                .estado(com.ollacercana.model.domain.EstadoReporte.RESUELTO)
                 .fechaCreacion(LocalDateTime.now())
                 .build());
 

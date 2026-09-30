@@ -1,7 +1,8 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.Cuenta;
 import org.mapstruct.Mapper;
+
+import com.ollacercana.model.domain.Cuenta;
 
 @Mapper(componentModel = "spring")
 public interface CuentaEntityMapper {

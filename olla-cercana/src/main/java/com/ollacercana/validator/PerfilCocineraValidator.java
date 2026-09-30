@@ -1,12 +1,13 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.MedioPago;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.exception.ReglaDeNegocioException;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.MedioPago;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.repository.PerfilCocineraRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
