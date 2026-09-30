@@ -16,6 +16,21 @@ import java.util.UUID;
 @Table(name = "reservas")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
+public class Reserva {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    // Conectado directamente con Cuenta.id (Long)
+    @Column(nullable = false)
+    private Long compradorId;
+
+    @Column(nullable = false)
+    private UUID platoId;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
@@ -49,6 +64,11 @@ public class Reserva {
     @Column(nullable = false)
     private Integer cantidadPorciones;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal montoTotal;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private BigDecimal montoTotal;
 
     @Enumerated(EnumType.STRING)
@@ -67,6 +87,9 @@ public class Reserva {
     @Column(nullable = false)
     private LocalDateTime fechaLimiteConfirmacion;
 
+    @Column(length = 500)
+    private String notaComprador;
+}
     /** Momento en que la cocinera confirmó o rechazó. */
     private LocalDateTime fechaDecision;
 
