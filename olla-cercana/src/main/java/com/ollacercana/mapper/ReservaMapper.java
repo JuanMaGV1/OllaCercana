@@ -5,6 +5,10 @@ import com.ollacercana.dto.request.ReservaRequestDTO;
 import com.ollacercana.dto.response.ReservaResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import com.ollacercana.dto.response.ReservaResponseDTO;
+import org.mapstruct.Mapper;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ReservaMapper {
@@ -24,4 +28,8 @@ public interface ReservaMapper {
     @Mapping(target = "plato", source = "nombrePlato")
     @Mapping(target = "conjunto", source = "conjunto")
     ReservaResponseDTO toResponseDTO(Reserva reserva, String nombrePlato, String conjunto);
+}
+    ReservaResponseDTO toResponse(Reserva reserva);
+
+    List<ReservaResponseDTO> toResponseList(List<Reserva> reservas);
 }

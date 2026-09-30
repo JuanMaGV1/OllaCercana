@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ollacercana.dto.request.PlatoRequestDTO;
 import com.ollacercana.domain.TipoComida;
 import com.ollacercana.domain.RestriccionAlimentaria;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -30,6 +32,21 @@ class PlatoControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void asegurarCocineraSembrada() {
+        UUID cocineraId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        Integer existe = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM perfiles_cocinera WHERE id = ?", Integer.class, cocineraId);
+        if (existe == null || existe == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO perfiles_cocinera (id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    cocineraId, "Torres del Parque", true, false, false, 0.0, 0);
+        }
+    }
 
     @Test
     void publicar_debeRetornar201() throws Exception {
