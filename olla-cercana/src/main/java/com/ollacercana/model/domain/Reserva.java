@@ -4,19 +4,16 @@ import com.ollacercana.exception.DecisionReservaInvalidaException;
 import com.ollacercana.exception.ReservaNoConfirmadaException;
 import com.ollacercana.exception.ReservaNoPendienteException;
 import com.ollacercana.exception.ReservaVencidaException;
-import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Entidad Reserva (agregado raíz).
- * Cubre HU-12 (confirmar/rechazar) y HU-23 (completar transacción).
- */
-@Entity
-@Table(name = "reservas")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,70 +26,32 @@ public class Reserva {
     public static final int MAX_CARACTERES_COMENTARIO = 150;
     public static final int HORAS_PARA_CIERRE_AUTOMATICO = 24;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
-    @Column(nullable = false)
     private UUID platoId;
-
-    @Column(nullable = false)
     private UUID cocineraId;
-
-    @Column(nullable = false)
-    private Long compradorId;
-
-    @Column(nullable = false)
+    private UUID compradorId;              // ← UUID (antes Long)
     private Integer cantidadPorciones;
-
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal montoTotal;
-
-    @Enumerated(EnumType.STRING)
     private MedioPago medioPago;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private EstadoReserva estado;
-
-    @Column(length = 300)
     private String notaComprador;
-
-    @Column(nullable = false)
     private LocalDateTime fechaCreacion;
-
-    @Column(nullable = false)
     private LocalDateTime fechaLimiteConfirmacion;
-
     private LocalDateTime fechaDecision;
     private LocalDateTime horaEstimadaEntrega;
-
-    @Enumerated(EnumType.STRING)
     private MotivoRechazo motivoRechazo;
-
-    @Column(length = MAX_CARACTERES_COMENTARIO)
     private String comentarioRechazo;
-
     private boolean recordatorioEnviado;
     private boolean chatHabilitado;
-
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private EstadoChat estadoChat = EstadoChat.SOLO_LECTURA;
-
+    private EstadoChat estadoChat;
     private LocalDateTime fechaCompletada;
-
-    @Column(length = MAX_CARACTERES_COMENTARIO)
     private String comentarioCierre;
-
     private boolean calificacionHabilitada;
-
-    @Version
     private Integer version;
 
     // ============ Reglas de negocio ============
 
-    public static Reserva crear(Plato plato, Long compradorId, int cantidadPorciones,
+    public static Reserva crear(Plato plato, UUID compradorId, int cantidadPorciones,
                                 MedioPago medioPago, String notaComprador, LocalDateTime ahora) {
         if (plato == null) {
             throw new IllegalArgumentException("La reserva debe estar asociada a un plato");
@@ -106,6 +65,7 @@ public class Reserva {
                 : plato.getPrecioPorcion().multiply(BigDecimal.valueOf(cantidadPorciones));
 
         return Reserva.builder()
+                .id(UUID.randomUUID())
                 .platoId(plato.getId())
                 .cocineraId(plato.getCocineraId())
                 .compradorId(compradorId)
@@ -116,6 +76,8 @@ public class Reserva {
                 .estado(EstadoReserva.PENDIENTE)
                 .fechaCreacion(ahora)
                 .fechaLimiteConfirmacion(ahora.plusMinutes(MINUTOS_PARA_CONFIRMAR))
+                .estadoChat(EstadoChat.ABIERTO)
+                .version(0)
                 .build();
     }
 
@@ -125,7 +87,6 @@ public class Reserva {
             throw new DecisionReservaInvalidaException(
                     "La hora estimada de entrega es obligatoria y debe ser posterior al momento actual");
         }
-
         this.estado = EstadoReserva.CONFIRMADA;
         this.horaEstimadaEntrega = horaEstimada;
         this.fechaDecision = ahora;
@@ -138,17 +99,14 @@ public class Reserva {
         if (motivo == null) {
             throw new DecisionReservaInvalidaException("El motivo de rechazo es obligatorio");
         }
-
         String comentarioLimpio = (comentario == null || comentario.isBlank()) ? null : comentario.trim();
         if (motivo == MotivoRechazo.OTRO && comentarioLimpio == null) {
-            throw new DecisionReservaInvalidaException(
-                    "El comentario es obligatorio cuando el motivo es OTRO");
+            throw new DecisionReservaInvalidaException("El comentario es obligatorio cuando el motivo es OTRO");
         }
         if (comentarioLimpio != null && comentarioLimpio.length() > MAX_CARACTERES_COMENTARIO) {
             throw new DecisionReservaInvalidaException(
                     "El comentario no puede superar los " + MAX_CARACTERES_COMENTARIO + " caracteres");
         }
-
         this.estado = EstadoReserva.RECHAZADA;
         this.motivoRechazo = motivo;
         this.comentarioRechazo = comentarioLimpio;
@@ -172,7 +130,6 @@ public class Reserva {
             throw new IllegalArgumentException(
                     "El comentario no puede superar los " + MAX_CARACTERES_COMENTARIO + " caracteres");
         }
-
         this.estado = EstadoReserva.COMPLETADA;
         this.estadoChat = EstadoChat.SOLO_LECTURA;
         this.calificacionHabilitada = true;

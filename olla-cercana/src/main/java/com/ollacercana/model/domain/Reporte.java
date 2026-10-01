@@ -1,34 +1,23 @@
 package com.ollacercana.model.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Reporte sobre una reserva (OC-34). Mientras esté ABIERTO no se puede cerrar la transacción (HU-23).
- */
-@Entity
-@Table(name = "reportes")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Reporte {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
-    @Column(nullable = false)
     private UUID reservaId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private com.ollacercana.model.domain.EstadoReporte estado;
-
-    @Column(nullable = false)
+    private EstadoReporte estado;
     private LocalDateTime fechaCreacion;
 }

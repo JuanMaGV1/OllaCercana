@@ -1,13 +1,14 @@
 package com.ollacercana.model.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "codigos_otp")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,23 +16,20 @@ import java.util.UUID;
 @Builder
 public class CodigoOTP {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
+    private UUID id;
     private UUID perfilId;
-
-    @Column(nullable = false, length = 10)
     private String codigo;
-
-    @Column(nullable = false)
     private LocalDateTime fechaExpiracion;
-
-    @Column(nullable = false)
     private boolean usado;
 
     public boolean esValido(String codigoIngresado) {
-        return !usado && this.codigo.equals(codigoIngresado) && LocalDateTime.now().isBefore(fechaExpiracion);
+        return !usado
+                && this.codigo != null
+                && this.codigo.equals(codigoIngresado)
+                && LocalDateTime.now().isBefore(fechaExpiracion);
+    }
+
+    public void marcarUsado() {
+        this.usado = true;
     }
 }

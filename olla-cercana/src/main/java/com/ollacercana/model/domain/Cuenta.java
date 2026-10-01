@@ -1,6 +1,5 @@
 package com.ollacercana.model.domain;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,10 +7,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
-@Entity
-@Table(name = "cuentas")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,39 +18,47 @@ import java.util.Set;
 @Builder
 public class Cuenta {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Embedded
+    private UUID id;
     private Identidad identidad;
-
-    @Embedded
     private Credenciales credenciales;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "estado", nullable = false)
     private EstadoCuenta estado;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "cuenta_roles", joinColumns = @JoinColumn(name = "cuenta_id"))
-    @Column(name = "rol")
-    @Enumerated(EnumType.STRING)
     private Set<Rol> roles;
-
-    @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.fechaRegistro == null) {
-            this.fechaRegistro = LocalDateTime.now();
+    // ============ Reglas de negocio ============
+
+    public void activar() {
+        this.estado = EstadoCuenta.ACTIVA;
+    }
+
+    public void pausar() {
+        this.estado = EstadoCuenta.PAUSADA;
+    }
+
+    public void suspender() {
+        this.estado = EstadoCuenta.SUSPENDIDA;
+    }
+
+    public void bloquearTemporalmente() {
+        this.estado = EstadoCuenta.BLOQUEADA_TEMPORAL;
+    }
+
+    public boolean tieneRol(Rol rol) {
+        return roles != null && roles.contains(rol);
+    }
+
+    public void agregarRol(Rol rol) {
+        if (this.roles == null) {
+            this.roles = new HashSet<>();
         }
-        if (this.estado == null) {
-            this.estado = EstadoCuenta.PENDIENTE_VERIFICACION;
-        }
-        if (this.credenciales != null && this.credenciales.getCelularVerificado() == null) {
-            this.credenciales.setCelularVerificado(false);
-        }
+        this.roles.add(rol);
+    }
+
+    public boolean estaActiva() {
+        return this.estado == EstadoCuenta.ACTIVA;
+    }
+
+    public boolean estaPendienteVerificacion() {
+        return this.estado == EstadoCuenta.PENDIENTE_VERIFICACION;
     }
 }

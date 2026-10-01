@@ -6,17 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Evento de dominio que se publica cuando cambia una reserva (patrón Observer).
- * El dominio no sabe quién lo consume: notificaciones in-app, push, WebSocket, etc.
- * NO se persiste: es un mensaje efímero entre capas.
- */
 public record EventoReserva(
         UUID id,
         TipoEvento tipo,
         UUID reservaId,
         UUID platoId,
-        Long compradorId,
+        UUID compradorId,
         UUID cocineraId,
         LocalDateTime timestamp,
         Map<String, Object> payload
