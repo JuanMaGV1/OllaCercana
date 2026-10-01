@@ -60,7 +60,7 @@ public class CuentaServiceImpl implements ICuentaService {
                 .orElseThrow(() -> new ConflictoException("Credenciales inválidas"));
 
         // 2. Validar si la cuenta está bloqueada
-        if (cuenta.getEstado() == EstadoCuenta.BLOQUEADO) {
+        if (cuenta.getEstado() == EstadoCuenta.BLOQUEADA_TEMPORAL) {
             throw new ConflictoException("La cuenta se encuentra bloqueada");
         }
 

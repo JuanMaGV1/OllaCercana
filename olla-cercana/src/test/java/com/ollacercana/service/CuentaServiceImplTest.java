@@ -65,7 +65,7 @@ class CuentaServiceImplTest {
                 .identidad(identidad)
                 .credenciales(credenciales)
                 .roles(Set.of(Rol.COMPRADOR))
-                .estado(EstadoCuenta.ACTIVO)
+                .estado(EstadoCuenta.ACTIVA)
                 .build();
     }
 
@@ -139,7 +139,7 @@ class CuentaServiceImplTest {
             // Assert
             assertNotNull(resultado);
             assertEquals("juan@gmail.com", resultado.getIdentidad().getCorreo());
-            assertEquals(EstadoCuenta.ACTIVO, resultado.getEstado());
+            assertEquals(EstadoCuenta.ACTIVA, resultado.getEstado());
         }
 
         @Test
@@ -179,7 +179,7 @@ class CuentaServiceImplTest {
         @DisplayName("4. Cuenta bloqueada (409 ConflictoException)")
         void autenticar_CuentaBloqueada_LanzaConflictoException() {
             // Arrange
-            cuentaBase.setEstado(EstadoCuenta.BLOQUEADO);
+            cuentaBase.setEstado(EstadoCuenta.BLOQUEADA_TEMPORAL);
             cuentaBase.getCredenciales().setContrasenaHash(bCryptHash);
             when(cuentaRepository.findByIdentificador("juan@gmail.com"))
                     .thenReturn(Optional.of(cuentaBase));

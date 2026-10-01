@@ -48,7 +48,7 @@ public class Cuenta {
             this.fechaRegistro = LocalDateTime.now();
         }
         if (this.estado == null) {
-            this.estado = EstadoCuenta.ACTIVO;
+            this.estado = EstadoCuenta.PENDIENTE_VERIFICACION;
         }
         if (this.credenciales != null && this.credenciales.getCelularVerificado() == null) {
             this.credenciales.setCelularVerificado(false);

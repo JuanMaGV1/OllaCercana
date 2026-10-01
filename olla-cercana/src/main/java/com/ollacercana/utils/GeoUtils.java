@@ -1,4 +1,4 @@
-package com.ollacercana.util;
+package com.ollacercana.utils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

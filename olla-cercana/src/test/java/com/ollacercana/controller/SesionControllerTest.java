@@ -46,7 +46,7 @@ class SesionControllerTest {
                 .id(1L)
                 .identidad(Identidad.builder().nombre("Carlos Perez").correo("carlos@gmail.com").celular("3001234567").build())
                 .roles(Set.of(Rol.COMPRADOR))
-                .estado(EstadoCuenta.ACTIVO)
+                .estado(EstadoCuenta.ACTIVA)
                 .build();
 
         when(cuentaService.autenticar("carlos@gmail.com", "Password123")).thenReturn(cuenta);
@@ -83,7 +83,7 @@ class SesionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensaje").value("Credenciales inválidas"));
+                .andExpect(jsonPath("$.message").value("Credenciales inválidas"));
     }
 
     @Test

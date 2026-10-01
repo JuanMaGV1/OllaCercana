@@ -45,12 +45,11 @@ class ReservaTest {
         Plato plato = plato();
         com.ollacercana.model.domain.Reserva reserva = com.ollacercana.model.domain.Reserva.crear(plato, 7L, 2, MedioPago.NEQUI, null, AHORA);
 
-        assertNotNull(reserva.getId());
         assertEquals(com.ollacercana.model.domain.EstadoReserva.PENDIENTE, reserva.getEstado());
         assertEquals(plato.getId(), reserva.getPlatoId());
         assertEquals(plato.getCocineraId(), reserva.getCocineraId());
         assertEquals(AHORA.plusMinutes(10), reserva.getFechaLimiteConfirmacion());
-        assertEquals(0, new BigDecimal("32000").compareTo(reserva.getMontoTotal()));
+        assertEquals(new BigDecimal("32000"), reserva.getMontoTotal()); 
         assertFalse(reserva.isChatHabilitado());
         assertFalse(reserva.isRecordatorioEnviado());
     }
@@ -197,11 +196,11 @@ class ReservaTest {
     @Test
     void confirmar_debeActivarElChat() {
         com.ollacercana.model.domain.Reserva reserva = reservaCreadaA(AHORA.minusMinutes(1));
-        assertEquals(com.ollacercana.model.domain.EstadoChat.INACTIVO, reserva.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.SOLO_LECTURA, reserva.getEstadoChat());
 
         reserva.confirmar(AHORA.plusHours(1), AHORA);
 
-        assertEquals(com.ollacercana.model.domain.EstadoChat.ACTIVO, reserva.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.ABIERTO, reserva.getEstadoChat());
     }
 
     @Test

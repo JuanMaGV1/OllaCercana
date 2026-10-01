@@ -5,6 +5,7 @@ import com.ollacercana.exception.ResourceNotFoundException;
 import com.ollacercana.mapper.PerfilCocineraMapper;
 import com.ollacercana.model.domain.CodigoOTP;
 import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.EstadoCuenta;
 import com.ollacercana.model.domain.PerfilCocinera;
 import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
@@ -103,8 +104,9 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
         codigoOTPRepository.save(codigoOTP);
 
         perfil.setVerificada(true);
-        if (perfil.getCuenta() != null && perfil.getCuenta().getCredenciales() != null) {
+        if (perfil.getCuenta() != null) {
             perfil.getCuenta().getCredenciales().setCelularVerificado(true);
+            perfil.getCuenta().setEstado(EstadoCuenta.ACTIVA);   // ← nuevo
         }
         perfilRepository.save(perfil);
 

@@ -30,6 +30,10 @@ public class RegistroRequestDTO {
 
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, message = "La contraseña debe tener mínimo 8 caracteres")
+    @Pattern(
+        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
+        message = "La contraseña debe incluir mayúscula, minúscula y número"
+    )
     private String contrasena;
 
     private Rol rol;

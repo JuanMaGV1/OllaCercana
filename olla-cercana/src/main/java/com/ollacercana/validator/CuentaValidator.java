@@ -14,9 +14,11 @@ public class CuentaValidator implements ICuentaValidator {
 
     private final CuentaRepository cuentaRepository;
 
-    // Regla: mínimo 8 caracteres, al menos una letra y un número
+    /**
+     * RN-11: mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número.
+     */
     private static final Pattern PASSWORD_PATTERN =
-            Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d).{8,}$");
+            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$");
 
     @Override
     public void validarCorreoUnico(String correo) {
@@ -35,7 +37,8 @@ public class CuentaValidator implements ICuentaValidator {
     @Override
     public void validarPasswordSegura(String password) {
         if (password == null || !PASSWORD_PATTERN.matcher(password).matches()) {
-            throw new ReglaDeNegocioException("La contraseña debe tener al menos 8 caracteres, e incluir letras y números");
+            throw new ReglaDeNegocioException(
+    "La contraseña debe tener mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número");
         }
     }
 }

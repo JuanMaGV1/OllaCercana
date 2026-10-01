@@ -1,35 +1,30 @@
 package com.ollacercana.service.impl;
 
-import com.ollacercana.domain.*;
-import com.ollacercana.dto.response.ReservaResponseDTO;
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.PlatoNoEncontradoException;
+import com.ollacercana.model.dto.response.ReservaResponseDTO;
+import com.ollacercana.exception.*;
 import com.ollacercana.mapper.ReservaMapper;
-import com.ollacercana.repository.EventoReservaRepository;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.repository.ReservaRepository;
-import com.ollacercana.validator.ReservaValidator;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import com.ollacercana.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.exception.AccesoDenegadoException;
-import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.exception.ReservaModificadaException;
-import com.ollacercana.exception.ReservaNoEncontradaException;
+import com.ollacercana.model.domain.*;
+import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
+import com.ollacercana.model.dto.request.ReservaRequestDTO;
 import com.ollacercana.observer.PublicadorEventosReserva;
+import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReporteRepository;
 import com.ollacercana.repository.ReservaRepository;
+import com.ollacercana.service.ReservaService;
+import com.ollacercana.validator.ReservaValidator;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -38,79 +33,48 @@ public class ReservaServiceImpl implements ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final PlatoRepository platoRepository;
+    private final PerfilCocineraRepository perfilCocineraRepository;
     private final ReporteRepository reporteRepository;
-    private final PublicadorEventosReserva publicador;
-    private final ReservaMapper reservaMapper;
     private final ReservaValidator validator;
+    private final ReservaMapper reservaMapper;
+    private final PublicadorEventosReserva publicador;
+
+    // ============ HU-11: crear reserva ============
 
     @Override
     @Transactional
-    public ReservaResponseDTO crear(Long compradorId, Reserva reserva) {
-        // 1. Obtener plato
-        Plato plato = platoRepository.findById(reserva.getPlatoId())
-                .orElseThrow(() -> new PlatoNoEncontradoException(reserva.getPlatoId()));
+    public ReservaResponseDTO crear(Long compradorId, ReservaRequestDTO request) {
+        Plato plato = platoRepository.findById(request.platoId())
+                .orElseThrow(() -> new PlatoNoEncontradoException(request.platoId()));
 
-        // 2. Validar reglas RN-14, RN-15, RN-03
-        validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
+        validator.validarParaCrear(compradorId, plato, request.cantidad());
 
-        // 3. Descontar porciones del plato (RN-03)
-        plato.comprometerPorciones(reserva.getCantidadPorciones());
-
-        // 4. Guardar cambios en el plato con bloqueo optimista (@Version)
+        // Descontar porciones (RN-03)
+        plato.comprometerPorciones(request.cantidad());
         try {
             platoRepository.saveAndFlush(plato);
         } catch (ObjectOptimisticLockingFailureException ex) {
-            throw new ConflictoException("El plato fue modificado por otra transacción simultánea, intenta de nuevo");
+            throw new ConflictoException("El plato fue modificado por otra transacción simultánea");
         }
 
-        // 5. Calcular monto total (RN-33) y hora límite (+10 min)
-        BigDecimal montoTotal = plato.getPrecioPorcion().multiply(BigDecimal.valueOf(reserva.getCantidadPorciones()));
-        LocalDateTime ahora = LocalDateTime.now();
+        // Crear la reserva (método de dominio)
+        Reserva reserva = Reserva.crear(
+                plato, compradorId, request.cantidad(),
+                request.medioPago(), request.nota(), LocalDateTime.now());
 
-        reserva.setCompradorId(compradorId);
-        reserva.setMontoTotal(montoTotal);
-        reserva.setEstado(EstadoReserva.PENDIENTE);
-        reserva.setFechaCreacion(ahora);
-        reserva.setFechaLimiteConfirmacion(ahora.plusMinutes(10));
-
-        // 6. Persistir reserva
         Reserva guardada = reservaRepository.save(reserva);
 
-        // 7. Evento para notificaciones (Observer)
-        EventoReserva evento = EventoReserva.builder()
-                .tipo(TipoEvento.RESERVA_CREADA)
-                .reservaId(guardada.getId())
-                .platoId(plato.getId())
-                .timestamp(ahora)
-                .payload("Reserva creada por " + reserva.getCantidadPorciones() + " porciones. Monto: " + montoTotal)
-                .build();
-        eventoReservaRepository.save(evento);
+        // Publicar evento (Observer)
+        publicador.publicar(EventoReserva.de(TipoEvento.RESERVA_CREADA, guardada, Map.of()));
 
-        // 8. Conjunto residencial de la cocinera
         String conjunto = perfilCocineraRepository.findById(plato.getCocineraId())
                 .map(PerfilCocinera::getConjuntoResidencial)
                 .orElse("Conjunto Residencial");
 
-        return reservaMapper.toResponseDTO(guardada, plato.getNombre(), conjunto);
+        return reservaMapper.toResponse(guardada);
     }
-}
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
-@Service
-@RequiredArgsConstructor
-public class ReservaServiceImpl implements com.ollacercana.service.ReservaService {
-
-    private static final Logger log = LoggerFactory.getLogger(ReservaServiceImpl.class);
-
-    private final ReservaRepository reservaRepository;
-    private final PlatoRepository platoRepository;
-    private final ReporteRepository reporteRepository;
-    private final PublicadorEventosReserva publicador;
+    // ============ HU-12: decisión de la cocinera ============
 
     @Override
     @Transactional(readOnly = true)
@@ -125,7 +89,7 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
         return reservaRepository
                 .findByCocineraIdAndEstadoOrderByFechaLimiteConfirmacionAsc(cocineraId, EstadoReserva.PENDIENTE)
                 .stream()
-                .filter(reserva -> !reserva.estaVencida(ahora))
+                .filter(r -> !r.estaVencida(ahora))
                 .toList();
     }
 
@@ -143,23 +107,14 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
         };
     }
 
-    @Override
-    @Transactional
-    public Reserva confirmar(UUID reservaId, LocalDateTime horaEstimada) {
-        return confirmar(buscar(reservaId), horaEstimada);
-    }
-
-    @Override
-    @Transactional
-    public Reserva rechazar(UUID reservaId, MotivoRechazo motivo, String comentario) {
-        return rechazar(buscar(reservaId), motivo, comentario);
-    }
+    // ============ RN-04 / RN-25: expiración y recordatorio ============
 
     @Override
     @Transactional(readOnly = true)
     public List<UUID> buscarReservasVencidas() {
         return reservaRepository
-                .findByEstadoAndFechaLimiteConfirmacionLessThanEqual(EstadoReserva.PENDIENTE, LocalDateTime.now())
+                .findByEstadoAndFechaLimiteConfirmacionLessThanEqual(
+                        EstadoReserva.PENDIENTE, LocalDateTime.now())
                 .stream()
                 .map(Reserva::getId)
                 .toList();
@@ -170,7 +125,6 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
     public Reserva expirar(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
         LocalDateTime ahora = LocalDateTime.now();
-
 
         if (!reserva.estaPendiente() || !reserva.estaVencida(ahora)) {
             return reserva;
@@ -211,16 +165,19 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
         reserva.marcarRecordatorioEnviado();
         Reserva guardada = guardar(reserva);
 
-        long minutosRestantes = Math.max(1, Duration.between(ahora, reserva.getFechaLimiteConfirmacion()).toMinutes());
+        long minutosRestantes = Math.max(1,
+                Duration.between(ahora, reserva.getFechaLimiteConfirmacion()).toMinutes());
         publicador.publicar(EventoReserva.de(
-                TipoEvento.RECORDATORIO_RESERVA, guardada, Map.of("minutosRestantes", minutosRestantes)));
+                TipoEvento.RECORDATORIO_RESERVA, guardada,
+                Map.of("minutosRestantes", minutosRestantes)));
     }
+
+    // ============ HU-23: cierre de transacción ============
 
     @Override
     @Transactional
     public Reserva completar(UUID reservaId, String comentario) {
         Reserva reserva = buscar(reservaId);
-        // Escenario 4: si no está CONFIRMADA se rechaza antes de mirar cualquier otra cosa.
         reserva.verificarQueEstaConfirmada();
         verificarSinReporteAbierto(reserva);
         return cerrar(reserva, comentario, false);
@@ -241,12 +198,9 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
     @Transactional
     public Reserva completarAutomaticamente(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
-
-
         if (!reserva.cierreAutomaticoVencido(LocalDateTime.now())) {
             return reserva;
         }
-
         if (tieneReporteAbierto(reserva)) {
             log.info("La reserva {} tiene un reporte abierto; no se completa automáticamente", reservaId);
             return reserva;
@@ -254,35 +208,14 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
         return cerrar(reserva, null, true);
     }
 
-    // ============ Lógica interna ============
-
-    private Reserva cerrar(Reserva reserva, String comentario, boolean automatica) {
-        reserva.completar(comentario, LocalDateTime.now());
-        Reserva guardada = guardar(reserva);
-
-        publicador.publicar(EventoReserva.de(
-                TipoEvento.RESERVA_COMPLETADA, guardada, Map.of("automatica", automatica)));
-        return guardada;
-    }
-
-    private void verificarSinReporteAbierto(Reserva reserva) {
-        if (tieneReporteAbierto(reserva)) {
-            throw new ReglaDeNegocioException(
-                    "No se puede cerrar la transacción: la reserva tiene un reporte abierto pendiente de moderación");
-        }
-    }
-
-    private boolean tieneReporteAbierto(Reserva reserva) {
-        return reporteRepository.existsByReservaIdAndEstado(reserva.getId(), EstadoReporte.ABIERTO);
-    }
+    // ============ Helpers privados ============
 
     private Reserva confirmar(Reserva reserva, LocalDateTime horaEstimada) {
-        // Las porciones ya se descontaron al crear la reserva: al confirmar se conservan.
         reserva.confirmar(horaEstimada, LocalDateTime.now());
         Reserva guardada = guardar(reserva);
-
         publicador.publicar(EventoReserva.de(
-                TipoEvento.RESERVA_CONFIRMADA, guardada, Map.of("horaEstimada", guardada.getHoraEstimadaEntrega())));
+                TipoEvento.RESERVA_CONFIRMADA, guardada,
+                Map.of("horaEstimada", guardada.getHoraEstimadaEntrega())));
         return guardada;
     }
 
@@ -300,18 +233,34 @@ public class ReservaServiceImpl implements com.ollacercana.service.ReservaServic
         return guardada;
     }
 
-    /**
-     * RN-03: devuelve al plato las porciones que tenía comprometidas la reserva.
-     * Si el plato ya no existe (fue eliminado) no hay nada que devolver.
-     */
+    private Reserva cerrar(Reserva reserva, String comentario, boolean automatica) {
+        reserva.completar(comentario, LocalDateTime.now());
+        Reserva guardada = guardar(reserva);
+        publicador.publicar(EventoReserva.de(
+                TipoEvento.RESERVA_COMPLETADA, guardada,
+                Map.of("automatica", automatica)));
+        return guardada;
+    }
+
+    private void verificarSinReporteAbierto(Reserva reserva) {
+        if (tieneReporteAbierto(reserva)) {
+            throw new ReglaDeNegocioException(
+                    "No se puede cerrar la transacción: la reserva tiene un reporte abierto");
+        }
+    }
+
+    private boolean tieneReporteAbierto(Reserva reserva) {
+        return reporteRepository.existsByReservaIdAndEstado(reserva.getId(), EstadoReporte.ABIERTO);
+    }
+
     private void liberarPorciones(Reserva reserva) {
         platoRepository.findById(reserva.getPlatoId()).ifPresentOrElse(
                 plato -> {
                     plato.liberarPorciones(reserva.getCantidadPorciones());
                     platoRepository.save(plato);
                 },
-                () -> log.warn("El plato {} de la reserva {} ya no existe; no hay porciones que devolver",
-                        reserva.getPlatoId(), reserva.getId())
+                () -> log.warn("El plato {} ya no existe; no hay porciones que devolver",
+                        reserva.getPlatoId())
         );
     }
 

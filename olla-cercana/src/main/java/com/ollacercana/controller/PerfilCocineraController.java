@@ -45,7 +45,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
             @PathVariable UUID id,
             @Valid @RequestBody VerificarOtpRequestDTO request) {
         perfilService.verificarTelefono(id, request.getCodigo());
-        return ResponseEntity.ok(Map.of("mensaje", "Teléfono verificado exitosamente"));
+        return ResponseEntity.ok(Map.of("message", "Teléfono verificado exitosamente"));
     }
 
     @Override

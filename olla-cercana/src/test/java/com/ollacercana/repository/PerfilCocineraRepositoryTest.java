@@ -30,7 +30,7 @@ class PerfilCocineraRepositoryTest {
                 .identidad(Identidad.builder().nombre("Maria Perez").correo("maria@gmail.com").celular("3001112233").build())
                 .credenciales(Credenciales.builder().contrasenaHash("Hash123").build())
                 .roles(Set.of(Rol.COCINERA))
-                .estado(EstadoCuenta.ACTIVO)
+                .estado(EstadoCuenta.ACTIVA)
                 .build();
         cuenta = cuentaRepository.save(cuenta);
 

@@ -139,7 +139,7 @@ class ReservaControllerCierreTest {
 
         com.ollacercana.model.domain.Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
         assertEquals(EstadoReserva.CONFIRMADA, guardada.getEstado());
-        assertEquals(com.ollacercana.model.domain.EstadoChat.ACTIVO, guardada.getEstadoChat());
+        assertEquals(com.ollacercana.model.domain.EstadoChat.ABIERTO, guardada.getEstadoChat());
     }
 
     @Test

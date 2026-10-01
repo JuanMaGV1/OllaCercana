@@ -11,7 +11,7 @@ import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.service.PlatoService;
-import com.ollacercana.util.GeoUtils;
+import com.ollacercana.utils.GeoUtils;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;

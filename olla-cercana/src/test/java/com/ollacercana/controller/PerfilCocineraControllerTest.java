@@ -108,7 +108,7 @@ class PerfilCocineraControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mensaje").value("Teléfono verificado exitosamente"));
+                .andExpect(jsonPath("$.message").value("Teléfono verificado exitosamente"));
     }
 
     @Test
@@ -125,6 +125,6 @@ class PerfilCocineraControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensaje").value("Código OTP inválido o expirado"));
+                .andExpect(jsonPath("$.message").value("Código OTP inválido o expirado"));
     }
 }

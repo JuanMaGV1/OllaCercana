@@ -1,4 +1,4 @@
-package com.ollacercana.util;
+package com.ollacercana.utils;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

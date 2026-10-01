@@ -50,4 +50,18 @@ public class Notificacion {
     public void marcarLeida() {
         this.leida = true;
     }
+
+    @PrePersist
+    @PreUpdate
+    protected void validarDestinatario() {
+        if (compradorId == null && cocineraId == null) {
+            throw new IllegalStateException("La notificación debe tener un destinatario");
+        }
+        if (compradorId != null && cocineraId != null) {
+            throw new IllegalStateException("La notificación no puede tener ambos destinatarios");
+        }
+        if (fechaCreacion == null) {
+            this.fechaCreacion = LocalDateTime.now();
+        }
+    }
 }

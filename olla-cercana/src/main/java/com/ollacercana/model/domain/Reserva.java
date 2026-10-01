@@ -1,6 +1,9 @@
 package com.ollacercana.model.domain;
 
-import com.ollacercana.exception.*;
+import com.ollacercana.exception.DecisionReservaInvalidaException;
+import com.ollacercana.exception.ReservaNoConfirmadaException;
+import com.ollacercana.exception.ReservaNoPendienteException;
+import com.ollacercana.exception.ReservaVencidaException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +11,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Entidad Reserva (agregado raíz).
+ * Cubre HU-12 (confirmar/rechazar) y HU-23 (completar transacción).
+ */
 @Entity
 @Table(name = "reservas")
 @Getter
@@ -71,7 +78,7 @@ public class Reserva {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private EstadoChat estadoChat = EstadoChat.INACTIVO;
+    private EstadoChat estadoChat = EstadoChat.SOLO_LECTURA;
 
     private LocalDateTime fechaCompletada;
 
@@ -83,14 +90,19 @@ public class Reserva {
     @Version
     private Integer version;
 
-    // ============ Métodos de negocio ============
+    // ============ Reglas de negocio ============
 
     public static Reserva crear(Plato plato, Long compradorId, int cantidadPorciones,
                                 MedioPago medioPago, String notaComprador, LocalDateTime ahora) {
-        if (plato == null) throw new IllegalArgumentException("La reserva debe estar asociada a un plato");
-        if (cantidadPorciones <= 0) throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
+        if (plato == null) {
+            throw new IllegalArgumentException("La reserva debe estar asociada a un plato");
+        }
+        if (cantidadPorciones <= 0) {
+            throw new IllegalArgumentException("La cantidad de porciones debe ser mayor a 0");
+        }
 
-        BigDecimal monto = plato.getPrecioPorcion() == null ? null
+        BigDecimal monto = plato.getPrecioPorcion() == null
+                ? null
                 : plato.getPrecioPorcion().multiply(BigDecimal.valueOf(cantidadPorciones));
 
         return Reserva.builder()
@@ -111,26 +123,32 @@ public class Reserva {
         validarQueSePuedeDecidir(ahora);
         if (horaEstimada == null || !horaEstimada.isAfter(ahora)) {
             throw new DecisionReservaInvalidaException(
-                    "La hora estimada debe ser posterior al momento actual");
+                    "La hora estimada de entrega es obligatoria y debe ser posterior al momento actual");
         }
+
         this.estado = EstadoReserva.CONFIRMADA;
         this.horaEstimadaEntrega = horaEstimada;
         this.fechaDecision = ahora;
         this.chatHabilitado = true;
-        this.estadoChat = EstadoChat.ACTIVO;
+        this.estadoChat = EstadoChat.ABIERTO;
     }
 
     public void rechazar(MotivoRechazo motivo, String comentario, LocalDateTime ahora) {
         validarQueSePuedeDecidir(ahora);
-        if (motivo == null) throw new DecisionReservaInvalidaException("El motivo es obligatorio");
+        if (motivo == null) {
+            throw new DecisionReservaInvalidaException("El motivo de rechazo es obligatorio");
+        }
 
         String comentarioLimpio = (comentario == null || comentario.isBlank()) ? null : comentario.trim();
         if (motivo == MotivoRechazo.OTRO && comentarioLimpio == null) {
-            throw new DecisionReservaInvalidaException("El comentario es obligatorio cuando el motivo es OTRO");
+            throw new DecisionReservaInvalidaException(
+                    "El comentario es obligatorio cuando el motivo es OTRO");
         }
         if (comentarioLimpio != null && comentarioLimpio.length() > MAX_CARACTERES_COMENTARIO) {
-            throw new DecisionReservaInvalidaException("Comentario demasiado largo");
+            throw new DecisionReservaInvalidaException(
+                    "El comentario no puede superar los " + MAX_CARACTERES_COMENTARIO + " caracteres");
         }
+
         this.estado = EstadoReserva.RECHAZADA;
         this.motivoRechazo = motivo;
         this.comentarioRechazo = comentarioLimpio;
@@ -138,26 +156,34 @@ public class Reserva {
     }
 
     public void expirar(LocalDateTime ahora) {
-        if (this.estado != EstadoReserva.PENDIENTE) throw new ReservaNoPendienteException(this.estado);
-        if (!estaVencida(ahora)) throw new IllegalStateException("La reserva aún no vence");
+        if (this.estado != EstadoReserva.PENDIENTE) {
+            throw new ReservaNoPendienteException(this.estado);
+        }
+        if (!estaVencida(ahora)) {
+            throw new IllegalStateException("La reserva todavía está dentro del tiempo de confirmación");
+        }
         this.estado = EstadoReserva.EXPIRADA;
     }
 
     public void completar(String comentario, LocalDateTime ahora) {
         verificarQueEstaConfirmada();
-        String c = (comentario == null || comentario.isBlank()) ? null : comentario.trim();
-        if (c != null && c.length() > MAX_CARACTERES_COMENTARIO) {
-            throw new IllegalArgumentException("Comentario demasiado largo");
+        String comentarioLimpio = (comentario == null || comentario.isBlank()) ? null : comentario.trim();
+        if (comentarioLimpio != null && comentarioLimpio.length() > MAX_CARACTERES_COMENTARIO) {
+            throw new IllegalArgumentException(
+                    "El comentario no puede superar los " + MAX_CARACTERES_COMENTARIO + " caracteres");
         }
+
         this.estado = EstadoReserva.COMPLETADA;
         this.estadoChat = EstadoChat.SOLO_LECTURA;
         this.calificacionHabilitada = true;
-        this.comentarioCierre = c;
+        this.comentarioCierre = comentarioLimpio;
         this.fechaCompletada = ahora;
     }
 
     public void verificarQueEstaConfirmada() {
-        if (this.estado != EstadoReserva.CONFIRMADA) throw new ReservaNoConfirmadaException(this.estado);
+        if (this.estado != EstadoReserva.CONFIRMADA) {
+            throw new ReservaNoConfirmadaException(this.estado);
+        }
     }
 
     public boolean cierreAutomaticoVencido(LocalDateTime ahora) {
@@ -173,13 +199,28 @@ public class Reserva {
                 && !estaVencida(ahora);
     }
 
-    public void marcarRecordatorioEnviado() { this.recordatorioEnviado = true; }
-    public boolean estaPendiente() { return this.estado == EstadoReserva.PENDIENTE; }
-    public boolean estaVencida(LocalDateTime ahora) { return !ahora.isBefore(this.fechaLimiteConfirmacion); }
-    public boolean perteneceACocinera(UUID idCocinera) { return this.cocineraId != null && this.cocineraId.equals(idCocinera); }
+    public void marcarRecordatorioEnviado() {
+        this.recordatorioEnviado = true;
+    }
+
+    public boolean estaPendiente() {
+        return this.estado == EstadoReserva.PENDIENTE;
+    }
+
+    public boolean estaVencida(LocalDateTime ahora) {
+        return !ahora.isBefore(this.fechaLimiteConfirmacion);
+    }
+
+    public boolean perteneceACocinera(UUID idCocinera) {
+        return this.cocineraId != null && this.cocineraId.equals(idCocinera);
+    }
 
     private void validarQueSePuedeDecidir(LocalDateTime ahora) {
-        if (!estaPendiente()) throw new ReservaNoPendienteException(this.estado);
-        if (estaVencida(ahora)) throw new ReservaVencidaException();
+        if (!estaPendiente()) {
+            throw new ReservaNoPendienteException(this.estado);
+        }
+        if (estaVencida(ahora)) {
+            throw new ReservaVencidaException();
+        }
     }
 }

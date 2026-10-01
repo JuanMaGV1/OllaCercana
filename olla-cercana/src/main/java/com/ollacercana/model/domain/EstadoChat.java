@@ -1,13 +1,11 @@
 package com.ollacercana.model.domain;
 
 /**
- * Estado del chat de coordinación de una reserva (HU-12 / HU-23).
+ * Estado del chat ligado a una reserva (RN-17).
+ * - ABIERTO: la reserva está Confirmada y ambos pueden escribir.
+ * - SOLO_LECTURA: la reserva se cerró; solo se puede consultar.
  */
 public enum EstadoChat {
-    /** Aún no hay chat: la reserva no ha sido confirmada. */
-    INACTIVO,
-    /** La reserva está confirmada y las partes pueden enviarse mensajes. */
-    ACTIVO,
-    /** RN-17: la transacción se cerró; el chat solo se puede consultar. */
+    ABIERTO,
     SOLO_LECTURA
 }
