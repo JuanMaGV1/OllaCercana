@@ -10,6 +10,7 @@ import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReporteRepository;
 import com.ollacercana.repository.ReservaRepository;
+import com.ollacercana.service.impl.ReservaServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,12 +52,12 @@ class ReservaServiceImplCierreTest {
     @Mock
     private ObservadorReserva observador;
 
-    private com.ollacercana.service.ReservaServiceImpl reservaService;
+    private ReservaServiceImpl reservaService;
 
     @BeforeEach
     void setUp() {
         PublicadorEventosReserva publicador = new PublicadorEventosReserva(List.of(observador));
-        reservaService = new com.ollacercana.service.ReservaServiceImpl(reservaRepository, platoRepository, reporteRepository, publicador);
+        reservaService = new ReservaServiceImpl(reservaRepository, platoRepository, reporteRepository, publicador);
 
         lenient().when(reservaRepository.saveAndFlush(any(com.ollacercana.domain.Reserva.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

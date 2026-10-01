@@ -1,15 +1,13 @@
 package com.ollacercana.service;
 
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
-
+import com.ollacercana.domain.PerfilCocinera;
 import java.util.List;
 import java.util.UUID;
 
 public interface IPerfilCocineraService {
-    PerfilCocineraResponseDTO crearPerfil(PerfilCocineraRequestDTO request);
-    PerfilCocineraResponseDTO actualizarPerfil(UUID id, PerfilCocineraRequestDTO request);
+    PerfilCocinera crearPerfil(PerfilCocinera perfil, Long cuentaId);
+    PerfilCocinera actualizarPerfil(UUID id, PerfilCocinera perfilActualizado);
     boolean verificarTelefono(UUID perfilId, String otp);
-    PerfilCocineraResponseDTO obtenerPorCuentaId(Long cuentaId);
-    List<PerfilCocineraResponseDTO> listarDestacadas();
+    PerfilCocinera obtenerPorCuentaId(Long cuentaId);
+    List<PerfilCocinera> listarDestacadas();
 }

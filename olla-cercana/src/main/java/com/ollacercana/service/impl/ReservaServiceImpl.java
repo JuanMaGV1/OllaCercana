@@ -1,4 +1,4 @@
-package com.ollacercana.service;
+package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
@@ -7,6 +7,7 @@ import com.ollacercana.exception.*;
 import com.ollacercana.mapper.ReservaMapper;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.*;
+import com.ollacercana.service.ReservaService;
 import com.ollacercana.validator.ReservaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@RequiredArgsConstructor
 public class ReservaServiceImpl implements ReservaService {
 
     private final ReservaRepository reservaRepository;

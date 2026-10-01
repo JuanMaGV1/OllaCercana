@@ -1,10 +1,11 @@
-package com.ollacercana.service;
+package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.Cuenta;
 import com.ollacercana.domain.EstadoCuenta;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.mapper.CuentaEntityMapper;
 import com.ollacercana.repository.CuentaRepository;
+import com.ollacercana.service.ICuentaService;
 import com.ollacercana.validator.ICuentaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

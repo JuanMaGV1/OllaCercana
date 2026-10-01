@@ -8,6 +8,7 @@ import com.ollacercana.mapper.ReservaMapper;
 import com.ollacercana.observer.ObservadorReserva;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.*;
+import com.ollacercana.service.impl.ReservaServiceImpl;
 import com.ollacercana.validator.ReservaValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

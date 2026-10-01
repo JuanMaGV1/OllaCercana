@@ -1,16 +1,14 @@
-package com.ollacercana.service;
+package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.CodigoOTP;
 import com.ollacercana.domain.Cuenta;
 import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.exception.ResourceNotFoundException;
-import com.ollacercana.mapper.PerfilCocineraMapper;
 import com.ollacercana.repository.CodigoOTPRepository;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.repository.PerfilCocineraRepository;
+import com.ollacercana.service.IPerfilCocineraService;
 import com.ollacercana.validator.IPerfilCocineraValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,24 +28,20 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
     private final PerfilCocineraRepository perfilRepository;
     private final CuentaRepository cuentaRepository;
     private final CodigoOTPRepository codigoOTPRepository;
-    private final PerfilCocineraMapper perfilMapper;
     private final IPerfilCocineraValidator validator;
 
     @Override
     @Transactional
-    public PerfilCocineraResponseDTO crearPerfil(PerfilCocineraRequestDTO request) {
-        Cuenta cuenta = cuentaRepository.findById(request.getCuentaId())
-                .orElseThrow(() -> new ConflictoException("La cuenta asociada con ID " + request.getCuentaId() + " no existe"));
+    public PerfilCocinera crearPerfil(PerfilCocinera perfil, Long cuentaId) {
+        log.info("Creando perfil de cocinera para cuentaId: {}", cuentaId);
+        Cuenta cuenta = cuentaRepository.findById(cuentaId)
+                .orElseThrow(() -> new ConflictoException("La cuenta asociada con ID " + cuentaId + " no existe"));
 
-        validator.validarParaCrear(request, cuenta);
-
-        PerfilCocinera perfil = perfilMapper.toDomain(request);
+        validator.validarParaCrear(perfil, cuenta);
         perfil.setCuenta(cuenta);
 
         PerfilCocinera guardado = perfilRepository.save(perfil);
-        log.info("Perfil de cocinera creado con ID: {}", guardado.getId());
 
-        // Generar código OTP de 6 dígitos para verificación telefónica
         String codigoGenerado = String.format("%06d", new Random().nextInt(999999));
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(guardado.getId())
@@ -56,33 +50,27 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
                 .usado(false)
                 .build();
         codigoOTPRepository.save(otp);
+        log.info("OTP generado para perfil {}: {}", guardado.getId(), codigoGenerado);
 
-        log.info("=================================================");
-        log.info(" CÓDIGO OTP GENERADO PARA PERFIL {}: {}", guardado.getId(), codigoGenerado);
-        log.info("=================================================");
-
-        return perfilMapper.toResponseDTO(guardado);
+        return guardado;
     }
 
     @Override
     @Transactional
-    public PerfilCocineraResponseDTO actualizarPerfil(UUID id, PerfilCocineraRequestDTO request) {
+    public PerfilCocinera actualizarPerfil(UUID id, PerfilCocinera perfilActualizado) {
         PerfilCocinera perfilExistente = perfilRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PerfilCocinera", id));
 
-        validator.validarParaActualizar(id, request);
+        validator.validarParaActualizar(id, perfilActualizado);
 
-        perfilExistente.setPresentacion(request.getPresentacion());
-        perfilExistente.setConjuntoResidencial(request.getConjuntoResidencial());
-        perfilExistente.setEspecialidades(request.getEspecialidades());
-        perfilExistente.setMediosPago(request.getMediosPago());
-        perfilExistente.setNumeroNequi(request.getNumeroNequi());
-        perfilExistente.setNumeroDaviplata(request.getNumeroDaviplata());
+        perfilExistente.setPresentacion(perfilActualizado.getPresentacion());
+        perfilExistente.setConjuntoResidencial(perfilActualizado.getConjuntoResidencial());
+        perfilExistente.setEspecialidades(perfilActualizado.getEspecialidades());
+        perfilExistente.setMediosPago(perfilActualizado.getMediosPago());
+        perfilExistente.setNumeroNequi(perfilActualizado.getNumeroNequi());
+        perfilExistente.setNumeroDaviplata(perfilActualizado.getNumeroDaviplata());
 
-        PerfilCocinera actualizado = perfilRepository.save(perfilExistente);
-        log.info("Perfil de cocinera actualizado con ID: {}", actualizado.getId());
-
-        return perfilMapper.toResponseDTO(actualizado);
+        return perfilRepository.save(perfilExistente);
     }
 
     @Override
@@ -92,7 +80,7 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
                 .orElseThrow(() -> new ResourceNotFoundException("PerfilCocinera", perfilId));
 
         CodigoOTP codigoOTP = codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId)
-                .orElseThrow(() -> new ConflictoException("No hay ningún código OTP activo para este perfil. Debe solicitar uno nuevo."));
+                .orElseThrow(() -> new ConflictoException("No hay ningún código OTP activo para este perfil"));
 
         if (!codigoOTP.esValido(otp)) {
             throw new ConflictoException("El código OTP ingresado es inválido o ya ha expirado");
@@ -106,24 +94,19 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
             perfil.getCuenta().getCredenciales().setCelularVerificado(true);
         }
         perfilRepository.save(perfil);
-
-        log.info("Teléfono verificado correctamente para el perfil {}", perfilId);
         return true;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PerfilCocineraResponseDTO obtenerPorCuentaId(Long cuentaId) {
-        PerfilCocinera perfil = perfilRepository.findByCuentaId(cuentaId)
-                .orElseThrow(() -> new ConflictoException("No existe perfil asociado a la cuenta ID " + cuentaId));
-        return perfilMapper.toResponseDTO(perfil);
+    public PerfilCocinera obtenerPorCuentaId(Long cuentaId) {
+        return perfilRepository.findByCuentaId(cuentaId)
+                .orElseThrow(() -> new ConflictoException("No existe perfil para la cuenta ID " + cuentaId));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<PerfilCocineraResponseDTO> listarDestacadas() {
-        return perfilRepository.findByEsDestacadaTrue().stream()
-                .map(perfilMapper::toResponseDTO)
-                .toList();
+    public List<PerfilCocinera> listarDestacadas() {
+        return perfilRepository.findByEsDestacadaTrue();
     }
 }
