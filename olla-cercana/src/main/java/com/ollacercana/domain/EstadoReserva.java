@@ -1,7 +1,7 @@
 package com.ollacercana.domain;
 
 /**
- * Estados posibles de una reserva (ver diagrama de clases).
+ * Estados posibles de una reserva.
  */
 public enum EstadoReserva {
     PENDIENTE,
@@ -10,5 +10,4 @@ public enum EstadoReserva {
     EXPIRADA,
     CANCELADA,
     COMPLETADA
-}
 }

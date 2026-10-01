@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -29,36 +32,31 @@ public class EventoReserva {
     @Column(nullable = false)
     private UUID platoId;
 
+    private Long compradorId;
+
+    private UUID cocineraId;
+
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
+    @Transient
+    private Map<String, Object> payload;
+
     @Column(columnDefinition = "TEXT")
-    private String payload;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+    private String payloadJson;
 
-/**
- * Evento de dominio que se publica cuando cambia una reserva (patrón Observer).
- * El dominio no sabe quién lo consume: notificaciones in-app, push, WebSocket, etc.
- */
-public record EventoReserva(
-        UUID id,
-        TipoEvento tipo,
-        UUID reservaId,
-        UUID platoId,
-        Long compradorId,
-        UUID cocineraId,
-        LocalDateTime timestamp,
-        Map<String, Object> payload
-) {
-
-    public EventoReserva {
-        payload = payload == null
-                ? Map.of()
-                : Collections.unmodifiableMap(new HashMap<>(payload));
+    public EventoReserva(UUID id, TipoEvento tipo, UUID reservaId, UUID platoId,
+                         Long compradorId, UUID cocineraId, LocalDateTime timestamp,
+                         Map<String, Object> payload) {
+        this.id = id != null ? id : UUID.randomUUID();
+        this.tipo = tipo;
+        this.reservaId = reservaId;
+        this.platoId = platoId;
+        this.compradorId = compradorId;
+        this.cocineraId = cocineraId;
+        this.timestamp = timestamp != null ? timestamp : LocalDateTime.now();
+        this.payload = payload == null ? Map.of() : Collections.unmodifiableMap(new HashMap<>(payload));
+        this.payloadJson = this.payload.toString();
     }
 
     public static EventoReserva de(TipoEvento tipo, Reserva reserva, Map<String, Object> payload) {
@@ -72,5 +70,16 @@ public record EventoReserva(
                 LocalDateTime.now(),
                 payload
         );
+    }
+
+    // Métodos accesores para compatibilidad con el observador
+    public TipoEvento tipo() { return this.tipo; }
+    public UUID reservaId() { return this.reservaId; }
+    public UUID platoId() { return this.platoId; }
+    public Long compradorId() { return this.compradorId; }
+    public UUID cocineraId() { return this.cocineraId; }
+    public LocalDateTime timestamp() { return this.timestamp; }
+    public Map<String, Object> payload() {
+        return this.payload != null ? this.payload : Map.of();
     }
 }
