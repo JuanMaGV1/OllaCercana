@@ -9,6 +9,7 @@ import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.mapper.CuentaEntityMapper;
 import com.ollacercana.repository.CuentaRepository;
+import com.ollacercana.service.impl.CuentaServiceImpl;
 import com.ollacercana.validator.ICuentaValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

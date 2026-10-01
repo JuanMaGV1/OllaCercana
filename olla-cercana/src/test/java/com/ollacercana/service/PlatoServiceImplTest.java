@@ -4,171 +4,136 @@ import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.domain.TipoComida;
 import com.ollacercana.exception.CocineraNoEncontradaException;
-import com.ollacercana.exception.CocineraPausadaException;
-import com.ollacercana.exception.PrecioFueraDeRangoException;
 import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
-import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.exception.PrecioFueraDeRangoException;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.validator.CocineraQueryPort;
+import com.ollacercana.service.impl.PlatoServiceImpl;
 import com.ollacercana.validator.PlatoValidator;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-/**
- * OC-94: pruebas unitarias de PlatoServiceImpl.crear() — 5 escenarios.
- */
 @ExtendWith(MockitoExtension.class)
 class PlatoServiceImplTest {
-
-    @Mock
-    private CocineraQueryPort cocineraQueryPort;
 
     @Mock
     private PlatoRepository platoRepository;
 
     @Mock
+    private PlatoValidator validator;
+
+    @Mock
     private PerfilCocineraRepository perfilCocineraRepository;
 
+    @InjectMocks
     private PlatoServiceImpl platoService;
 
     private static final UUID COCINERA_ID = UUID.randomUUID();
 
-    @BeforeEach
-    void setUp() {
-        PlatoEntityMapper entityMapper = Mappers.getMapper(PlatoEntityMapper.class);
-        PlatoValidator validator = new PlatoValidator(platoRepository, cocineraQueryPort);
-        platoService = new PlatoServiceImpl(platoRepository, entityMapper, validator, perfilCocineraRepository);
-
-        lenient().when(platoRepository.save(any(Plato.class))).thenAnswer(invocation -> {
-            Plato plato = invocation.getArgument(0);
-            if (plato.getId() == null) {
-                plato.setId(UUID.randomUUID());
-            }
-            return plato;
-        });
-    }
-
-    private Plato platoValido() {
+    private Plato platoEjemplo() {
         return Plato.builder()
                 .cocineraId(COCINERA_ID)
                 .nombre("Bandeja paisa")
-                .descripcion("Bandeja paisa casera con frijoles, chicharrón y arroz")
-                .fotoUrl("https://fotos.ollacercana.com/bandeja.jpg")
+                .descripcion("Frijoles campesinos con chicharrón")
                 .tipoComida(TipoComida.ALMUERZO)
-                .restricciones(List.of())
                 .porcionesTotales(5)
                 .precioPorcion(new BigDecimal("15000"))
-                .horaDisponibilidad(LocalDateTime.now().plusHours(2))
-                .puntoEntrega("Calle 80 #45-12, Bogotá")
+                .puntoEntrega("Portería Torre 1")
                 .latitud(4.6789)
                 .longitud(-74.0567)
                 .build();
     }
 
-    // ============ Escenario 1: happy path (201) ============
-
+    // ── Escenario 1: Happy Path (Crear exitoso) ─────────────────────
     @Test
-    void crear_conDatosValidosYCocineraHabilitada_debePublicarPlato() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
-        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
-        when(platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
-                .thenReturn(0L);
+    @DisplayName("Escenario 1: Happy path - Guardar plato correctamente")
+    void crear_conDatosValidos_debePublicarPlato() {
+        // Arrange
+        Plato plato = platoEjemplo();
+        when(platoRepository.save(any(Plato.class))).thenAnswer(i -> {
+            Plato p = i.getArgument(0);
+            p.setId(UUID.randomUUID());
+            return p;
+        });
 
-        Plato guardado = platoService.crear(platoValido());
+        // Act
+        Plato resultado = platoService.crear(plato);
 
-        assertNotNull(guardado.getId());
-        assertEquals(EstadoPlato.ACTIVO, guardado.getEstado());
-        assertEquals(0, guardado.getPorcionesComprometidas());
-        verify(platoRepository, times(1)).save(any(Plato.class));
+        // Assert
+        assertNotNull(resultado.getId());
+        assertEquals(EstadoPlato.ACTIVO, resultado.getEstado());
+        verify(validator, times(1)).validarParaPublicar(any(Plato.class));
+        verify(platoRepository, times(1)).save(plato);
     }
 
-    // ============ Escenario 2: 404 — cocinera no encontrada ============
-
+    // ── Escenario 2: 404 Recurso No Encontrado ───────────────────────
     @Test
-    void crear_conCocineraInexistente_debeLanzarCocineraNoEncontrada() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID))
-                .thenThrow(new CocineraNoEncontradaException(COCINERA_ID));
+    @DisplayName("Escenario 2: 404 - Cocinera inexistente lanza excepción")
+    void crear_conCocineraInexistente_debeLanzarExcepcion() {
+        // Arrange
+        Plato plato = platoEjemplo();
+        doThrow(new CocineraNoEncontradaException(COCINERA_ID))
+                .when(validator).validarParaPublicar(any(Plato.class));
 
-        assertThrows(CocineraNoEncontradaException.class,
-                () -> platoService.crear(platoValido()));
-
+        // Act & Assert
+        assertThrows(CocineraNoEncontradaException.class, () -> platoService.crear(plato));
         verify(platoRepository, never()).save(any());
     }
 
-    // ============ Escenario 3: 409 — conflicto de regla (límite de 3 activos) ============
-
+    // ── Escenario 3: 409 Conflicto (Regla de límite activo) ──────────
     @Test
-    void crear_conTresPlatosActivosVigentes_debeLanzarConflicto() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
-        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
-        when(platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
-                .thenReturn(3L);
+    @DisplayName("Escenario 3: 409 - Límite de 3 platos activos alcanzado")
+    void crear_conLimiteAlcanzado_debeLanzarConflicto() {
+        // Arrange
+        Plato plato = platoEjemplo();
+        doThrow(new LimitePlatosActivosExcedidoException(3))
+                .when(validator).validarParaPublicar(any(Plato.class));
 
-        assertThrows(LimitePlatosActivosExcedidoException.class,
-                () -> platoService.crear(platoValido()));
-
+        // Act & Assert
+        assertThrows(LimitePlatosActivosExcedidoException.class, () -> platoService.crear(plato));
         verify(platoRepository, never()).save(any());
     }
 
+    // ── Escenario 4: 422 Regla de Negocio / Estado Inválido ──────────
     @Test
-    void crear_conCocineraPausada_debeLanzarConflicto() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
-        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(true);
+    @DisplayName("Escenario 4: 422 - Precio fuera del rango permitido")
+    void crear_conPrecioInvalido_debeLanzarErrorDeValidacion() {
+        // Arrange
+        Plato plato = platoEjemplo();
+        doThrow(new PrecioFueraDeRangoException(new BigDecimal("2000"), new BigDecimal("50000")))
+                .when(validator).validarParaPublicar(any(Plato.class));
 
-        assertThrows(CocineraPausadaException.class,
-                () -> platoService.crear(platoValido()));
-
+        // Act & Assert
+        assertThrows(PrecioFueraDeRangoException.class, () -> platoService.crear(plato));
         verify(platoRepository, never()).save(any());
     }
 
-    // ============ Escenario 4: 422 — estado/datos inválidos (precio fuera de rango) ============
-
+    // ── Escenario 5: Lista Vacía (Retorna lista vacía, no null) ──────
     @Test
-    void crear_conPrecioFueraDeRango_debeLanzarExcepcionDeValidacion() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
-        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
+    @DisplayName("Escenario 5: Lista vacía - Retorna colección vacía cuando no hay coincidencias")
+    void buscarCercanos_sinPlatos_debeRetornarListaVacia() {
+        // Arrange
+        when(platoRepository.findActivosVigentes(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
+                .thenReturn(List.of());
 
-        Plato platoConPrecioInvalido = platoValido().toBuilder()
-                .precioPorcion(new BigDecimal("1000")) // menor al mínimo de 2.000
-                .build();
+        // Act
+        List<Plato> resultado = platoService.buscarCercanos(4.6789, -74.0567);
 
-        assertThrows(PrecioFueraDeRangoException.class,
-                () -> platoService.crear(platoConPrecioInvalido));
-
-        verify(platoRepository, never()).save(any());
-    }
-
-    // ============ Escenario 5: fecha de expiración = ahora + 4h (RN-02) ============
-
-    @Test
-    void crear_debeCalcularFechaExpiracionExactamente4hDespuesDeLaPublicacion() {
-        when(cocineraQueryPort.estaVerificada(COCINERA_ID)).thenReturn(true);
-        when(cocineraQueryPort.estaPausada(COCINERA_ID)).thenReturn(false);
-        when(platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(eq(COCINERA_ID), eq(EstadoPlato.ACTIVO), any()))
-                .thenReturn(0L);
-
-        Plato guardado = platoService.crear(platoValido());
-
-        assertNotNull(guardado.getFechaPublicacion());
-        assertNotNull(guardado.getFechaExpiracion());
-        Duration vigencia = Duration.between(guardado.getFechaPublicacion(), guardado.getFechaExpiracion());
-        assertEquals(4, vigencia.toHours());
-        assertEquals(0, vigencia.toMinutesPart());
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
     }
 }

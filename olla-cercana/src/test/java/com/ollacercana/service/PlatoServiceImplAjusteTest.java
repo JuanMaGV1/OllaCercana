@@ -11,8 +11,8 @@ import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
 import com.ollacercana.mapper.PlatoEntityMapper;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.service.impl.PlatoServiceImpl;
 import com.ollacercana.validator.CocineraQueryPort;
-import com.ollacercana.validator.PlatoValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +49,7 @@ class PlatoServiceImplAjusteTest {
     @BeforeEach
     void setUp() {
         PlatoEntityMapper entityMapper = Mappers.getMapper(PlatoEntityMapper.class);
-        PlatoValidator validator = new PlatoValidator(platoRepository, cocineraQueryPort);
+        PlatoValidator.PlatoValidator validator = new PlatoValidator.PlatoValidator(platoRepository, cocineraQueryPort);
         platoService = new PlatoServiceImpl(platoRepository, entityMapper, validator, perfilCocineraRepository);
 
         lenient().when(platoRepository.saveAndFlush(any(Plato.class)))

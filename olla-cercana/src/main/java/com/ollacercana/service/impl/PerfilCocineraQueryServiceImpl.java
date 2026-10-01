@@ -1,4 +1,4 @@
-package com.ollacercana.service;
+package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.exception.CocineraNoEncontradaException;

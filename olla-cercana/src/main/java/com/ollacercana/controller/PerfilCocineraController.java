@@ -1,9 +1,11 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.PerfilCocineraApi;
+import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.dto.request.VerificarOtpRequestDTO;
 import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
+import com.ollacercana.mapper.PerfilCocineraMapper;
 import com.ollacercana.service.IPerfilCocineraService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +23,14 @@ import java.util.UUID;
 public class PerfilCocineraController implements PerfilCocineraApi {
 
     private final IPerfilCocineraService perfilService;
+    private final PerfilCocineraMapper perfilMapper;
 
     @Override
     @PostMapping
     public ResponseEntity<PerfilCocineraResponseDTO> crearPerfil(@Valid @RequestBody PerfilCocineraRequestDTO request) {
-        PerfilCocineraResponseDTO response = perfilService.crearPerfil(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        PerfilCocinera dominio = perfilMapper.toDomain(request);
+        PerfilCocinera creado = perfilService.crearPerfil(dominio, request.getCuentaId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(perfilMapper.toResponseDTO(creado));
     }
 
     @Override
@@ -34,8 +38,9 @@ public class PerfilCocineraController implements PerfilCocineraApi {
     public ResponseEntity<PerfilCocineraResponseDTO> actualizarPerfil(
             @PathVariable UUID id,
             @Valid @RequestBody PerfilCocineraRequestDTO request) {
-        PerfilCocineraResponseDTO response = perfilService.actualizarPerfil(id, request);
-        return ResponseEntity.ok(response);
+        PerfilCocinera dominio = perfilMapper.toDomain(request);
+        PerfilCocinera actualizado = perfilService.actualizarPerfil(id, dominio);
+        return ResponseEntity.ok(perfilMapper.toResponseDTO(actualizado));
     }
 
     @Override
@@ -50,12 +55,14 @@ public class PerfilCocineraController implements PerfilCocineraApi {
     @Override
     @GetMapping("/cuenta/{cuentaId}")
     public ResponseEntity<PerfilCocineraResponseDTO> obtenerPorCuentaId(@PathVariable Long cuentaId) {
-        return ResponseEntity.ok(perfilService.obtenerPorCuentaId(cuentaId));
+        PerfilCocinera perfil = perfilService.obtenerPorCuentaId(cuentaId);
+        return ResponseEntity.ok(perfilMapper.toResponseDTO(perfil));
     }
 
     @Override
     @GetMapping("/destacadas")
     public ResponseEntity<List<PerfilCocineraResponseDTO>> listarDestacadas() {
-        return ResponseEntity.ok(perfilService.listarDestacadas());
+        List<PerfilCocinera> destacadas = perfilService.listarDestacadas();
+        return ResponseEntity.ok(destacadas.stream().map(perfilMapper::toResponseDTO).toList());
     }
 }
