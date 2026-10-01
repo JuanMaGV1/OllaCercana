@@ -1,11 +1,6 @@
 package com.ollacercana.model.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +30,6 @@ public class Plato {
     private Double latitud;
     private Double longitud;
     private String puntoEntrega;
-    private Integer version;
 
     // ============ Reglas de negocio ============
 
@@ -53,7 +47,6 @@ public class Plato {
         this.porcionesComprometidas = 0;
         this.fechaPublicacion = LocalDateTime.now();
         this.fechaExpiracion = this.fechaPublicacion.plusHours(4);
-        this.version = 0;
     }
 
     public void marcarAgotado() {

@@ -1,16 +1,16 @@
 package com.ollacercana.service;
 
-import com.ollacercana.model.dto.response.ReservaResponseDTO;
 import com.ollacercana.model.domain.Reserva;
 import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
 import com.ollacercana.model.dto.request.ReservaRequestDTO;
+import com.ollacercana.model.dto.response.ReservaResponseDTO;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface ReservaService {
 
-    ReservaResponseDTO crear(Long compradorId, ReservaRequestDTO request);
+    ReservaResponseDTO crear(UUID compradorId, ReservaRequestDTO request);
 
     Reserva obtenerPorId(UUID reservaId);
 

@@ -5,7 +5,6 @@ import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
 import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.service.IPerfilCocineraService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,8 +25,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
     @Override
     @PostMapping
     public ResponseEntity<PerfilCocineraResponseDTO> crearPerfil(@Valid @RequestBody PerfilCocineraRequestDTO request) {
-        PerfilCocineraResponseDTO response = perfilService.crearPerfil(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(perfilService.crearPerfil(request));
     }
 
     @Override
@@ -35,8 +33,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
     public ResponseEntity<PerfilCocineraResponseDTO> actualizarPerfil(
             @PathVariable UUID id,
             @Valid @RequestBody PerfilCocineraRequestDTO request) {
-        PerfilCocineraResponseDTO response = perfilService.actualizarPerfil(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(perfilService.actualizarPerfil(id, request));
     }
 
     @Override
@@ -50,7 +47,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
 
     @Override
     @GetMapping("/cuenta/{cuentaId}")
-    public ResponseEntity<PerfilCocineraResponseDTO> obtenerPorCuentaId(@PathVariable Long cuentaId) {
+    public ResponseEntity<PerfilCocineraResponseDTO> obtenerPorCuentaId(@PathVariable UUID cuentaId) {
         return ResponseEntity.ok(perfilService.obtenerPorCuentaId(cuentaId));
     }
 

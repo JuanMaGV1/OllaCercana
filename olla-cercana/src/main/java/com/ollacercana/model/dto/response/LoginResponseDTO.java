@@ -1,5 +1,7 @@
 package com.ollacercana.model.dto.response;
 
+import java.util.UUID;
+
 import com.ollacercana.model.domain.Rol;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,7 +21,7 @@ public class LoginResponseDTO {
     private String token;
 
     @Schema(description = "Identificador único de la cuenta", example = "1")
-    private Long id;
+    private UUID id;
 
     @Schema(description = "Nombre completo del usuario", example = "Carlos Pérez")
     private String nombre;

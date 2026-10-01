@@ -1,21 +1,23 @@
 package com.ollacercana.service.impl;
 
-import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
+import com.ollacercana.mapper.PerfilCocineraEntityMapper;
 import com.ollacercana.mapper.PlatoEntityMapper;
 import com.ollacercana.model.domain.EstadoPlato;
 import com.ollacercana.model.domain.PerfilCocinera;
 import com.ollacercana.model.domain.Plato;
 import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
+import com.ollacercana.persistence.entity.PlatoEntity;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.service.PlatoService;
 import com.ollacercana.utils.GeoUtils;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -28,52 +30,46 @@ public class PlatoServiceImpl implements PlatoService {
 
     private final PlatoRepository repository;
     private final PlatoEntityMapper entityMapper;
+    private final PerfilCocineraEntityMapper perfilMapper;
     private final PlatoValidator validator;
     private final PerfilCocineraRepository perfilCocineraRepository;
 
     @Override
+    @Transactional
     public Plato crear(Plato plato) {
         validator.validarParaPublicar(plato);
         plato.publicar();
 
-        if (plato.getId() == null) {
-            plato.setId(UUID.randomUUID());
-        }
-
-        Plato entidad = entityMapper.toEntity(plato);
-        Plato guardado = repository.save(entidad);
+        PlatoEntity entity = entityMapper.toEntity(plato);
+        PlatoEntity guardado = repository.save(entity);
         return entityMapper.toDomain(guardado);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Plato obtenerPorId(UUID id) {
         return repository.findById(id)
+                .map(entityMapper::toDomain)
                 .orElseThrow(() -> new PlatoNoEncontradoException(id));
     }
 
     @Override
+    @Transactional
     public Plato ajustarDisponibilidad(UUID platoId, AjusteDisponibilidadRequest request) {
-        Plato plato = repository.findById(platoId)
+        PlatoEntity entity = repository.findById(platoId)
                 .orElseThrow(() -> new PlatoNoEncontradoException(platoId));
 
+        Plato plato = entityMapper.toDomain(entity);
         validator.validarAjusteDisponibilidad(plato, request);
-
         plato.ajustarDisponibilidad(request.tipo(), request.cantidad());
-        plato.setVersion(request.version());
 
-        try {
-            return repository.saveAndFlush(plato);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw new ConflictoVersionException(
-                    plato.getVersion(),
-                    plato.getPorcionesTotales(),
-                    plato.getPorcionesComprometidas(),
-                    plato.getEstado().name()
-            );
-        }
+        PlatoEntity actualizado = entityMapper.toEntity(plato);
+        PlatoEntity guardado = repository.saveAndFlush(actualizado);
+        return entityMapper.toDomain(guardado);
     }
 
     @Override
+    @Transactional
     public void eliminar(UUID id) {
         if (!repository.existsById(id)) {
             throw new PlatoNoEncontradoException(id);
@@ -82,18 +78,21 @@ public class PlatoServiceImpl implements PlatoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PlatoCercanoResponseDTO> buscarCercanos(Double latitudCliente, Double longitudCliente) {
-        // Consulta platos ACTIVOS, no expirados y con porciones disponibles > 0
-        List<Plato> platosActivos = repository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now());
+        List<PlatoEntity> platosActivos = repository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now());
 
         return platosActivos.stream()
+                .map(entityMapper::toDomain)
                 .map(plato -> {
                     String conjunto = perfilCocineraRepository.findById(plato.getCocineraId())
+                            .map(perfilMapper::toDomain)
                             .map(PerfilCocinera::getConjuntoResidencial)
                             .orElse("Conjunto Residencial");
 
                     Integer distanciaRedondeada = null;
-                    if (latitudCliente != null && longitudCliente != null && plato.getLatitud() != null && plato.getLongitud() != null) {
+                    if (latitudCliente != null && longitudCliente != null
+                            && plato.getLatitud() != null && plato.getLongitud() != null) {
                         double distanciaMetros = GeoUtils.calcularDistanciaEnMetros(
                                 latitudCliente, longitudCliente,
                                 plato.getLatitud(), plato.getLongitud()
@@ -114,7 +113,6 @@ public class PlatoServiceImpl implements PlatoService {
                             .tiempoRestante(GeoUtils.formatearTiempoRestante(plato.getFechaExpiracion()))
                             .build();
                 })
-                // Si el cliente envió coordenadas, ordenamos por cercanía ascendente
                 .sorted(Comparator.comparing(
                         PlatoCercanoResponseDTO::getDistanciaAproximada,
                         Comparator.nullsLast(Integer::compareTo)

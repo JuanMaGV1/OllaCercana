@@ -1,13 +1,13 @@
 package com.ollacercana.model.dto.response;
 
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.RestriccionAlimentaria;
+import com.ollacercana.model.domain.TipoComida;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import com.ollacercana.model.domain.EstadoPlato;
-import com.ollacercana.model.domain.RestriccionAlimentaria;
-import com.ollacercana.model.domain.TipoComida;
 
 public record PlatoResponseDTO(
         UUID id,

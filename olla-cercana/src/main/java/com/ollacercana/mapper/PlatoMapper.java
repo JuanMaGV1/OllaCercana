@@ -19,7 +19,6 @@ public interface PlatoMapper {
     @Mapping(target = "porcionesComprometidas", ignore = true)
     @Mapping(target = "fechaPublicacion", ignore = true)
     @Mapping(target = "fechaExpiracion", ignore = true)
-    @Mapping(target = "version", ignore = true)
     Plato toDomain(PlatoRequestDTO dto);
 
     PlatoResponseDTO toResponse(Plato plato);

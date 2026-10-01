@@ -5,6 +5,7 @@ import com.ollacercana.model.domain.RestriccionAlimentaria;
 import com.ollacercana.model.domain.TipoComida;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,10 +19,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PlatoEntity {
+public class PlatoEntity implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
     @Column(name = "cocinera_id", nullable = false)
@@ -74,6 +75,35 @@ public class PlatoEntity {
     @Column(name = "punto_entrega")
     private String puntoEntrega;
 
-    @Version
-    private Integer version;
+    // ============ Persistable ============
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.id == null) this.id = UUID.randomUUID();
+        if (this.estado == null) this.estado = EstadoPlato.ACTIVO;
+        if (this.porcionesComprometidas == null) this.porcionesComprometidas = 0;
+        if (this.fechaPublicacion == null) this.fechaPublicacion = LocalDateTime.now();
+        if (this.fechaExpiracion == null) 
+            this.fechaExpiracion = this.fechaPublicacion.plusHours(4);
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
+    }
 }

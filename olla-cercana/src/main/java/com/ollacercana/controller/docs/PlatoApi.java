@@ -1,21 +1,14 @@
 package com.ollacercana.controller.docs;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.model.dto.request.PlatoRequestDTO;
 import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.model.dto.response.PlatoResponseDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,13 +18,6 @@ import java.util.UUID;
 public interface PlatoApi {
 
     @Operation(summary = "Publicar un nuevo plato (HU-04)")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Plato publicado exitosamente"),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos"),
-            @ApiResponse(responseCode = "404", description = "Cocinera no encontrada"),
-            @ApiResponse(responseCode = "409", description = "Límite de 3 platos activos o cocinera no habilitada"),
-            @ApiResponse(responseCode = "422", description = "Precio, porciones o restricciones fuera de rango")
-    })
     @PostMapping
     ResponseEntity<PlatoResponseDTO> crear(
             @RequestHeader("X-Cocinera-Id") UUID cocineraId,
@@ -49,23 +35,10 @@ public interface PlatoApi {
             @Valid @RequestBody AjusteDisponibilidadRequest request
     );
 
-    @Operation(
-            summary = "Listar platos cercanos (RN-05)",
-            description = "Retorna los platos disponibles ordenados por cercanía. La distancia se aproxima a múltiplos de 100m y nunca expone la dirección exacta."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Listado de ofertas cercanas",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PlatoCercanoResponseDTO.class)))
-            )
-    })
+    @Operation(summary = "Listar platos cercanos (RN-05)")
     @GetMapping("/cercanos")
     ResponseEntity<List<PlatoCercanoResponseDTO>> listarCercanos(
-            @Parameter(description = "Latitud actual del comprador", example = "4.6789")
             @RequestParam(required = false) Double latitud,
-
-            @Parameter(description = "Longitud actual del comprador", example = "-74.0567")
             @RequestParam(required = false) Double longitud
     );
 

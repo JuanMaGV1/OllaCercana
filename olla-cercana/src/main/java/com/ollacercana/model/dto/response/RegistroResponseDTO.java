@@ -2,11 +2,9 @@ package com.ollacercana.model.dto.response;
 
 import com.ollacercana.model.domain.EstadoCuenta;
 import com.ollacercana.model.domain.Rol;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class RegistroResponseDTO {
 
-    private Long id;
+    private UUID id;
     private String correo;
     private Rol rol;
     private EstadoCuenta estado;

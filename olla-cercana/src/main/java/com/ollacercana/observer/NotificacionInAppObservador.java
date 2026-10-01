@@ -1,5 +1,6 @@
 package com.ollacercana.observer;
 
+import com.ollacercana.mapper.NotificacionEntityMapper;
 import com.ollacercana.model.domain.EventoReserva;
 import com.ollacercana.model.domain.Notificacion;
 import com.ollacercana.model.domain.Rol;
@@ -12,7 +13,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-
 @Component
 @RequiredArgsConstructor
 public class NotificacionInAppObservador implements ObservadorReserva {
@@ -20,47 +20,37 @@ public class NotificacionInAppObservador implements ObservadorReserva {
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final NotificacionRepository notificacionRepository;
+    private final NotificacionEntityMapper notificacionMapper;
 
     @Override
     public void notificar(EventoReserva evento) {
         List<Notificacion> notificaciones = switch (evento.tipo()) {
             case RESERVA_CONFIRMADA -> List.of(paraComprador(evento, TipoNotificacion.RESERVA_CONFIRMADA,
                     "¡Tu reserva fue confirmada!",
-                    "La cocinera confirmó tu pedido. Hora estimada de entrega: " + horaEstimada(evento)
-                            + ". Ya puedes coordinar la entrega."));
+                    "La cocinera confirmó tu pedido. Hora estimada: " + horaEstimada(evento)));
             case RESERVA_RECHAZADA -> List.of(paraComprador(evento, TipoNotificacion.RESERVA_RECHAZADA,
                     "Tu reserva fue rechazada",
-                    "La cocinera no puede atender tu pedido. Motivo: " + motivo(evento)
-                            + ". Las porciones volvieron a estar disponibles."));
+                    "Motivo: " + motivo(evento)));
             case RESERVA_EXPIRADA -> List.of(paraComprador(evento, TipoNotificacion.RESERVA_EXPIRADA,
                     "Tu reserva expiró",
-                    "La cocinera no respondió a tiempo y la solicitud se canceló. "
-                            + "Puedes buscar otro plato cerca de ti."));
+                    "La cocinera no respondió a tiempo."));
             case RECORDATORIO_RESERVA -> List.of(paraCocinera(evento, TipoNotificacion.RECORDATORIO,
-                    "Tienes una solicitud sin responder",
-                    "Te quedan " + evento.payload().getOrDefault("minutosRestantes", "pocos")
-                            + " minutos para confirmar o rechazar la reserva. Si no respondes, expirará automáticamente."));
-            // HU-23: el cierre avisa a ambas partes e invita a calificar.
+                    "Solicitud sin responder",
+                    "Te quedan " + evento.payload().getOrDefault("minutosRestantes", "pocos") + " minutos."));
             case RESERVA_COMPLETADA -> {
-                String mensaje = mensajeCierre(evento);
+                boolean automatica = Boolean.TRUE.equals(evento.payload().get("automatica"));
+                String msg = automatica
+                        ? "Pasaron 24h desde la confirmación. La reserva se completó automáticamente."
+                        : "Se confirmó la entrega. ¡Ya puedes calificar!";
                 yield List.of(
-                        paraComprador(evento, TipoNotificacion.INVITACION_CALIFICAR,
-                                "Tu pedido fue completado", mensaje),
-                        paraCocinera(evento, TipoNotificacion.INVITACION_CALIFICAR,
-                                "Tu pedido fue completado", mensaje));
+                        paraComprador(evento, TipoNotificacion.INVITACION_CALIFICAR, "Pedido completado", msg),
+                        paraCocinera(evento, TipoNotificacion.INVITACION_CALIFICAR, "Pedido completado", msg)
+                );
             }
             default -> List.of();
         };
 
-        notificaciones.forEach(notificacionRepository::save);
-    }
-
-    private String mensajeCierre(EventoReserva evento) {
-        boolean automatica = Boolean.TRUE.equals(evento.payload().get("automatica"));
-        String origen = automatica
-                ? "Pasaron 24 horas desde la confirmación y la reserva se completó automáticamente. "
-                : "Se confirmó la entrega y el pago. ";
-        return origen + "El chat quedó en solo lectura. ¡Ya puedes calificar la experiencia!";
+        notificaciones.forEach(n -> notificacionRepository.save(notificacionMapper.toEntity(n)));
     }
 
     private Notificacion paraComprador(EventoReserva evento, TipoNotificacion tipo, String titulo, String mensaje) {
@@ -77,8 +67,10 @@ public class NotificacionInAppObservador implements ObservadorReserva {
                 .build();
     }
 
-    private Notificacion.NotificacionBuilder base(EventoReserva evento, TipoNotificacion tipo, String titulo, String mensaje) {
+    private Notificacion.NotificacionBuilder base(EventoReserva evento, TipoNotificacion tipo,
+                                                   String titulo, String mensaje) {
         return Notificacion.builder()
+                .id(java.util.UUID.randomUUID())
                 .reservaId(evento.reservaId())
                 .tipo(tipo)
                 .titulo(titulo)

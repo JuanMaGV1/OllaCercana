@@ -4,6 +4,7 @@ import com.ollacercana.model.domain.Rol;
 import com.ollacercana.model.domain.TipoNotificacion;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,10 +16,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NotificacionEntity {
+public class NotificacionEntity implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
     @Column(name = "reserva_id")
@@ -49,4 +50,32 @@ public class NotificacionEntity {
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
+
+    // ============ Persistable ============
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.id == null) this.id = UUID.randomUUID();
+        if (this.fechaCreacion == null) this.fechaCreacion = LocalDateTime.now();
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
+    }
 }

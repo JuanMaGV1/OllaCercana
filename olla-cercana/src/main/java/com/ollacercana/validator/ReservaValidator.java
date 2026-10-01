@@ -4,14 +4,15 @@ import com.ollacercana.exception.AutoReservaException;
 import com.ollacercana.exception.LimiteReservasPendientesException;
 import com.ollacercana.exception.PorcionesInsuficientesException;
 import com.ollacercana.model.domain.EstadoReserva;
-import com.ollacercana.model.domain.PerfilCocinera;
 import com.ollacercana.model.domain.Plato;
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -22,10 +23,9 @@ public class ReservaValidator {
     private final ReservaRepository reservaRepository;
     private final PerfilCocineraRepository perfilCocineraRepository;
 
-    public void validarParaCrear(Long compradorId, Plato plato, int cantidadPorciones) {
+    public void validarParaCrear(UUID compradorId, Plato plato, int cantidadPorciones) {
         // (1) La cocinera no reserva su propio plato (RN-14)
-        // Verificamos si la cuenta del comprador tiene un perfil de cocinera que coincida con el plato
-        Optional<PerfilCocinera> perfilComprador = perfilCocineraRepository.findByCuentaId(compradorId);
+        Optional<PerfilCocineraEntity> perfilComprador = perfilCocineraRepository.findByCuentaId(compradorId);
         if (perfilComprador.isPresent() && perfilComprador.get().getId().equals(plato.getCocineraId())) {
             throw new AutoReservaException();
         }

@@ -29,7 +29,7 @@ public class Reserva {
     private UUID id;
     private UUID platoId;
     private UUID cocineraId;
-    private UUID compradorId;              // ← UUID (antes Long)
+    private UUID compradorId;
     private Integer cantidadPorciones;
     private BigDecimal montoTotal;
     private MedioPago medioPago;
@@ -47,7 +47,6 @@ public class Reserva {
     private LocalDateTime fechaCompletada;
     private String comentarioCierre;
     private boolean calificacionHabilitada;
-    private Integer version;
 
     // ============ Reglas de negocio ============
 
@@ -77,7 +76,6 @@ public class Reserva {
                 .fechaCreacion(ahora)
                 .fechaLimiteConfirmacion(ahora.plusMinutes(MINUTOS_PARA_CONFIRMAR))
                 .estadoChat(EstadoChat.ABIERTO)
-                .version(0)
                 .build();
     }
 

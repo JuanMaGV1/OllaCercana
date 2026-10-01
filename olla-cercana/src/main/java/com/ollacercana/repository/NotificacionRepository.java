@@ -1,13 +1,12 @@
 package com.ollacercana.repository;
 
+import com.ollacercana.persistence.entity.NotificacionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.ollacercana.model.domain.Notificacion;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface NotificacionRepository extends JpaRepository<Notificacion, UUID> {
+public interface NotificacionRepository extends JpaRepository<NotificacionEntity, UUID> {
 
-    List<Notificacion> findByReservaIdOrderByFechaCreacionAsc(UUID reservaId);
+    List<NotificacionEntity> findByReservaIdOrderByFechaCreacionAsc(UUID reservaId);
 }

@@ -1,18 +1,15 @@
 package com.ollacercana.model.dto.request;
 
+import com.ollacercana.model.domain.MedioPago;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
-
-import com.ollacercana.model.domain.MedioPago;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +19,7 @@ import com.ollacercana.model.domain.MedioPago;
 public class PerfilCocineraRequestDTO {
 
     @NotNull(message = "El ID de la cuenta es obligatorio")
-    private Long cuentaId;
+    private UUID cuentaId;
 
     @NotBlank(message = "La presentación es obligatoria")
     @Size(max = 500, message = "La presentación no puede superar los 500 caracteres")

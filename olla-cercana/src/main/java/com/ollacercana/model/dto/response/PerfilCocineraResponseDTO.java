@@ -1,25 +1,19 @@
 package com.ollacercana.model.dto.response;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.ollacercana.model.domain.MedioPago;
+import lombok.*;
 
 import java.util.List;
 import java.util.UUID;
-
-import com.ollacercana.model.domain.MedioPago;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Schema(description = "Datos públicos del perfil de la cocinera")
 public class PerfilCocineraResponseDTO {
 
     private UUID id;
-    private Long cuentaId;
+    private UUID cuentaId;
     private String nombreCocinera;
     private String presentacion;
     private String conjuntoResidencial;

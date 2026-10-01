@@ -53,7 +53,7 @@ public interface PerfilCocineraApi {
             @ApiResponse(responseCode = "200", description = "Perfil encontrado", content = @Content(schema = @Schema(implementation = PerfilCocineraResponseDTO.class))),
             @ApiResponse(responseCode = "409", description = "No existe perfil para la cuenta", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
-    ResponseEntity<PerfilCocineraResponseDTO> obtenerPorCuentaId(@PathVariable Long cuentaId);
+    ResponseEntity<PerfilCocineraResponseDTO> obtenerPorCuentaId(@PathVariable UUID cuentaId);
 
     @Operation(summary = "Listar cocineras destacadas (findByEsDestacadaTrue)")
     @ApiResponse(responseCode = "200", description = "Listado de perfiles destacados")

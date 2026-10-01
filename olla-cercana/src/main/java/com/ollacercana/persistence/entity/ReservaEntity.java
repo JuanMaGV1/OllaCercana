@@ -3,6 +3,7 @@ package com.ollacercana.persistence.entity;
 import com.ollacercana.model.domain.*;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,10 +16,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReservaEntity {
+public class ReservaEntity implements Persistable<UUID> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
     @Column(name = "plato_id", nullable = false)
@@ -85,6 +86,36 @@ public class ReservaEntity {
     @Column(name = "calificacion_habilitada", nullable = false)
     private boolean calificacionHabilitada;
 
-    @Version
-    private Integer version;
+    // ============ Persistable ============
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.id == null) this.id = UUID.randomUUID();
+        if (this.fechaCreacion == null) this.fechaCreacion = LocalDateTime.now();
+        if (this.fechaLimiteConfirmacion == null) 
+            this.fechaLimiteConfirmacion = this.fechaCreacion.plusMinutes(10);
+        if (this.estado == null) this.estado = EstadoReserva.PENDIENTE;
+        if (this.estadoChat == null) this.estadoChat = EstadoChat.ABIERTO;
+        if (this.montoTotal == null) this.montoTotal = BigDecimal.ZERO;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
+    }
 }

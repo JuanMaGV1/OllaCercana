@@ -14,19 +14,23 @@ import java.util.UUID;
 @Repository
 public interface ReservaRepository extends JpaRepository<ReservaEntity, UUID> {
 
-    long countByCompradorIdAndEstado(UUID compradorId, EstadoReserva estado);
+    long countByCompradorIdAndEstado(UUID compradorId, EstadoReserva estado);   // ← UUID
 
-    List<ReservaEntity> findByCocineraIdAndEstadoOrderByFechaLimiteConfirmacionAsc(UUID cocineraId, EstadoReserva estado);
+    List<ReservaEntity> findByCocineraIdAndEstadoOrderByFechaLimiteConfirmacionAsc(
+            UUID cocineraId, EstadoReserva estado);
 
-    List<ReservaEntity> findByEstadoAndFechaLimiteConfirmacionLessThanEqual(EstadoReserva estado, LocalDateTime ahora);
+    List<ReservaEntity> findByEstadoAndFechaLimiteConfirmacionLessThanEqual(
+            EstadoReserva estado, LocalDateTime ahora);
 
-    List<ReservaEntity> findByEstadoAndFechaDecisionLessThanEqual(EstadoReserva estado, LocalDateTime limite);
+    List<ReservaEntity> findByEstadoAndFechaDecisionLessThanEqual(
+            EstadoReserva estado, LocalDateTime limite);
 
     @Query("SELECT r FROM ReservaEntity r WHERE r.estado = :estado " +
             "AND r.recordatorioEnviado = false " +
             "AND r.fechaCreacion <= :creadaAntesDe " +
             "AND r.fechaLimiteConfirmacion > :ahora")
-    List<ReservaEntity> findPendientesParaRecordatorio(@Param("estado") EstadoReserva estado,
-                                                       @Param("creadaAntesDe") LocalDateTime creadaAntesDe,
-                                                       @Param("ahora") LocalDateTime ahora);
+    List<ReservaEntity> findPendientesParaRecordatorio(
+            @Param("estado") EstadoReserva estado,
+            @Param("creadaAntesDe") LocalDateTime creadaAntesDe,
+            @Param("ahora") LocalDateTime ahora);
 }

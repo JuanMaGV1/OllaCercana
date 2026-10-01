@@ -8,7 +8,6 @@ import com.ollacercana.model.dto.request.PlatoRequestDTO;
 import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.model.dto.response.PlatoResponseDTO;
 import com.ollacercana.service.PlatoService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,14 +33,12 @@ public class PlatoController implements PlatoApi {
 
     @Override
     public ResponseEntity<PlatoResponseDTO> obtenerPorId(UUID id) {
-        Plato plato = platoService.obtenerPorId(id);
-        return ResponseEntity.ok(platoMapper.toResponse(plato));
+        return ResponseEntity.ok(platoMapper.toResponse(platoService.obtenerPorId(id)));
     }
 
     @Override
     public ResponseEntity<PlatoResponseDTO> actualizar(UUID id, AjusteDisponibilidadRequest request) {
-        Plato actualizado = platoService.ajustarDisponibilidad(id, request);
-        return ResponseEntity.ok(platoMapper.toResponse(actualizado));
+        return ResponseEntity.ok(platoMapper.toResponse(platoService.ajustarDisponibilidad(id, request)));
     }
 
     @Override

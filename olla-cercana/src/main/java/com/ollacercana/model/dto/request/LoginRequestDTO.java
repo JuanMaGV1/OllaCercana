@@ -15,10 +15,10 @@ import lombok.NoArgsConstructor;
 public class LoginRequestDTO {
 
     @NotBlank(message = "El identificador (correo o celular) es obligatorio")
-    @Schema(description = "Correo electrónico o número de celular de la cuenta", example = "carlos@gmail.com")
+    @Schema(description = "Correo electrónico o número de celular", example = "carlos@gmail.com")
     private String identificador;
 
     @NotBlank(message = "La contraseña es obligatoria")
-    @Schema(description = "Contraseña en texto plano para autenticación", example = "Password123")
+    @Schema(description = "Contraseña en texto plano", example = "Password123")
     private String contrasena;
 }

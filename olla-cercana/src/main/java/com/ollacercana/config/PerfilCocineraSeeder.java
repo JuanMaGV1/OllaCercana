@@ -1,45 +1,70 @@
 package com.ollacercana.config;
 
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
+import com.ollacercana.repository.PerfilCocineraRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
+@Order(1)
 @Profile("!test")
+@RequiredArgsConstructor
+@Slf4j
 public class PerfilCocineraSeeder implements CommandLineRunner {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final PerfilCocineraRepository perfilRepository;
 
     @Override
     public void run(String... args) {
-        Integer total = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM perfiles_cocinera", Integer.class
-        );
+        if (perfilRepository.count() > 0) return;
 
-        if (total != null && total == 0) {
-            String sql = "INSERT INTO perfiles_cocinera " +
-                    "(id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        UUID cocinera1 = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID cocinera2 = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID cocinera3 = UUID.fromString("33333333-3333-3333-3333-333333333333");
 
-            // 1. Perfil verificado y no pausado
-            jdbcTemplate.update(sql,
-                    UUID.fromString("11111111-1111-1111-1111-111111111111"),
-                    "Torres del Parque", true, false, false, 0.0, 0);
+        PerfilCocineraEntity perfil1 = PerfilCocineraEntity.builder()
+                .id(cocinera1)
+                .cuentaId(cocinera1)
+                .conjuntoResidencial("Torres del Parque")
+                .presentacion("Comida casera tradicional")
+                .verificada(true)
+                .pausada(false)
+                .esDestacada(false)
+                .promedioCalificacion(0.0)
+                .resenasPositivas(0)
+                .build();
 
-            // 2. Perfil no verificado
-            jdbcTemplate.update(sql,
-                    UUID.fromString("22222222-2222-2222-2222-222222222222"),
-                    "Altos de la Colina", false, false, false, 0.0, 0);
+        PerfilCocineraEntity perfil2 = PerfilCocineraEntity.builder()
+                .id(cocinera2)
+                .cuentaId(cocinera2)
+                .conjuntoResidencial("Altos de la Colina")
+                .presentacion("Especialidades vegetarianas")
+                .verificada(false)
+                .pausada(false)
+                .esDestacada(false)
+                .promedioCalificacion(0.0)
+                .resenasPositivas(0)
+                .build();
 
-            // 3. Perfil verificado y pausado
-            jdbcTemplate.update(sql,
-                    UUID.fromString("33333333-3333-3333-3333-333333333333"),
-                    "Portal del Norte", true, true, false, 0.0, 0);
-        }
+        PerfilCocineraEntity perfil3 = PerfilCocineraEntity.builder()
+                .id(cocinera3)
+                .cuentaId(cocinera3)
+                .conjuntoResidencial("Portal del Norte")
+                .presentacion("Postres y snacks")
+                .verificada(true)
+                .pausada(true)
+                .esDestacada(false)
+                .promedioCalificacion(0.0)
+                .resenasPositivas(0)
+                .build();
+
+        perfilRepository.saveAll(java.util.List.of(perfil1, perfil2, perfil3));
+        log.info("Perfiles de cocinera de prueba creados.");
     }
 }

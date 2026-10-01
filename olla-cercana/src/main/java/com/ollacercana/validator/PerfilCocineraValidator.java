@@ -7,7 +7,6 @@ import com.ollacercana.model.domain.MedioPago;
 import com.ollacercana.model.domain.Rol;
 import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.repository.PerfilCocineraRepository;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +34,8 @@ public class PerfilCocineraValidator implements IPerfilCocineraValidator {
         validarTelefonosUnicos(request, perfilId);
     }
 
+    // ============ Validaciones privadas ============
+
     private void validarConjuntoResidencial(String conjunto) {
         if (conjunto == null || conjunto.trim().isEmpty()) {
             throw new ConflictoException("El conjunto residencial debe estar seleccionado");
@@ -43,13 +44,14 @@ public class PerfilCocineraValidator implements IPerfilCocineraValidator {
 
     private void validarRol(Cuenta cuenta) {
         if (cuenta.getRoles() == null || !cuenta.getRoles().contains(Rol.COCINERA)) {
-            throw new ReglaDeNegocioException("La cuenta debe poseer el rol COCINERA para crear un perfil");
+            throw new ReglaDeNegocioException(
+                    "La cuenta debe poseer el rol COCINERA para crear un perfil");
         }
     }
 
-    private void validarUnicidadPerfil(Long cuentaId) {
+    private void validarUnicidadPerfil(UUID cuentaId) {
         if (perfilCocineraRepository.findByCuentaId(cuentaId).isPresent()) {
-            throw new ConflictoException("La cuenta ya cuenta con un perfil de cocinera registrado");
+            throw new ConflictoException("La cuenta ya tiene un perfil de cocinera registrado");
         }
     }
 
@@ -58,14 +60,14 @@ public class PerfilCocineraValidator implements IPerfilCocineraValidator {
             throw new ReglaDeNegocioException("Debe seleccionar al menos un medio de pago válido");
         }
 
-        if (request.getMediosPago().contains(MedioPago.NEQUI) &&
-                (request.getNumeroNequi() == null || request.getNumeroNequi().trim().isEmpty())) {
-            throw new ReglaDeNegocioException("Debe especificar el número Nequi si seleccionó dicho medio de pago");
+        if (request.getMediosPago().contains(MedioPago.NEQUI)
+                && (request.getNumeroNequi() == null || request.getNumeroNequi().trim().isEmpty())) {
+            throw new ReglaDeNegocioException("Debe especificar el número Nequi");
         }
 
-        if (request.getMediosPago().contains(MedioPago.DAVIPLATA) &&
-                (request.getNumeroDaviplata() == null || request.getNumeroDaviplata().trim().isEmpty())) {
-            throw new ReglaDeNegocioException("Debe especificar el número Daviplata si seleccionó dicho medio de pago");
+        if (request.getMediosPago().contains(MedioPago.DAVIPLATA)
+                && (request.getNumeroDaviplata() == null || request.getNumeroDaviplata().trim().isEmpty())) {
+            throw new ReglaDeNegocioException("Debe especificar el número Daviplata");
         }
     }
 
@@ -76,7 +78,8 @@ public class PerfilCocineraValidator implements IPerfilCocineraValidator {
                     .filter(p -> request.getNumeroNequi().equals(p.getNumeroNequi()))
                     .findAny()
                     .ifPresent(p -> {
-                        throw new ConflictoException("El número de Nequi ya se encuentra registrado por otra cocinera");
+                        throw new ConflictoException(
+                                "El número de Nequi ya está registrado por otra cocinera");
                     });
         }
 
@@ -86,7 +89,8 @@ public class PerfilCocineraValidator implements IPerfilCocineraValidator {
                     .filter(p -> request.getNumeroDaviplata().equals(p.getNumeroDaviplata()))
                     .findAny()
                     .ifPresent(p -> {
-                        throw new ConflictoException("El número de Daviplata ya se encuentra registrado por otra cocinera");
+                        throw new ConflictoException(
+                                "El número de Daviplata ya está registrado por otra cocinera");
                     });
         }
     }
