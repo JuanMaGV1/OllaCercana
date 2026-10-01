@@ -1,20 +1,19 @@
 package com.ollacercana.repository;
 
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import com.ollacercana.model.domain.PerfilCocinera;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface PerfilCocineraRepository extends JpaRepository<PerfilCocinera, UUID> {
+public interface PerfilCocineraRepository extends JpaRepository<PerfilCocineraEntity, UUID> {
 
-    Optional<PerfilCocinera> findByCuentaId(Long cuentaId);
+    Optional<PerfilCocineraEntity> findByCuentaId(UUID cuentaId);
 
-    List<PerfilCocinera> findByEsDestacadaTrue();
+    List<PerfilCocineraEntity> findByEsDestacadaTrue();
 
     boolean existsByNumeroNequi(String numeroNequi);
 

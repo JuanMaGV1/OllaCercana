@@ -1,31 +1,20 @@
 package com.ollacercana.repository;
 
+import com.ollacercana.persistence.entity.CuentaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.ollacercana.model.domain.Cuenta;
-
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
+public interface CuentaRepository extends JpaRepository<CuentaEntity, UUID> {
 
-    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Cuenta c WHERE c.identidad.correo = :correo")
-    boolean existsByCorreo(@Param("correo") String correo);
+    boolean existsByCorreo(String correo);
 
-    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Cuenta c WHERE c.identidad.celular = :celular")
-    boolean existsByCelular(@Param("celular") String celular);
+    boolean existsByCelular(String celular);
 
-    @Query("SELECT c FROM Cuenta c WHERE c.identidad.correo = :correo")
-    Optional<Cuenta> findByCorreo(@Param("correo") String correo);
+    Optional<CuentaEntity> findByCorreo(String correo);
 
-    @Query("SELECT c FROM Cuenta c WHERE c.identidad.correo = :identificador OR c.identidad.celular = :identificador")
-    Optional<Cuenta> findByIdentificador(@Param("identificador") String identificador);
-
-    boolean existsByIdentidadCorreo(String correo);
-    boolean existsByIdentidadCelular(String celular);
-    Optional<Cuenta> findByIdentidadCorreo(String correo);
-    Optional<Cuenta> findByIdentidadCorreoOrIdentidadCelular(String correo, String celular);
+    Optional<CuentaEntity> findByCorreoOrCelular(String correo, String celular);
 }
