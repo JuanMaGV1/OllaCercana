@@ -1,10 +1,7 @@
 package com.ollacercana.service;
 
 import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.mapper.PerfilCocineraMapper;
 import com.ollacercana.repository.CodigoOTPRepository;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.repository.PerfilCocineraRepository;
@@ -41,9 +38,6 @@ class PerfilCocineraServiceImplTest {
     private CodigoOTPRepository codigoOTPRepository;
 
     @Mock
-    private PerfilCocineraMapper perfilMapper;
-
-    @Mock
     private IPerfilCocineraValidator validator;
 
     @InjectMocks
@@ -51,8 +45,7 @@ class PerfilCocineraServiceImplTest {
 
     private Cuenta cuenta;
     private PerfilCocinera perfil;
-    private PerfilCocineraRequestDTO request;
-    private PerfilCocineraResponseDTO responseDTO;
+    private PerfilCocinera perfilNuevo;
     private final UUID perfilId = UUID.randomUUID();
 
     @BeforeEach
@@ -63,8 +56,7 @@ class PerfilCocineraServiceImplTest {
                 .credenciales(Credenciales.builder().celularVerificado(false).build())
                 .build();
 
-        request = PerfilCocineraRequestDTO.builder()
-                .cuentaId(1L)
+        perfilNuevo = PerfilCocinera.builder()
                 .presentacion("Comida típica casera")
                 .conjuntoResidencial("Torres del Parque")
                 .especialidades(List.of("Sancocho", "Bandeja Paisa"))
@@ -79,29 +71,22 @@ class PerfilCocineraServiceImplTest {
                 .cuenta(cuenta)
                 .verificada(false)
                 .build();
-
-        responseDTO = PerfilCocineraResponseDTO.builder()
-                .id(perfilId)
-                .cuentaId(1L)
-                .presentacion("Comida típica casera")
-                .conjuntoResidencial("Torres del Parque")
-                .build();
     }
 
     @Test
     @DisplayName("Crear Perfil - Happy Path")
     void crearPerfil_Exitoso() {
         when(cuentaRepository.findById(1L)).thenReturn(Optional.of(cuenta));
-        when(perfilMapper.toDomain(request)).thenReturn(perfil);
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
-        when(perfilMapper.toResponseDTO(perfil)).thenReturn(responseDTO);
 
-        PerfilCocineraResponseDTO result = perfilService.crearPerfil(request);
+        PerfilCocinera result = perfilService.crearPerfil(perfilNuevo, 1L);
 
         assertNotNull(result);
         assertEquals("Torres del Parque", result.getConjuntoResidencial());
-        verify(validator).validarParaCrear(request, cuenta);
-        verify(perfilRepository).save(perfil);
+        assertEquals(cuenta, perfilNuevo.getCuenta());
+        verify(validator).validarParaCrear(perfilNuevo, cuenta);
+        verify(perfilRepository).save(perfilNuevo);
+        verify(codigoOTPRepository).save(any(CodigoOTP.class));
     }
 
     @Test
@@ -109,12 +94,12 @@ class PerfilCocineraServiceImplTest {
     void actualizarPerfil_Exitoso() {
         when(perfilRepository.findById(perfilId)).thenReturn(Optional.of(perfil));
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
-        when(perfilMapper.toResponseDTO(perfil)).thenReturn(responseDTO);
 
-        PerfilCocineraResponseDTO result = perfilService.actualizarPerfil(perfilId, request);
+        PerfilCocinera result = perfilService.actualizarPerfil(perfilId, perfilNuevo);
 
         assertNotNull(result);
-        verify(validator).validarParaActualizar(perfilId, request);
+        assertEquals("Comida típica casera", result.getPresentacion());
+        verify(validator).validarParaActualizar(perfilId, perfilNuevo);
         verify(perfilRepository).save(perfil);
     }
 

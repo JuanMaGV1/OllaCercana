@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ollacercana.domain.MedioPago;
 import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
+import com.ollacercana.domain.Cuenta;
+import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.service.IPerfilCocineraService;
 import org.junit.jupiter.api.DisplayName;
@@ -53,13 +54,13 @@ class PerfilCocineraControllerTest {
                 .numeroNequi("3001234567")
                 .build();
 
-        PerfilCocineraResponseDTO response = PerfilCocineraResponseDTO.builder()
+        PerfilCocinera creado = PerfilCocinera.builder()
                 .id(perfilId)
-                .cuentaId(1L)
+                .cuenta(Cuenta.builder().id(1L).build())
                 .conjuntoResidencial("Torres del Parque")
                 .build();
 
-        when(perfilService.crearPerfil(any(PerfilCocineraRequestDTO.class))).thenReturn(response);
+        when(perfilService.crearPerfil(any(PerfilCocinera.class), eq(1L))).thenReturn(creado);
 
         mockMvc.perform(post("/api/v1/perfiles")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -80,12 +81,12 @@ class PerfilCocineraControllerTest {
                 .numeroDaviplata("3001234567")
                 .build();
 
-        PerfilCocineraResponseDTO response = PerfilCocineraResponseDTO.builder()
+        PerfilCocinera actualizado = PerfilCocinera.builder()
                 .id(perfilId)
                 .presentacion("Presentación actualizada")
                 .build();
 
-        when(perfilService.actualizarPerfil(eq(perfilId), any(PerfilCocineraRequestDTO.class))).thenReturn(response);
+        when(perfilService.actualizarPerfil(eq(perfilId), any(PerfilCocinera.class))).thenReturn(actualizado);
 
         mockMvc.perform(put("/api/v1/perfiles/" + perfilId)
                         .contentType(MediaType.APPLICATION_JSON)
