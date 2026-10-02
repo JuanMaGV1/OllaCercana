@@ -26,7 +26,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class ReservaServiceImpl implements ReservaService {
 
     private final ReservaRepository reservaRepository;
