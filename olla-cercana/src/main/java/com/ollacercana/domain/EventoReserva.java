@@ -48,7 +48,8 @@ public class EventoReserva {
     public EventoReserva(UUID id, TipoEvento tipo, UUID reservaId, UUID platoId,
                          Long compradorId, UUID cocineraId, LocalDateTime timestamp,
                          Map<String, Object> payload) {
-        this.id = id != null ? id : UUID.randomUUID();
+        // Si viene null, Hibernate lo genera (@GeneratedValue). Un id ya asignado haría que save() hiciera merge y fallara.
+        this.id = id;
         this.tipo = tipo;
         this.reservaId = reservaId;
         this.platoId = platoId;
@@ -61,7 +62,7 @@ public class EventoReserva {
 
     public static EventoReserva de(TipoEvento tipo, Reserva reserva, Map<String, Object> payload) {
         return new EventoReserva(
-                UUID.randomUUID(),
+                null,
                 tipo,
                 reserva.getId(),
                 reserva.getPlatoId(),

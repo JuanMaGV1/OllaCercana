@@ -63,6 +63,8 @@ public class ReservaServiceImpl implements ReservaService {
         BigDecimal montoTotal = plato.getPrecioPorcion().multiply(BigDecimal.valueOf(reserva.getCantidadPorciones()));
         LocalDateTime ahora = LocalDateTime.now();
 
+        // Reserva no tiene @GeneratedValue (el id lo asigna la aplicación); el mapper lo ignora, así que se asigna aquí.
+        reserva.setId(UUID.randomUUID());
         reserva.setCocineraId(plato.getCocineraId());
         reserva.setCompradorId(compradorId);
         reserva.setMontoTotal(montoTotal);
