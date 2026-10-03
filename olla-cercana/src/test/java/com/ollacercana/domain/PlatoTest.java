@@ -93,4 +93,50 @@ class PlatoTest {
         plato.liberarPorciones(10);
         assertThat(plato.getPorcionesComprometidas()).isEqualTo(0);
     }
+
+    @Test
+    void publicar_sinCocineraId_lanzaIllegalStateException() {
+        Plato sinCocinera = Plato.builder().nombre("Sancocho").build();
+        assertThatThrownBy(sinCocinera::publicar)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sin una cocinera asociada");
+    }
+
+    @Test
+    void cambiarPorcionesTotales_validaciones() {
+        // Fuera de rango [1, 30]
+        assertThatThrownBy(() -> plato.cambiarPorcionesTotales(0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> plato.cambiarPorcionesTotales(31))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        // Por debajo de comprometidas
+        plato.setPorcionesComprometidas(4);
+        assertThatThrownBy(() -> plato.cambiarPorcionesTotales(3))
+                .isInstanceOf(IllegalStateException.class);
+
+        // Válido
+        plato.cambiarPorcionesTotales(10);
+        assertThat(plato.getPorcionesTotales()).isEqualTo(10);
+    }
+
+    @Test
+    void recalcularEstado_siEstaExpirado_noCambiaAActivoNiAgotado() {
+        plato.expirar();
+        plato.setPorcionesComprometidas(0);
+        plato.recalcularEstado();
+        assertThat(plato.getEstado()).isEqualTo(EstadoPlato.EXPIRADO);
+    }
+
+    @Test
+    void estaVigente_evaluacion() {
+        plato.setFechaExpiracion(null);
+        assertThat(plato.estaVigente()).isFalse();
+
+        plato.setFechaExpiracion(java.time.LocalDateTime.now().plusHours(1));
+        assertThat(plato.estaVigente()).isTrue();
+
+        plato.setFechaExpiracion(java.time.LocalDateTime.now().minusHours(1));
+        assertThat(plato.estaVigente()).isFalse();
+    }
 }

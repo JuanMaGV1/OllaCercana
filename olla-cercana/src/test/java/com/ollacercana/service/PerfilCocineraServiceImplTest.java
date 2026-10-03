@@ -147,4 +147,59 @@ class PerfilCocineraServiceImplTest {
         assertFalse(perfil.isVerificada());
         verify(perfilRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("Crear Perfil - Cuenta no existe lanza ConflictoException")
+    void crearPerfil_cuentaNoExiste_lanzaConflicto() {
+        when(cuentaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ConflictoException.class, () -> perfilService.crearPerfil(perfil, 99L));
+        verify(perfilRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Actualizar Perfil - Perfil inexistente lanza ResourceNotFoundException")
+    void actualizarPerfil_noExiste_lanzaNotFound() {
+        when(perfilRepository.findById(perfilId)).thenReturn(Optional.empty());
+
+        assertThrows(com.ollacercana.exception.ResourceNotFoundException.class,
+                () -> perfilService.actualizarPerfil(perfilId, perfil));
+    }
+
+    @Test
+    @DisplayName("Verificar Teléfono OTP - Perfil no encontrado")
+    void verificarTelefono_perfilNoExiste_lanzaNotFound() {
+        when(perfilRepository.findById(perfilId)).thenReturn(Optional.empty());
+
+        assertThrows(com.ollacercana.exception.ResourceNotFoundException.class,
+                () -> perfilService.verificarTelefono(perfilId, "123456"));
+    }
+
+    @Test
+    @DisplayName("Verificar Teléfono OTP - No hay código OTP generado para el perfil")
+    void verificarTelefono_sinOtpActivo_lanzaConflicto() {
+        when(perfilRepository.findById(perfilId)).thenReturn(Optional.of(perfil));
+        when(codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ConflictoException.class, () -> perfilService.verificarTelefono(perfilId, "123456"));
+    }
+
+    @Test
+    @DisplayName("Obtener por CuentaId - Retorna perfil cuando existe y lanza Conflicto cuando no")
+    void obtenerPorCuentaId_comportamiento() {
+        when(perfilRepository.findByCuentaId(1L)).thenReturn(Optional.of(perfil));
+        assertEquals(perfil, perfilService.obtenerPorCuentaId(1L));
+
+        when(perfilRepository.findByCuentaId(2L)).thenReturn(Optional.empty());
+        assertThrows(ConflictoException.class, () -> perfilService.obtenerPorCuentaId(2L));
+    }
+
+    @Test
+    @DisplayName("Listar destacadas - Llama al repositorio correspondiente")
+    void listarDestacadas_retornaLista() {
+        when(perfilRepository.findByEsDestacadaTrue()).thenReturn(List.of(perfil));
+        List<PerfilCocinera> resultado = perfilService.listarDestacadas();
+        assertEquals(1, resultado.size());
+    }
 }

@@ -1,8 +1,7 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.MedioPago;
-import com.ollacercana.domain.PerfilCocinera;
+import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.dto.request.VerificarOtpRequestDTO;
 import com.ollacercana.exception.ConflictoException;
@@ -22,8 +21,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -126,5 +124,43 @@ class PerfilCocineraControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Código OTP inválido o expirado"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/perfiles/cuenta/{cuentaId} - 200 OK")
+    void obtenerPorCuentaId_Exitoso() throws Exception {
+        PerfilCocinera perfil = PerfilCocinera.builder()
+                .id(perfilId)
+                .conjuntoResidencial("Torres del Parque")
+                .cuenta(Cuenta.builder()
+                        .id(1L)
+                        .identidad(Identidad.builder().nombre("Maria").build())
+                        .build())
+                .build();
+
+        when(perfilService.obtenerPorCuentaId(1L)).thenReturn(perfil);
+
+        mockMvc.perform(get("/api/v1/perfiles/cuenta/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(perfilId.toString()))
+                .andExpect(jsonPath("$.conjuntoResidencial").value("Torres del Parque"))
+                .andExpect(jsonPath("$.nombreCocinera").value("Maria"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/perfiles/destacadas - 200 OK retorna lista")
+    void listarDestacadas_Exitoso() throws Exception {
+        PerfilCocinera destacada = PerfilCocinera.builder()
+                .id(perfilId)
+                .conjuntoResidencial("Bosques Verdes")
+                .esDestacada(true)
+                .build();
+
+        when(perfilService.listarDestacadas()).thenReturn(List.of(destacada));
+
+        mockMvc.perform(get("/api/v1/perfiles/destacadas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].conjuntoResidencial").value("Bosques Verdes"));
     }
 }
