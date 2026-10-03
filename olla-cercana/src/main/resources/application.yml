@@ -1,32 +1,28 @@
 spring:
   application:
     name: olla-cercana
+  # PERSISTENCIA 1: PostgreSQL (JPA)
 
   datasource:
-    url: jdbc:h2:mem:olla_cercana;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ollacercana}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-  api-docs:
-    path: /v3/api-docs
+  # PERSISTENCIA 2: MongoDB
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/ollacercana}
 
 server:
   port: 8080

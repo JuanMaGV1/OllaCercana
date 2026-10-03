@@ -89,6 +89,13 @@ public class Reserva {
     @Version
     private Integer version;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
+    }
+
     public static Reserva crear(Plato plato, Long compradorId, int cantidadPorciones,
                                 MedioPago medioPago, String notaComprador, LocalDateTime ahora) {
         if (plato == null) {

@@ -11,15 +11,17 @@ import com.ollacercana.mapper.PlatoMapper;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.service.PlatoService;
 import com.ollacercana.util.GeoUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/api/v1/platos")
 @RequiredArgsConstructor
 public class PlatoController implements PlatoApi {
 
@@ -28,7 +30,10 @@ public class PlatoController implements PlatoApi {
     private final PerfilCocineraRepository perfilCocineraRepository;
 
     @Override
-    public ResponseEntity<PlatoResponseDTO> crear(UUID cocineraId, PlatoRequestDTO request) {
+    @PostMapping
+    public ResponseEntity<PlatoResponseDTO> crear(
+            @RequestHeader("X-Cocinera-Id") UUID cocineraId,
+            @Valid @RequestBody PlatoRequestDTO request) {
         Plato plato = platoMapper.toDomain(request);
         plato.setCocineraId(cocineraId);
         Plato guardado = platoService.crear(plato);
@@ -36,19 +41,26 @@ public class PlatoController implements PlatoApi {
     }
 
     @Override
-    public ResponseEntity<PlatoResponseDTO> obtenerPorId(UUID id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<PlatoResponseDTO> obtenerPorId(@PathVariable UUID id) {
         Plato plato = platoService.obtenerPorId(id);
         return ResponseEntity.ok(platoMapper.toResponse(plato));
     }
 
     @Override
-    public ResponseEntity<PlatoResponseDTO> actualizar(UUID id, AjusteDisponibilidadRequest request) {
+    @PatchMapping("/{id}/disponibilidad")
+    public ResponseEntity<PlatoResponseDTO> actualizar(
+            @PathVariable UUID id,
+            @Valid @RequestBody AjusteDisponibilidadRequest request) {
         Plato actualizado = platoService.ajustarDisponibilidad(id, request.tipo(), request.cantidad(), request.version());
         return ResponseEntity.ok(platoMapper.toResponse(actualizado));
     }
 
     @Override
-    public ResponseEntity<List<PlatoCercanoResponseDTO>> listarCercanos(Double latitud, Double longitud) {
+    @GetMapping("/cercanos")
+    public ResponseEntity<List<PlatoCercanoResponseDTO>> listarCercanos(
+            @RequestParam(required = false) Double latitud,
+            @RequestParam(required = false) Double longitud) {
         List<Plato> platos = platoService.buscarCercanos(latitud, longitud);
 
         List<PlatoCercanoResponseDTO> dtos = platos.stream().map(p -> {
@@ -81,7 +93,8 @@ public class PlatoController implements PlatoApi {
     }
 
     @Override
-    public ResponseEntity<Void> eliminar(UUID id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
         platoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }

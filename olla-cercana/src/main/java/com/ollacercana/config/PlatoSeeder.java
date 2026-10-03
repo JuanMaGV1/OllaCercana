@@ -1,10 +1,14 @@
 package com.ollacercana.config;
 
-import com.ollacercana.domain.*;
+import com.ollacercana.domain.EstadoPlato;
+import com.ollacercana.domain.Plato;
+import com.ollacercana.domain.RestriccionAlimentaria;
+import com.ollacercana.domain.TipoComida;
 import com.ollacercana.repository.PlatoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +19,7 @@ import java.util.UUID;
 
 @Component
 @Order(2)
+@Profile("!test")
 public class PlatoSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PlatoSeeder.class);

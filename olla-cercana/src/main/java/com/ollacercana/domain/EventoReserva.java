@@ -1,7 +1,8 @@
 package com.ollacercana.domain;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -9,8 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@Entity
-@Table(name = "eventos_reserva")
+@Document(collection = "eventos_reserva")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,37 +19,22 @@ import java.util.UUID;
 public class EventoReserva {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private String id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private TipoEvento tipo;
-
-    @Column(nullable = false)
     private UUID reservaId;
-
-    @Column(nullable = false)
     private UUID platoId;
-
     private Long compradorId;
-
     private UUID cocineraId;
-
-    @Column(nullable = false)
     private LocalDateTime timestamp;
-
-    @Transient
     private Map<String, Object> payload;
-
-    @Column(columnDefinition = "TEXT")
     private String payloadJson;
 
+    // Constructor sobrecargado para soportar las pruebas unitarias que pasan UUID
     public EventoReserva(UUID id, TipoEvento tipo, UUID reservaId, UUID platoId,
                          Long compradorId, UUID cocineraId, LocalDateTime timestamp,
                          Map<String, Object> payload) {
-        // Si viene null, Hibernate lo genera (@GeneratedValue). Un id ya asignado haría que save() hiciera merge y fallara.
-        this.id = id;
+        this.id = id != null ? id.toString() : UUID.randomUUID().toString();
         this.tipo = tipo;
         this.reservaId = reservaId;
         this.platoId = platoId;
@@ -61,19 +46,21 @@ public class EventoReserva {
     }
 
     public static EventoReserva de(TipoEvento tipo, Reserva reserva, Map<String, Object> payload) {
-        return new EventoReserva(
-                null,
-                tipo,
-                reserva.getId(),
-                reserva.getPlatoId(),
-                reserva.getCompradorId(),
-                reserva.getCocineraId(),
-                LocalDateTime.now(),
-                payload
-        );
+        Map<String, Object> mapaPayload = payload != null ? payload : Map.of();
+        return EventoReserva.builder()
+                .id(UUID.randomUUID().toString())
+                .tipo(tipo)
+                .reservaId(reserva.getId())
+                .platoId(reserva.getPlatoId())
+                .compradorId(reserva.getCompradorId())
+                .cocineraId(reserva.getCocineraId())
+                .timestamp(LocalDateTime.now())
+                .payload(mapaPayload)
+                .payloadJson(mapaPayload.toString())
+                .build();
     }
 
-    // Métodos accesores para compatibilidad con el observador
+    // Métodos accesores para mantener compatibilidad con observadores
     public TipoEvento tipo() { return this.tipo; }
     public UUID reservaId() { return this.reservaId; }
     public UUID platoId() { return this.platoId; }

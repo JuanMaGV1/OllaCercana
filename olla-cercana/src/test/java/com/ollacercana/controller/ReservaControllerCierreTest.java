@@ -3,7 +3,7 @@ package com.ollacercana.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.CierreTransaccionRequestDTO;
-import com.ollacercana.repository.NotificacionRepository;
+import com.ollacercana.repository.mongo.NotificacionRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReporteRepository;
 import com.ollacercana.repository.ReservaRepository;

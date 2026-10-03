@@ -2,19 +2,17 @@ package com.ollacercana.service;
 
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.dto.response.ReservaResponseDTO;
 import com.ollacercana.exception.*;
-import com.ollacercana.mapper.ReservaMapper;
 import com.ollacercana.observer.ObservadorReserva;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.*;
+import com.ollacercana.repository.mongo.EventoReservaRepository;
 import com.ollacercana.service.impl.ReservaServiceImpl;
 import com.ollacercana.validator.ReservaValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,7 +26,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,7 +50,6 @@ class ReservaServiceImplTest {
     private ObservadorReserva observador;
 
     private ReservaValidator validator;
-    private ReservaMapper reservaMapper;
     private ReservaServiceImpl reservaService;
 
     private static final UUID COCINERA_ID = UUID.randomUUID();
@@ -63,7 +59,6 @@ class ReservaServiceImplTest {
     @BeforeEach
     void setUp() {
         validator = new ReservaValidator(reservaRepository, perfilCocineraRepository);
-        reservaMapper = Mappers.getMapper(ReservaMapper.class);
         PublicadorEventosReserva publicador = new PublicadorEventosReserva(List.of(observador));
 
         reservaService = new ReservaServiceImpl(
@@ -73,8 +68,7 @@ class ReservaServiceImplTest {
                 reporteRepository,
                 eventoReservaRepository,
                 publicador,
-                validator,
-                reservaMapper
+                validator
         );
 
         lenient().when(reservaRepository.save(any(Reserva.class))).thenAnswer(i -> {
@@ -134,15 +128,15 @@ class ReservaServiceImplTest {
     // ==========================================
 
     @Test
-    @DisplayName("1. Happy path: Crear reserva exitosa (201)")
+    @DisplayName("1. Happy path: Crear reserva exitosa retorna dominio Reserva")
     void crearReserva_Exitoso() {
+        // Arrange
         Plato plato = platoMock(5, 0);
         PerfilCocinera perfil = PerfilCocinera.builder().id(COCINERA_ID).conjuntoResidencial("Torres del Parque").build();
 
         when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
-        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.of(perfil));
 
         Reserva reserva = Reserva.builder()
                 .platoId(platoId)
@@ -150,11 +144,13 @@ class ReservaServiceImplTest {
                 .medioPago(MedioPago.NEQUI)
                 .build();
 
-        ReservaResponseDTO respuesta = reservaService.crear(COMPRADOR_ID, reserva);
+        // Act
+        Reserva respuesta = reservaService.crear(COMPRADOR_ID, reserva);
 
+        // Assert
         assertNotNull(respuesta);
         assertEquals(EstadoReserva.PENDIENTE, respuesta.getEstado());
-        assertEquals(new BigDecimal("30000"), respuesta.getMonto());
+        assertEquals(new BigDecimal("30000"), respuesta.getMontoTotal());
         assertEquals(2, plato.getPorcionesComprometidas());
         assertEquals(3, plato.getPorcionesDisponibles());
         verify(reservaRepository).save(any(Reserva.class));

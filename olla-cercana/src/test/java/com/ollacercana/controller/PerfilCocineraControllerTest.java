@@ -2,10 +2,9 @@ package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ollacercana.domain.MedioPago;
+import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
 import com.ollacercana.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.service.IPerfilCocineraService;
 import org.junit.jupiter.api.DisplayName;
@@ -54,13 +53,13 @@ class PerfilCocineraControllerTest {
                 .numeroNequi("3001234567")
                 .build();
 
-        PerfilCocinera creado = PerfilCocinera.builder()
+        PerfilCocinera perfilDominio = PerfilCocinera.builder()
                 .id(perfilId)
-                .cuenta(Cuenta.builder().id(1L).build())
+                .presentacion("Especialista en comida típica")
                 .conjuntoResidencial("Torres del Parque")
                 .build();
 
-        when(perfilService.crearPerfil(any(PerfilCocinera.class), eq(1L))).thenReturn(creado);
+        when(perfilService.crearPerfil(any(PerfilCocinera.class), eq(1L))).thenReturn(perfilDominio);
 
         mockMvc.perform(post("/api/v1/perfiles")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,12 +80,13 @@ class PerfilCocineraControllerTest {
                 .numeroDaviplata("3001234567")
                 .build();
 
-        PerfilCocinera actualizado = PerfilCocinera.builder()
+        PerfilCocinera perfilDominio = PerfilCocinera.builder()
                 .id(perfilId)
                 .presentacion("Presentación actualizada")
+                .conjuntoResidencial("Torres del Parque")
                 .build();
 
-        when(perfilService.actualizarPerfil(eq(perfilId), any(PerfilCocinera.class))).thenReturn(actualizado);
+        when(perfilService.actualizarPerfil(eq(perfilId), any(PerfilCocinera.class))).thenReturn(perfilDominio);
 
         mockMvc.perform(put("/api/v1/perfiles/" + perfilId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -125,6 +125,6 @@ class PerfilCocineraControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensaje").value("Código OTP inválido o expirado"));
+                .andExpect(jsonPath("$.message").value("Código OTP inválido o expirado"));
     }
 }

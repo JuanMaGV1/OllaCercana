@@ -2,12 +2,16 @@ package com.ollacercana.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 @Component
+@Order(1)
+@Profile("!test")
 @RequiredArgsConstructor
 public class PerfilCocineraSeeder implements CommandLineRunner {
 
