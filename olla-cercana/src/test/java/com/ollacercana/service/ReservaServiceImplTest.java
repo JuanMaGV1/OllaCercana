@@ -353,4 +353,54 @@ class ReservaServiceImplTest {
 
         assertSame(reserva, reservaService.obtenerPorId(reserva.getId()));
     }
+
+    @Test
+    @DisplayName("Decidir - Flujo CONFIRMAR por switch")
+    void decidir_confirmar_debeConfirmar() {
+        Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
+        Reserva reserva = reservaPendiente(plato, 2, 1);
+        LocalDateTime hora = LocalDateTime.now().plusHours(1);
+
+        Reserva confirmada = reservaService.decidir(reserva.getId(), COCINERA_ID,
+                new DecisionReservaRequestDTO(DecisionReserva.CONFIRMAR, hora, null, null));
+
+        assertEquals(EstadoReserva.CONFIRMADA, confirmada.getEstado());
+    }
+
+    @Test
+    @DisplayName("Expirar - Si no está vencida no altera la reserva")
+    void expirar_noVencida_noHaceNada() {
+        Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
+        Reserva reserva = reservaPendiente(plato, 2, 1); // 1 minuto, vencen a los 10
+
+        Reserva resultado = reservaService.expirar(reserva.getId());
+
+        assertEquals(EstadoReserva.PENDIENTE, resultado.getEstado());
+        verify(platoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Enviar recordatorio - Si no lo requiere aún, no lo envía")
+    void enviarRecordatorio_noRequerido_noHaceNada() {
+        Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
+        Reserva reserva = reservaPendiente(plato, 2, 1); // Creada hace 1 min (requiere a los 7)
+
+        reservaService.enviarRecordatorio(reserva.getId());
+
+        assertFalse(reserva.isRecordatorioEnviado());
+        verify(reservaRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("Buscar vencidas y para recordatorio consultan repositorio")
+    void consultasProgramadas_ejecutanConsultas() {
+        Reserva r = reservaPendiente(plato(5, 2, EstadoPlato.ACTIVO), 2, 1);
+        when(reservaRepository.findByEstadoAndFechaLimiteConfirmacionLessThanEqual(any(), any()))
+                .thenReturn(List.of(r));
+        when(reservaRepository.findPendientesParaRecordatorio(any(), any(), any()))
+                .thenReturn(List.of(r));
+
+        assertEquals(List.of(r.getId()), reservaService.buscarReservasVencidas());
+        assertEquals(List.of(r.getId()), reservaService.buscarReservasParaRecordatorio());
+    }
 }

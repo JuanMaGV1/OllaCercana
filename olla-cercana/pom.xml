@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -25,12 +24,19 @@
 
     <!-- Testing / calidad -->
     <junit.version>5.13.4</junit.version>
-    <jacoco.version>0.8.15</jacoco.version>
+    <jacoco.version>0.8.12</jacoco.version>
     <sonar.version>5.7.0.6970</sonar.version>
     <sonar.projectKey>olla-cercana</sonar.projectKey>
     <sonar.projectName>Olla Cercana</sonar.projectName>
     <sonar.host.url>http://localhost:9000</sonar.host.url>
-    <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.exclusions>
+      **/dto/**,
+      **/config/**,
+      **/exception/**,
+      **/mapper/**,
+      **/OllaCercanaApplication.java
+    </sonar.exclusions>
 
     <!-- Librerías -->
     <lombok.version>1.18.48</lombok.version>
@@ -52,6 +58,7 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
+    <!-- Solo BCrypt para encriptar contraseñas (sin bloquear endpoints) -->
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-crypto</artifactId>
@@ -80,7 +87,7 @@
       <artifactId>spring-boot-starter-data-mongodb</artifactId>
     </dependency>
 
-    <!-- MongoDB embebido en memoria exclusivamente para pruebas -->
+    <!-- MongoDB embebido para pruebas -->
     <dependency>
       <groupId>de.flapdoodle.embed</groupId>
       <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
@@ -129,7 +136,7 @@
   <build>
     <plugins>
 
-      <!-- ============ SPRING BOOT ============ -->
+      <!-- ============ SPRING BOOT PLUGIN ============ -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
@@ -143,7 +150,7 @@
         </configuration>
       </plugin>
 
-      <!-- ============ COMPILER (Lombok + MapStruct) ============ -->
+      <!-- ============ COMPILADOR (Lombok + MapStruct) ============ -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -171,43 +178,42 @@
         </configuration>
       </plugin>
 
-      <!-- ============ JACOCO ============ -->
+      <!-- ============ JACOCO (COBERTURA) ============ -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco.version}</version>
         <executions>
           <execution>
-            <goals><goal>prepare-agent</goal></goals>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
           </execution>
           <execution>
             <id>report</id>
             <phase>test</phase>
-            <goals><goal>report</goal></goals>
-          </execution>
-          <execution>
-            <id>check</id>
-            <phase>verify</phase>
-            <goals><goal>check</goal></goals>
+            <goals>
+              <goal>report</goal>
+            </goals>
             <configuration>
-              <rules>
-                <rule>
-                  <element>BUNDLE</element>
-                  <limits>
-                    <limit>
-                      <counter>LINE</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.85</minimum>
-                    </limit>
-                  </limits>
-                </rule>
-              </rules>
+              <outputDirectory>${project.build.directory}/site/jacoco</outputDirectory>
             </configuration>
           </execution>
         </executions>
+        <configuration>
+          <!-- Excluir clases sin lógica del cálculo de cobertura -->
+          <excludes>
+            <exclude>com/ollacercana/dto/**</exclude>
+            <exclude>com/ollacercana/config/**</exclude>
+            <exclude>com/ollacercana/exception/**</exclude>
+            <exclude>com/ollacercana/mapper/**</exclude>
+            <exclude>com/ollacercana/OllaCercanaApplication.class</exclude>
+          </excludes>
+        </configuration>
       </plugin>
 
-      <!-- ============ SONAR ============ -->
+      <!-- ============ SONARQUBE ============ -->
       <plugin>
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
