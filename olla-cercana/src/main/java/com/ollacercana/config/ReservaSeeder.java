@@ -9,6 +9,7 @@ import com.ollacercana.repository.ReservaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -18,15 +19,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Reservas de prueba para probar HU-12 desde Swagger mientras no exista el endpoint de crear reserva.
- * Usan la cocinera sembrada 11111111-1111-1111-1111-111111111111
- * - aaaaaaaa-...: para CONFIRMAR
- * - bbbbbbbb-...: para RECHAZAR
- * - cccccccc-...: creada hace 8 min; recibe el recordatorio (RN-25) y expira sola en ~2 min (RN-04)
- */
 @Component
 @Order(3)
+@Profile("!test")
 public class ReservaSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ReservaSeeder.class);

@@ -1,14 +1,13 @@
 package com.ollacercana.domain;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-
-@Entity
-@Table(name = "notificaciones")
+@Document(collection = "notificaciones")
 @Getter
 @Setter
 @Builder
@@ -17,34 +16,16 @@ import java.util.UUID;
 public class Notificacion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private String id;
 
     private UUID reservaId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Rol rolDestinatario;
-
-    /** Se llena cuando el destinatario es el comprador. */
     private Long compradorId;
-
-    /** Se llena cuando el destinatario es la cocinera. */
     private UUID cocineraId;
-
-    @Column(nullable = false, length = 100)
     private String titulo;
-
-    @Column(nullable = false, length = 500)
     private String mensaje;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private TipoNotificacion tipo;
-
     private boolean leida;
-
-    @Column(nullable = false)
     private LocalDateTime fechaCreacion;
 
     public void marcarLeida() {

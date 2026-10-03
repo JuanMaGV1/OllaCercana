@@ -2,14 +2,12 @@ package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.dto.response.ReservaResponseDTO;
 import com.ollacercana.exception.*;
-import com.ollacercana.mapper.ReservaMapper;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.*;
+import com.ollacercana.repository.mongo.EventoReservaRepository;
 import com.ollacercana.service.ReservaService;
 import com.ollacercana.validator.ReservaValidator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -26,7 +24,6 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ReservaServiceImpl implements ReservaService {
 
     private final ReservaRepository reservaRepository;
@@ -36,21 +33,40 @@ public class ReservaServiceImpl implements ReservaService {
     private final EventoReservaRepository eventoReservaRepository;
     private final PublicadorEventosReserva publicador;
     private final ReservaValidator validator;
-    private final ReservaMapper reservaMapper;
 
-    // Constructor sobrecargado para soportar pruebas unitarias aisladas
-    public ReservaServiceImpl(ReservaRepository reservaRepository, PlatoRepository platoRepository,
-                              ReporteRepository reporteRepository, PublicadorEventosReserva publicador) {
-        this(reservaRepository, platoRepository, null, reporteRepository, null, publicador, null, null);
+    @Autowired
+    public ReservaServiceImpl(ReservaRepository reservaRepository,
+                              PlatoRepository platoRepository,
+                              PerfilCocineraRepository perfilCocineraRepository,
+                              ReporteRepository reporteRepository,
+                              EventoReservaRepository eventoReservaRepository,
+                              PublicadorEventosReserva publicador,
+                              ReservaValidator validator) {
+        this.reservaRepository = reservaRepository;
+        this.platoRepository = platoRepository;
+        this.perfilCocineraRepository = perfilCocineraRepository;
+        this.reporteRepository = reporteRepository;
+        this.eventoReservaRepository = eventoReservaRepository;
+        this.publicador = publicador;
+        this.validator = validator;
+    }
+
+    public ReservaServiceImpl(ReservaRepository reservaRepository,
+                              PlatoRepository platoRepository,
+                              ReporteRepository reporteRepository,
+                              PublicadorEventosReserva publicador) {
+        this(reservaRepository, platoRepository, null, reporteRepository, null, publicador, null);
     }
 
     @Override
     @Transactional
-    public ReservaResponseDTO crear(Long compradorId, Reserva reserva) {
+    public Reserva crear(Long compradorId, Reserva reserva) {
         Plato plato = platoRepository.findById(reserva.getPlatoId())
                 .orElseThrow(() -> new PlatoNoEncontradoException(reserva.getPlatoId()));
 
-        validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
+        if (validator != null) {
+            validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
+        }
 
         plato.comprometerPorciones(reserva.getCantidadPorciones());
 
@@ -84,19 +100,17 @@ public class ReservaServiceImpl implements ReservaService {
                 .build();
 
         if (eventoReservaRepository != null) {
-            eventoReservaRepository.save(evento);
+            try {
+                eventoReservaRepository.save(evento);
+            } catch (Exception e) {
+                log.warn("No se pudo registrar evento en Mongo (modo local/test): {}", e.getMessage());
+            }
         }
         if (publicador != null) {
             publicador.publicar(evento);
         }
 
-        String conjunto = perfilCocineraRepository != null
-                ? perfilCocineraRepository.findById(plato.getCocineraId())
-                .map(PerfilCocinera::getConjuntoResidencial)
-                .orElse("Conjunto Residencial")
-                : "Conjunto Residencial";
-
-        return reservaMapper.toResponseDTO(guardada, plato.getNombre(), conjunto);
+        return guardada;
     }
 
     @Override

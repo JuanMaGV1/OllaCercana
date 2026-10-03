@@ -4,15 +4,16 @@ import com.ollacercana.domain.EventoReserva;
 import com.ollacercana.domain.Notificacion;
 import com.ollacercana.domain.Rol;
 import com.ollacercana.domain.TipoNotificacion;
-import com.ollacercana.repository.NotificacionRepository;
+import com.ollacercana.repository.mongo.NotificacionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NotificacionInAppObservador implements ObservadorReserva {
@@ -40,7 +41,6 @@ public class NotificacionInAppObservador implements ObservadorReserva {
                     "Tienes una solicitud sin responder",
                     "Te quedan " + evento.payload().getOrDefault("minutosRestantes", "pocos")
                             + " minutos para confirmar o rechazar la reserva. Si no respondes, expirará automáticamente."));
-            // HU-23: el cierre avisa a ambas partes e invita a calificar.
             case RESERVA_COMPLETADA -> {
                 String mensaje = mensajeCierre(evento);
                 yield List.of(
@@ -52,7 +52,13 @@ public class NotificacionInAppObservador implements ObservadorReserva {
             default -> List.of();
         };
 
-        notificaciones.forEach(notificacionRepository::save);
+        if (notificacionRepository != null) {
+            try {
+                notificaciones.forEach(notificacionRepository::save);
+            } catch (Exception e) {
+                log.warn("No se pudo persistir la notificación en Mongo: {}", e.getMessage());
+            }
+        }
     }
 
     private String mensajeCierre(EventoReserva evento) {

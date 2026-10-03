@@ -5,7 +5,7 @@ import com.ollacercana.domain.Notificacion;
 import com.ollacercana.domain.Rol;
 import com.ollacercana.domain.TipoEvento;
 import com.ollacercana.domain.TipoNotificacion;
-import com.ollacercana.repository.NotificacionRepository;
+import com.ollacercana.repository.mongo.NotificacionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

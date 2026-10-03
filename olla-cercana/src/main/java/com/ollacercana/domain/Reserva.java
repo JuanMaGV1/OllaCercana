@@ -26,7 +26,6 @@ public class Reserva {
     public static final int HORAS_PARA_CIERRE_AUTOMATICO = 24;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
@@ -87,6 +86,13 @@ public class Reserva {
 
     @Version
     private Integer version;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
+    }
 
     public static Reserva crear(Plato plato, Long compradorId, int cantidadPorciones,
                                 MedioPago medioPago, String notaComprador, LocalDateTime ahora) {

@@ -1,15 +1,12 @@
 package com.ollacercana.service;
 
 import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.mapper.PerfilCocineraMapper;
 import com.ollacercana.repository.CodigoOTPRepository;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.service.impl.PerfilCocineraServiceImpl;
 import com.ollacercana.validator.IPerfilCocineraValidator;
+import com.ollacercana.service.impl.PerfilCocineraServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,9 +38,6 @@ class PerfilCocineraServiceImplTest {
     private CodigoOTPRepository codigoOTPRepository;
 
     @Mock
-    private PerfilCocineraMapper perfilMapper;
-
-    @Mock
     private IPerfilCocineraValidator validator;
 
     @InjectMocks
@@ -51,8 +45,6 @@ class PerfilCocineraServiceImplTest {
 
     private Cuenta cuenta;
     private PerfilCocinera perfil;
-    private PerfilCocineraRequestDTO request;
-    private PerfilCocineraResponseDTO responseDTO;
     private final UUID perfilId = UUID.randomUUID();
 
     @BeforeEach
@@ -63,64 +55,55 @@ class PerfilCocineraServiceImplTest {
                 .credenciales(Credenciales.builder().celularVerificado(false).build())
                 .build();
 
-        request = PerfilCocineraRequestDTO.builder()
-                .cuentaId(1L)
+        perfil = PerfilCocinera.builder()
+                .id(perfilId)
                 .presentacion("Comida típica casera")
                 .conjuntoResidencial("Torres del Parque")
                 .especialidades(List.of("Sancocho", "Bandeja Paisa"))
                 .mediosPago(List.of(MedioPago.NEQUI))
                 .numeroNequi("3001234567")
-                .build();
-
-        perfil = PerfilCocinera.builder()
-                .id(perfilId)
-                .presentacion("Comida típica casera")
-                .conjuntoResidencial("Torres del Parque")
                 .cuenta(cuenta)
                 .verificada(false)
-                .build();
-
-        responseDTO = PerfilCocineraResponseDTO.builder()
-                .id(perfilId)
-                .cuentaId(1L)
-                .presentacion("Comida típica casera")
-                .conjuntoResidencial("Torres del Parque")
                 .build();
     }
 
     @Test
     @DisplayName("Crear Perfil - Happy Path")
     void crearPerfil_Exitoso() {
+        // Arrange
         when(cuentaRepository.findById(1L)).thenReturn(Optional.of(cuenta));
-        when(perfilMapper.toDomain(request)).thenReturn(perfil);
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
-        when(perfilMapper.toResponseDTO(perfil)).thenReturn(responseDTO);
 
-        PerfilCocineraResponseDTO result = perfilService.crearPerfil(request);
+        // Act
+        PerfilCocinera result = perfilService.crearPerfil(perfil, 1L);
 
+        // Assert
         assertNotNull(result);
         assertEquals("Torres del Parque", result.getConjuntoResidencial());
-        verify(validator).validarParaCrear(request, cuenta);
+        verify(validator).validarParaCrear(perfil, cuenta);
         verify(perfilRepository).save(perfil);
     }
 
     @Test
     @DisplayName("Actualizar Perfil - Happy Path")
     void actualizarPerfil_Exitoso() {
+        // Arrange
         when(perfilRepository.findById(perfilId)).thenReturn(Optional.of(perfil));
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
-        when(perfilMapper.toResponseDTO(perfil)).thenReturn(responseDTO);
 
-        PerfilCocineraResponseDTO result = perfilService.actualizarPerfil(perfilId, request);
+        // Act
+        PerfilCocinera result = perfilService.actualizarPerfil(perfilId, perfil);
 
+        // Assert
         assertNotNull(result);
-        verify(validator).validarParaActualizar(perfilId, request);
+        verify(validator).validarParaActualizar(perfilId, perfil);
         verify(perfilRepository).save(perfil);
     }
 
     @Test
     @DisplayName("Verificar Teléfono OTP - Exitoso")
     void verificarTelefono_OTPValido_RetornaTrueYVerifica() {
+        // Arrange
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
@@ -132,8 +115,10 @@ class PerfilCocineraServiceImplTest {
         when(codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId))
                 .thenReturn(Optional.of(otp));
 
+        // Act
         boolean resultado = perfilService.verificarTelefono(perfilId, "123456");
 
+        // Assert
         assertTrue(resultado);
         assertTrue(perfil.isVerificada());
         assertTrue(perfil.getCuenta().getCredenciales().getCelularVerificado());
@@ -145,6 +130,7 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Verificar Teléfono OTP - Código Erróneo Lanza ConflictoException")
     void verificarTelefono_OTPInvalido_LanzaConflictoException() {
+        // Arrange
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
@@ -156,6 +142,7 @@ class PerfilCocineraServiceImplTest {
         when(codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId))
                 .thenReturn(Optional.of(otp));
 
+        // Act & Assert
         assertThrows(ConflictoException.class, () -> perfilService.verificarTelefono(perfilId, "000000"));
         assertFalse(perfil.isVerificada());
         verify(perfilRepository, never()).save(any());
