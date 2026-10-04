@@ -25,6 +25,8 @@ public class Reserva {
     public static final int MAX_CARACTERES_COMENTARIO = 150;
     public static final int HORAS_PARA_CIERRE_AUTOMATICO = 24;
 
+    // ID asignado por la aplicación (Reserva.crear lo genera), igual que Plato.
+    // Con @GeneratedValue + @Version, Hibernate rechaza persistir un id ya asignado.
     @Id
     private UUID id;
 

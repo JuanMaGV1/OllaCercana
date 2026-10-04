@@ -50,6 +50,10 @@ class PlatoServiceImplAjusteTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
+    private Plato ajustar(UUID platoId, AjusteDisponibilidadRequest request) {
+        return platoService.ajustarDisponibilidad(platoId, request.tipo(), request.cantidad(), request.version());
+    }
+
     private Plato platoActivo(UUID id, int totales, int comprometidas, int version) {
         return Plato.builder()
                 .id(id)

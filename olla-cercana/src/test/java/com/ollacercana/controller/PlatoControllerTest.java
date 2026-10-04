@@ -1,9 +1,11 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.domain.TipoComida;
 import com.ollacercana.domain.RestriccionAlimentaria;
+import com.ollacercana.domain.TipoAjustePorciones;
+import com.ollacercana.domain.TipoComida;
+import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.dto.request.PlatoRequestDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -108,5 +108,76 @@ class PlatoControllerTest {
     void eliminar_conPlatoInexistente_debeRetornar404() throws Exception {
         mockMvc.perform(delete("/api/v1/platos/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void obtenerPorId_conPlatoExistente_debeRetornar200() throws Exception {
+        PlatoRequestDTO request = new PlatoRequestDTO(
+                "Ajiaco", "Sopa con pollo y tres papas", "http://foto.com/a.jpg",
+                TipoComida.ALMUERZO, List.of(), 5, new BigDecimal("14000.00"),
+                LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
+        );
+
+        String responseJson = mockMvc.perform(post("/api/v1/platos")
+                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(responseJson).get("id").asText();
+
+        mockMvc.perform(get("/api/v1/platos/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Ajiaco"));
+    }
+
+    @Test
+    void actualizarDisponibilidad_debeRetornar200() throws Exception {
+        PlatoRequestDTO request = new PlatoRequestDTO(
+                "Mondongo", "Sopa típica tradicional", "http://foto.com/m.jpg",
+                TipoComida.ALMUERZO, List.of(), 6, new BigDecimal("15000.00"),
+                LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
+        );
+
+        String responseJson = mockMvc.perform(post("/api/v1/platos")
+                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(responseJson).get("id").asText();
+
+        AjusteDisponibilidadRequest ajusteRequest = new AjusteDisponibilidadRequest(
+                TipoAjustePorciones.AUMENTAR, 2, "Cocinó más", 0
+        );
+
+        mockMvc.perform(patch("/api/v1/platos/{id}/disponibilidad", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ajusteRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.porcionesTotales").value(8));
+    }
+
+    @Test
+    void eliminar_conPlatoExistente_debeRetornar204() throws Exception {
+        PlatoRequestDTO request = new PlatoRequestDTO(
+                "Postre Natas", "Dulce casero tradicional", "http://foto.com/p.jpg",
+                TipoComida.POSTRE, List.of(), 4, new BigDecimal("8000.00"),
+                LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
+        );
+
+        String responseJson = mockMvc.perform(post("/api/v1/platos")
+                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(responseJson).get("id").asText();
+
+        mockMvc.perform(delete("/api/v1/platos/{id}", id))
+                .andExpect(status().isNoContent());
     }
 }
