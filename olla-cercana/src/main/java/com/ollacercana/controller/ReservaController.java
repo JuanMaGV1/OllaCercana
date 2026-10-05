@@ -74,10 +74,9 @@ public class ReservaController implements ReservaApi {
         Long cuentaId = usuarioActual.getCuentaId();
 
         boolean esComprador = reserva.getCompradorId().equals(cuentaId);
-        boolean esCocinera = false;
-        try {
-            esCocinera = reserva.getCocineraId().equals(usuarioActual.getCocineraId());
-        } catch (Exception ignored) {}
+        boolean esCocinera = usuarioActual.getCocineraIdOpt()
+                .map(cocineraId -> cocineraId.equals(reserva.getCocineraId()))
+                .orElse(false);
 
         if (!esComprador && !esCocinera && !usuarioActual.tieneRol(Rol.ADMIN)) {
             throw new AccesoDenegadoException("No tienes permiso para cerrar esta transacción");
@@ -103,10 +102,9 @@ public class ReservaController implements ReservaApi {
         Long cuentaId = usuarioActual.getCuentaId();
 
         boolean esComprador = reserva.getCompradorId().equals(cuentaId);
-        boolean esCocinera = false;
-        try {
-            esCocinera = reserva.getCocineraId().equals(usuarioActual.getCocineraId());
-        } catch (Exception ignored) {}
+        boolean esCocinera = usuarioActual.getCocineraIdOpt()
+                .map(cocineraId -> cocineraId.equals(reserva.getCocineraId()))
+                .orElse(false);
 
         if (!esComprador && !esCocinera && !usuarioActual.tieneRol(Rol.ADMIN)) {
             throw new AccesoDenegadoException("No tienes permiso para consultar esta reserva");

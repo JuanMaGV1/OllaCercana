@@ -3,7 +3,6 @@ package com.ollacercana.service;
 import com.ollacercana.domain.*;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.mapper.CuentaEntityMapper;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.service.impl.CuentaServiceImpl;
 import com.ollacercana.validator.ICuentaValidator;
@@ -34,9 +33,6 @@ class CuentaServiceImplTest {
 
     @Mock
     private CuentaRepository cuentaRepository;
-
-    @Mock
-    private CuentaEntityMapper cuentaEntityMapper;
 
     @Mock
     private ICuentaValidator cuentaValidator;
@@ -79,9 +75,7 @@ class CuentaServiceImplTest {
         @Test
         @DisplayName("1. Registro exitoso (Happy Path)")
         void registrar_HappyPath_DebeRegistrarCuentaExitosamente() {
-            when(cuentaEntityMapper.toEntity(any(Cuenta.class))).thenReturn(cuentaBase);
             when(cuentaRepository.save(any(Cuenta.class))).thenReturn(cuentaBase);
-            when(cuentaEntityMapper.toDomain(any(Cuenta.class))).thenReturn(cuentaBase);
 
             Cuenta resultado = cuentaService.registrar(cuentaBase);
 

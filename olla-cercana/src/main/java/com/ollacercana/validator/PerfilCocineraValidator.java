@@ -68,23 +68,23 @@ public class PerfilCocineraValidator implements IPerfilCocineraValidator {
 
     private void validarTelefonosUnicos(PerfilCocinera perfil, UUID perfilActualId) {
         if (perfil.getNumeroNequi() != null && !perfil.getNumeroNequi().trim().isEmpty()) {
-            perfilCocineraRepository.findAll().stream()
-                    .filter(p -> perfilActualId == null || !p.getId().equals(perfilActualId))
-                    .filter(p -> perfil.getNumeroNequi().equals(p.getNumeroNequi()))
-                    .findAny()
-                    .ifPresent(p -> {
-                        throw new ConflictoException("El número de Nequi ya se encuentra registrado por otra cocinera");
-                    });
+            boolean existe = (perfilActualId == null)
+                    ? perfilCocineraRepository.existsByNumeroNequi(perfil.getNumeroNequi())
+                    : perfilCocineraRepository.existsByNumeroNequiAndIdNot(perfil.getNumeroNequi(), perfilActualId);
+
+            if (existe) {
+                throw new ConflictoException("El número de Nequi ya se encuentra registrado por otra cocinera");
+            }
         }
 
         if (perfil.getNumeroDaviplata() != null && !perfil.getNumeroDaviplata().trim().isEmpty()) {
-            perfilCocineraRepository.findAll().stream()
-                    .filter(p -> perfilActualId == null || !p.getId().equals(perfilActualId))
-                    .filter(p -> perfil.getNumeroDaviplata().equals(p.getNumeroDaviplata()))
-                    .findAny()
-                    .ifPresent(p -> {
-                        throw new ConflictoException("El número de Daviplata ya se encuentra registrado por otra cocinera");
-                    });
+            boolean existe = (perfilActualId == null)
+                    ? perfilCocineraRepository.existsByNumeroDaviplata(perfil.getNumeroDaviplata())
+                    : perfilCocineraRepository.existsByNumeroDaviplataAndIdNot(perfil.getNumeroDaviplata(), perfilActualId);
+
+            if (existe) {
+                throw new ConflictoException("El número de Daviplata ya se encuentra registrado por otra cocinera");
+            }
         }
     }
 }
