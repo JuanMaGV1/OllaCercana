@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -50,17 +51,30 @@ public class UsuarioActual {
     }
 
     public UUID getCocineraId() {
-        Authentication auth = getAuthentication();
-        Object principal = auth.getPrincipal();
+        return getCocineraIdOpt()
+                .orElseThrow(() -> new AccesoDenegadoException("La cuenta autenticada no tiene un perfil de cocinera asociado"));
+    }
 
-        if (principal instanceof CuentaUserDetails cud && cud.getCocineraId() != null) {
-            return cud.getCocineraId();
+    /**
+     * Consulta segura del ID de cocinera sin lanzar excepciones si la cuenta no tiene perfil de cocinera.
+     */
+    public Optional<UUID> getCocineraIdOpt() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return Optional.empty();
         }
 
-        Long cuentaId = getCuentaId();
-        return perfilCocineraRepository.findByCuentaId(cuentaId)
-                .map(PerfilCocinera::getId)
-                .orElseThrow(() -> new AccesoDenegadoException("La cuenta autenticada no tiene un perfil de cocinera asociado"));
+        Object principal = auth.getPrincipal();
+        if (principal instanceof CuentaUserDetails cud && cud.getCocineraId() != null) {
+            return Optional.of(cud.getCocineraId());
+        }
+
+        try {
+            Long cuentaId = getCuentaId();
+            return perfilCocineraRepository.findByCuentaId(cuentaId).map(PerfilCocinera::getId);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     public String getIdentificador() {

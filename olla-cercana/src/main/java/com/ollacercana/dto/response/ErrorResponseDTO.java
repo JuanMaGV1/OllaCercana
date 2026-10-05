@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,7 +20,6 @@ public class ErrorResponseDTO {
     private String error;
     private String mensaje;
     private String message;
-    private String mensaje;
     private String path;
     private Map<String, String> detalles;
 }

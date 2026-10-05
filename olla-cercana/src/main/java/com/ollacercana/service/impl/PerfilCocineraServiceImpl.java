@@ -15,15 +15,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final PerfilCocineraRepository perfilRepository;
     private final CuentaRepository cuentaRepository;
@@ -42,7 +44,7 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
 
         PerfilCocinera guardado = perfilRepository.save(perfil);
 
-        String codigoGenerado = String.format("%06d", new Random().nextInt(999999));
+        String codigoGenerado = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(guardado.getId())
                 .codigo(codigoGenerado)

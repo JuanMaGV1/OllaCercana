@@ -43,6 +43,8 @@ public interface ReservaMapper {
 
     @Mapping(target = "monto", source = "montoTotal")
     @Mapping(target = "horaLimite", source = "fechaLimiteConfirmacion")
+    @Mapping(target = "plato", ignore = true)
+    @Mapping(target = "conjunto", ignore = true)
     ReservaResponseDTO toResponse(Reserva reserva);
 
     List<ReservaResponseDTO> toResponseList(List<Reserva> reservas);

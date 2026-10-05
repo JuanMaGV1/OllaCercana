@@ -7,7 +7,6 @@ import com.ollacercana.exception.CocineraNoEncontradaException;
 import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.exception.PrecioFueraDeRangoException;
-import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.service.impl.PlatoServiceImpl;
 import com.ollacercana.validator.PlatoValidator;
@@ -38,9 +37,6 @@ class PlatoServiceImplTest {
     @Mock
     private PlatoValidator validator;
 
-    @Mock
-    private PerfilCocineraRepository perfilCocineraRepository;
-
     @InjectMocks
     private PlatoServiceImpl platoService;
 
@@ -60,7 +56,6 @@ class PlatoServiceImplTest {
                 .build();
     }
 
-    // ── Escenario 1: Happy Path (Crear exitoso) ─────────────────────
     @Test
     @DisplayName("Escenario 1: Happy path - Guardar plato correctamente")
     void crear_conDatosValidos_debePublicarPlato() {
@@ -79,7 +74,6 @@ class PlatoServiceImplTest {
         verify(platoRepository, times(1)).save(plato);
     }
 
-    // ── Escenario 2: 404 Recurso No Encontrado ───────────────────────
     @Test
     @DisplayName("Escenario 2: 404 - Cocinera inexistente lanza excepción")
     void crear_conCocineraInexistente_debeLanzarExcepcion() {
@@ -91,7 +85,6 @@ class PlatoServiceImplTest {
         verify(platoRepository, never()).save(any());
     }
 
-    // ── Escenario 3: 409 Conflicto (Regla de límite activo) ──────────
     @Test
     @DisplayName("Escenario 3: 409 - Límite de 3 platos activos alcanzado")
     void crear_conLimiteAlcanzado_debeLanzarConflicto() {
@@ -103,7 +96,6 @@ class PlatoServiceImplTest {
         verify(platoRepository, never()).save(any());
     }
 
-    // ── Escenario 4: 422 Regla de Negocio / Estado Inválido ──────────
     @Test
     @DisplayName("Escenario 4: 422 - Precio fuera del rango permitido")
     void crear_conPrecioInvalido_debeLanzarErrorDeValidacion() {
@@ -115,7 +107,6 @@ class PlatoServiceImplTest {
         verify(platoRepository, never()).save(any());
     }
 
-    // ── Escenario 5: Lista Vacía (Retorna lista vacía, no null) ──────
     @Test
     @DisplayName("Escenario 5: Lista vacía - Retorna colección vacía cuando no hay coincidencias")
     void buscarCercanos_sinPlatos_debeRetornarListaVacia() {

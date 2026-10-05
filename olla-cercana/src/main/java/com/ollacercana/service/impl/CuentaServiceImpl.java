@@ -2,7 +2,6 @@ package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.Cuenta;
 import com.ollacercana.domain.EstadoCuenta;
-import com.ollacercana.mapper.CuentaEntityMapper;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.service.ICuentaService;
 import com.ollacercana.validator.ICuentaValidator;
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class CuentaServiceImpl implements ICuentaService {
 
     private final CuentaRepository cuentaRepository;
-    private final CuentaEntityMapper cuentaEntityMapper;
     private final ICuentaValidator cuentaValidator;
     private final PasswordEncoder passwordEncoder;
 
@@ -43,12 +41,9 @@ public class CuentaServiceImpl implements ICuentaService {
             cuenta.getCredenciales().setContrasenaHash(passwordHasheada);
         }
 
-        Cuenta entidad = cuentaEntityMapper.toEntity(cuenta);
-        Cuenta guardada = cuentaRepository.save(entidad);
-
+        Cuenta guardada = cuentaRepository.save(cuenta);
         log.info("Cuenta registrada exitosamente con ID: {}", guardada.getId());
-
-        return cuentaEntityMapper.toDomain(guardada);
+        return guardada;
     }
 
     @Override

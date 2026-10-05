@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -70,27 +71,26 @@ public class NotificacionInAppObservador implements ObservadorReserva {
     }
 
     private Notificacion paraComprador(EventoReserva evento, TipoNotificacion tipo, String titulo, String mensaje) {
-        return base(evento, tipo, titulo, mensaje)
-                .rolDestinatario(Rol.COMPRADOR)
-                .compradorId(evento.compradorId())
-                .build();
+        return crearNotificacion(evento, tipo, titulo, mensaje, Rol.COMPRADOR, evento.compradorId(), null);
     }
 
     private Notificacion paraCocinera(EventoReserva evento, TipoNotificacion tipo, String titulo, String mensaje) {
-        return base(evento, tipo, titulo, mensaje)
-                .rolDestinatario(Rol.COCINERA)
-                .cocineraId(evento.cocineraId())
-                .build();
+        return crearNotificacion(evento, tipo, titulo, mensaje, Rol.COCINERA, null, evento.cocineraId());
     }
 
-    private Notificacion.NotificacionBuilder base(EventoReserva evento, TipoNotificacion tipo, String titulo, String mensaje) {
+    private Notificacion crearNotificacion(EventoReserva evento, TipoNotificacion tipo, String titulo, String mensaje,
+                                           Rol rol, Long compradorId, UUID cocineraId) {
         return Notificacion.builder()
                 .reservaId(evento.reservaId())
+                .rolDestinatario(rol)
+                .compradorId(compradorId)
+                .cocineraId(cocineraId)
                 .tipo(tipo)
                 .titulo(titulo)
                 .mensaje(mensaje)
                 .leida(false)
-                .fechaCreacion(LocalDateTime.now());
+                .fechaCreacion(LocalDateTime.now())
+                .build();
     }
 
     private String horaEstimada(EventoReserva evento) {

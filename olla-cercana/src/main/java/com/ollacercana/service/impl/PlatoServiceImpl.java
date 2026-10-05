@@ -3,12 +3,11 @@ package com.ollacercana.service.impl;
 import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.domain.TipoAjustePorciones;
-import com.ollacercana.observer.PublicadorEventosPorciones;
 import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.filter.FiltroCompuestoPlato;
 import com.ollacercana.filter.FiltroDistanciaMaxima;
-import com.ollacercana.repository.PerfilCocineraRepository;
+import com.ollacercana.observer.PublicadorEventosPorciones;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.service.PlatoService;
 import com.ollacercana.validator.PlatoValidator;
@@ -29,8 +28,7 @@ public class PlatoServiceImpl implements PlatoService {
 
     private final PlatoRepository repository;
     private final PlatoValidator validator;
-    private final PerfilCocineraRepository perfilCocineraRepository;
-    private PublicadorEventosPorciones publicadorEventosPorciones; // HU-16 (opcional: null en pruebas unitarias)
+    private PublicadorEventosPorciones publicadorEventosPorciones;
 
     @Autowired(required = false)
     public void setPublicadorEventosPorciones(PublicadorEventosPorciones publicadorEventosPorciones) {
@@ -105,10 +103,9 @@ public class PlatoServiceImpl implements PlatoService {
         log.info("Buscando platos cercanos a coordenadas ({}, {})", latitudCliente, longitudCliente);
         List<Plato> platosActivos = repository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now());
 
-        // Aplicamos el patrón Composite para el filtrado geográfico
         FiltroCompuestoPlato filtroComposite = new FiltroCompuestoPlato();
         if (latitudCliente != null && longitudCliente != null) {
-            filtroComposite.agregar(new FiltroDistanciaMaxima(latitudCliente, longitudCliente, 2000.0)); // Radio 2km (RN-05)
+            filtroComposite.agregar(new FiltroDistanciaMaxima(latitudCliente, longitudCliente, 2000.0));
         }
 
         return platosActivos.stream()

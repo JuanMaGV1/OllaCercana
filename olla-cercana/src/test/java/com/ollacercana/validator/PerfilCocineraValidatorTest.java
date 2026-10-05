@@ -108,11 +108,8 @@ class PerfilCocineraValidatorTest {
     @Test
     @DisplayName("validarParaCrear: Número Nequi duplicado por otra cocinera lanza ConflictoException")
     void validarParaCrear_nequiDuplicado_lanzaConflicto() {
-        PerfilCocinera otraCocinera = PerfilCocinera.builder()
-                .id(UUID.randomUUID())
-                .numeroNequi("3001234567")
-                .build();
-        when(perfilCocineraRepository.findAll()).thenReturn(List.of(otraCocinera));
+        when(perfilCocineraRepository.findByCuentaId(cuenta.getId())).thenReturn(Optional.empty());
+        when(perfilCocineraRepository.existsByNumeroNequi("3001234567")).thenReturn(true);
 
         assertThrows(ConflictoException.class, () -> validator.validarParaCrear(perfil, cuenta));
     }
@@ -120,11 +117,9 @@ class PerfilCocineraValidatorTest {
     @Test
     @DisplayName("validarParaCrear: Número Daviplata duplicado por otra cocinera lanza ConflictoException")
     void validarParaCrear_daviplataDuplicado_lanzaConflicto() {
-        PerfilCocinera otraCocinera = PerfilCocinera.builder()
-                .id(UUID.randomUUID())
-                .numeroDaviplata("3007654321")
-                .build();
-        when(perfilCocineraRepository.findAll()).thenReturn(List.of(otraCocinera));
+        when(perfilCocineraRepository.findByCuentaId(cuenta.getId())).thenReturn(Optional.empty());
+        when(perfilCocineraRepository.existsByNumeroNequi("3001234567")).thenReturn(false);
+        when(perfilCocineraRepository.existsByNumeroDaviplata("3007654321")).thenReturn(true);
 
         assertThrows(ConflictoException.class, () -> validator.validarParaCrear(perfil, cuenta));
     }
@@ -133,7 +128,8 @@ class PerfilCocineraValidatorTest {
     @DisplayName("validarParaCrear: Happy path exitoso")
     void validarParaCrear_datosValidos_pasaExitoso() {
         when(perfilCocineraRepository.findByCuentaId(cuenta.getId())).thenReturn(Optional.empty());
-        when(perfilCocineraRepository.findAll()).thenReturn(List.of());
+        when(perfilCocineraRepository.existsByNumeroNequi("3001234567")).thenReturn(false);
+        when(perfilCocineraRepository.existsByNumeroDaviplata("3007654321")).thenReturn(false);
 
         assertDoesNotThrow(() -> validator.validarParaCrear(perfil, cuenta));
     }
@@ -142,13 +138,8 @@ class PerfilCocineraValidatorTest {
     @DisplayName("validarParaActualizar: Mismo perfil con sus propios números no entra en conflicto")
     void validarParaActualizar_mismoPerfil_pasaExitoso() {
         UUID perfilId = UUID.randomUUID();
-        PerfilCocinera propio = PerfilCocinera.builder()
-                .id(perfilId)
-                .numeroNequi("3001234567")
-                .numeroDaviplata("3007654321")
-                .build();
-
-        when(perfilCocineraRepository.findAll()).thenReturn(List.of(propio));
+        when(perfilCocineraRepository.existsByNumeroNequiAndIdNot("3001234567", perfilId)).thenReturn(false);
+        when(perfilCocineraRepository.existsByNumeroDaviplataAndIdNot("3007654321", perfilId)).thenReturn(false);
 
         assertDoesNotThrow(() -> validator.validarParaActualizar(perfilId, perfil));
     }
@@ -157,12 +148,8 @@ class PerfilCocineraValidatorTest {
     @DisplayName("validarParaActualizar: Otro perfil con el mismo Daviplata lanza ConflictoException")
     void validarParaActualizar_otroPerfilConMismoDaviplata_lanzaConflicto() {
         UUID perfilId = UUID.randomUUID();
-        PerfilCocinera ajeno = PerfilCocinera.builder()
-                .id(UUID.randomUUID())
-                .numeroDaviplata("3007654321")
-                .build();
-
-        when(perfilCocineraRepository.findAll()).thenReturn(List.of(ajeno));
+        when(perfilCocineraRepository.existsByNumeroNequiAndIdNot("3001234567", perfilId)).thenReturn(false);
+        when(perfilCocineraRepository.existsByNumeroDaviplataAndIdNot("3007654321", perfilId)).thenReturn(true);
 
         assertThrows(ConflictoException.class, () -> validator.validarParaActualizar(perfilId, perfil));
     }

@@ -18,4 +18,8 @@ public interface PerfilCocineraRepository extends JpaRepository<PerfilCocinera, 
     boolean existsByNumeroNequi(String numeroNequi);
 
     boolean existsByNumeroDaviplata(String numeroDaviplata);
+
+    boolean existsByNumeroNequiAndIdNot(String numeroNequi, UUID id);
+
+    boolean existsByNumeroDaviplataAndIdNot(String numeroDaviplata, UUID id);
 }

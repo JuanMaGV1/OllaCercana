@@ -8,10 +8,9 @@ import com.ollacercana.exception.CantidadAjusteInvalidaException;
 import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
-import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.validator.PlatoValidator;
 import com.ollacercana.service.impl.PlatoServiceImpl;
+import com.ollacercana.validator.PlatoValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +37,6 @@ class PlatoServiceImplAjusteTest {
     @Mock
     private PlatoValidator validator;
 
-    @Mock
-    private PerfilCocineraRepository perfilCocineraRepository;
-
     @InjectMocks
     private PlatoServiceImpl platoService;
 
@@ -48,10 +44,6 @@ class PlatoServiceImplAjusteTest {
     void setUp() {
         lenient().when(platoRepository.saveAndFlush(any(Plato.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-    }
-
-    private Plato ajustar(UUID platoId, AjusteDisponibilidadRequest request) {
-        return platoService.ajustarDisponibilidad(platoId, request.tipo(), request.cantidad(), request.version());
     }
 
     private Plato platoActivo(UUID id, int totales, int comprometidas, int version) {
@@ -69,22 +61,18 @@ class PlatoServiceImplAjusteTest {
 
     @Test
     void ajustar_conAumentar_debeIncrementarTotalYVersion() {
-        // Arrange
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 0, 0);
         when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
 
-        // Act
         Plato actualizado = platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.AUMENTAR, 2, 0);
 
-        // Assert
         assertEquals(5, actualizado.getPorcionesTotales());
         verify(platoRepository, times(1)).saveAndFlush(any(Plato.class));
     }
 
     @Test
     void ajustar_conReduccionPorDebajoDeComprometidas_debeLanzarExcepcion() {
-        // Arrange
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 3, 0);
         when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
@@ -92,7 +80,6 @@ class PlatoServiceImplAjusteTest {
         doThrow(new ReduccionPorDebajoDeComprometidasException(3))
                 .when(validator).validarAjusteDisponibilidad(plato, TipoAjustePorciones.DISMINUIR, 1);
 
-        // Act & Assert
         assertThrows(ReduccionPorDebajoDeComprometidasException.class,
                 () -> platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.DISMINUIR, 1, 0));
 
@@ -101,15 +88,12 @@ class PlatoServiceImplAjusteTest {
 
     @Test
     void ajustar_conMarcarAgotado_noDebeCancelarReservasExistentes() {
-        // Arrange
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 5, 3, 0);
         when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
 
-        // Act
         Plato actualizado = platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.MARCAR_AGOTADO, null, 0);
 
-        // Assert
         assertEquals(0, actualizado.getPorcionesDisponibles());
         assertEquals(EstadoPlato.AGOTADO, actualizado.getEstado());
         assertEquals(3, actualizado.getPorcionesComprometidas());
@@ -117,32 +101,27 @@ class PlatoServiceImplAjusteTest {
 
     @Test
     void ajustar_conVersionDesactualizada_debeLanzarConflictoVersion() {
-        // Arrange
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 0, 5);
         when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
         when(platoRepository.saveAndFlush(any(Plato.class)))
                 .thenThrow(new ObjectOptimisticLockingFailureException(Plato.class, platoId));
 
-        // Act & Assert
         assertThrows(ConflictoVersionException.class,
                 () -> platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.AUMENTAR, 1, 4));
     }
 
     @Test
     void ajustar_conPlatoInexistente_debeLanzarPlatoNoEncontrado() {
-        // Arrange
         UUID platoId = UUID.randomUUID();
         when(platoRepository.findById(platoId)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(PlatoNoEncontradoException.class,
                 () -> platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.AUMENTAR, 1, 0));
     }
 
     @Test
     void ajustar_conCantidadInvalidaParaAumentar_debeLanzarExcepcion() {
-        // Arrange
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 0, 0);
         when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
@@ -150,22 +129,18 @@ class PlatoServiceImplAjusteTest {
         doThrow(new CantidadAjusteInvalidaException())
                 .when(validator).validarAjusteDisponibilidad(plato, TipoAjustePorciones.AUMENTAR, 0);
 
-        // Act & Assert
         assertThrows(CantidadAjusteInvalidaException.class,
                 () -> platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.AUMENTAR, 0, 0));
     }
 
     @Test
     void ajustar_conDisminuir_debeDecrementarTotalSinQuedarPorDebajoDeComprometidas() {
-        // Arrange
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 5, 2, 0);
         when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
 
-        // Act
         Plato actualizado = platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.DISMINUIR, 2, 0);
 
-        // Assert
         assertEquals(3, actualizado.getPorcionesTotales());
         verify(platoRepository, times(1)).saveAndFlush(any(Plato.class));
     }

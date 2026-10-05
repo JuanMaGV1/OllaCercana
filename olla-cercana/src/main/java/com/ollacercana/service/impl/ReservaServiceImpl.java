@@ -2,10 +2,13 @@ package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.observer.PublicadorEventosPorciones;
 import com.ollacercana.exception.*;
+import com.ollacercana.observer.PublicadorEventosPorciones;
 import com.ollacercana.observer.PublicadorEventosReserva;
-import com.ollacercana.repository.*;
+import com.ollacercana.repository.PerfilCocineraRepository;
+import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.repository.ReporteRepository;
+import com.ollacercana.repository.ReservaRepository;
 import com.ollacercana.repository.mongo.EventoReservaRepository;
 import com.ollacercana.service.ReservaService;
 import com.ollacercana.validator.ReservaValidator;
@@ -15,7 +18,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -34,7 +36,7 @@ public class ReservaServiceImpl implements ReservaService {
     private final EventoReservaRepository eventoReservaRepository;
     private final PublicadorEventosReserva publicador;
     private final ReservaValidator validator;
-    private PublicadorEventosPorciones publicadorEventosPorciones; // HU-16 (opcional: null en pruebas unitarias)
+    private PublicadorEventosPorciones publicadorEventosPorciones;
 
     @Autowired(required = false)
     public void setPublicadorEventosPorciones(PublicadorEventosPorciones publicadorEventosPorciones) {
@@ -85,19 +87,21 @@ public class ReservaServiceImpl implements ReservaService {
         }
         publicarPorciones(disponiblesAntes, plato);
 
-        BigDecimal montoTotal = plato.getPrecioPorcion().multiply(BigDecimal.valueOf(reserva.getCantidadPorciones()));
         LocalDateTime ahora = LocalDateTime.now();
+        Reserva nuevaReserva = Reserva.crear(
+                plato,
+                compradorId,
+                reserva.getCantidadPorciones(),
+                reserva.getMedioPago(),
+                reserva.getNotaComprador(),
+                ahora
+        );
 
-        // Reserva no tiene @GeneratedValue (el id lo asigna la aplicación); el mapper lo ignora, así que se asigna aquí.
-        reserva.setId(UUID.randomUUID());
-        reserva.setCocineraId(plato.getCocineraId());
-        reserva.setCompradorId(compradorId);
-        reserva.setMontoTotal(montoTotal);
-        reserva.setEstado(EstadoReserva.PENDIENTE);
-        reserva.setFechaCreacion(ahora);
-        reserva.setFechaLimiteConfirmacion(ahora.plusMinutes(Reserva.MINUTOS_PARA_CONFIRMAR));
+        if (reserva.getId() != null) {
+            nuevaReserva.setId(reserva.getId());
+        }
 
-        Reserva guardada = reservaRepository.save(reserva);
+        Reserva guardada = reservaRepository.save(nuevaReserva);
 
         EventoReserva evento = EventoReserva.builder()
                 .tipo(TipoEvento.RESERVA_CREADA)
@@ -106,8 +110,8 @@ public class ReservaServiceImpl implements ReservaService {
                 .compradorId(compradorId)
                 .cocineraId(plato.getCocineraId())
                 .timestamp(ahora)
-                .payload(Map.of("porciones", reserva.getCantidadPorciones(), "monto", montoTotal))
-                .payloadJson("Reserva creada por " + reserva.getCantidadPorciones() + " porciones. Monto: " + montoTotal)
+                .payload(Map.of("porciones", guardada.getCantidadPorciones(), "monto", guardada.getMontoTotal()))
+                .payloadJson("Reserva creada por " + guardada.getCantidadPorciones() + " porciones. Monto: " + guardada.getMontoTotal())
                 .build();
 
         if (eventoReservaRepository != null) {

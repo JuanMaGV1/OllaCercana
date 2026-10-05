@@ -3,6 +3,7 @@ package com.ollacercana.config;
 import com.ollacercana.dto.response.ErrorResponseDTO;
 import com.ollacercana.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -25,8 +27,6 @@ import java.util.Map;
 
 /**
  * Manejo centralizado de errores. Todas las respuestas usan ErrorResponseDTO.
- * 400 solicitud inválida, 403 acceso denegado, 404 no encontrado, 409 conflicto,
- * 422 regla de negocio y 500 error inesperado sin exponer el detalle al cliente.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -110,7 +110,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponseDTO> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+        Map<String, String> errores = new HashMap<>();
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            String propertyPath = violation.getPropertyPath().toString();
+            String campo = propertyPath.contains(".")
+                    ? propertyPath.substring(propertyPath.lastIndexOf('.') + 1)
+                    : propertyPath;
+            errores.put(campo, violation.getMessage());
+        }
+        return buildValidationResponse(errores, request.getRequestURI());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -125,6 +133,11 @@ public class GlobalExceptionHandler {
     // --------- 500 ---------
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(Exception ex, HttpServletRequest request) {
+        // Preserva el código de estado propio de excepciones Spring MVC (ej. 405 Method Not Allowed)
+        if (ex instanceof ErrorResponse errorResponse) {
+            HttpStatus status = HttpStatus.resolve(errorResponse.getStatusCode().value());
+            return buildResponse(status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI());
+        }
         log.error("Error no controlado en {}", request.getRequestURI(), ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, MENSAJE_ERROR_INESPERADO, request.getRequestURI());
     }

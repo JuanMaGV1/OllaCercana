@@ -22,9 +22,4 @@ public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
 
     @Query("SELECT c FROM Cuenta c WHERE c.identidad.correo = :identificador OR c.identidad.celular = :identificador")
     Optional<Cuenta> findByIdentificador(@Param("identificador") String identificador);
-
-    boolean existsByIdentidadCorreo(String correo);
-    boolean existsByIdentidadCelular(String celular);
-    Optional<Cuenta> findByIdentidadCorreo(String correo);
-    Optional<Cuenta> findByIdentidadCorreoOrIdentidadCelular(String correo, String celular);
 }
