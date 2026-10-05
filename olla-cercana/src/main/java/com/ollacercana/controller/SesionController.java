@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/sesiones")
 @RequiredArgsConstructor
@@ -26,24 +29,25 @@ public class SesionController implements SesionApi {
     @Override
     @PostMapping
     public ResponseEntity<LoginResponseDTO> iniciarSesion(@Valid @RequestBody LoginRequestDTO request) {
-        // 1. Autentica las credenciales con el servicio de cuenta
         Cuenta cuenta = cuentaService.autenticar(request.getIdentificador(), request.getContrasena());
 
-        // 2. Genera el token JWT (Mock para Sprint 2)
         String token = jwtService.generarToken(cuenta);
 
-        // Extraer rol principal (primer rol disponible)
+        List<String> listaRoles = (cuenta.getRoles() != null)
+                ? cuenta.getRoles().stream().map(Rol::name).toList()
+                : Collections.emptyList();
+
         Rol rolPrincipal = (cuenta.getRoles() != null && !cuenta.getRoles().isEmpty())
                 ? cuenta.getRoles().iterator().next()
                 : null;
 
-        // 3. Construye y retorna la respuesta 200 OK
         LoginResponseDTO response = LoginResponseDTO.builder()
                 .token(token)
                 .id(cuenta.getId())
                 .nombre(cuenta.getIdentidad() != null ? cuenta.getIdentidad().getNombre() : null)
                 .correo(cuenta.getIdentidad() != null ? cuenta.getIdentidad().getCorreo() : null)
                 .rol(rolPrincipal)
+                .roles(listaRoles)
                 .build();
 
         return ResponseEntity.ok(response);

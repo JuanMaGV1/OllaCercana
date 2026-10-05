@@ -2,14 +2,14 @@ package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.Cuenta;
 import com.ollacercana.domain.EstadoCuenta;
-import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.mapper.CuentaEntityMapper;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.service.ICuentaService;
 import com.ollacercana.validator.ICuentaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,8 +22,7 @@ public class CuentaServiceImpl implements ICuentaService {
     private final CuentaRepository cuentaRepository;
     private final CuentaEntityMapper cuentaEntityMapper;
     private final ICuentaValidator cuentaValidator;
-
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -55,19 +54,16 @@ public class CuentaServiceImpl implements ICuentaService {
     @Override
     @Transactional(readOnly = true)
     public Cuenta autenticar(String identificador, String password) {
-        // 1. Buscar por correo o celular
         Cuenta cuenta = cuentaRepository.findByIdentificador(identificador)
-                .orElseThrow(() -> new ConflictoException("Credenciales inválidas"));
+                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
 
-        // 2. Validar si la cuenta está bloqueada
         if (cuenta.getEstado() == EstadoCuenta.BLOQUEADO) {
-            throw new ConflictoException("La cuenta se encuentra bloqueada");
+            throw new LockedException("La cuenta se encuentra bloqueada");
         }
 
-        // 3. Comparar el hash con BCrypt
         if (cuenta.getCredenciales() == null ||
                 !passwordEncoder.matches(password, cuenta.getCredenciales().getContrasenaHash())) {
-            throw new ConflictoException("Credenciales inválidas");
+            throw new BadCredentialsException("Credenciales inválidas");
         }
 
         return cuenta;

@@ -1,5 +1,6 @@
 package com.ollacercana.controller.docs;
 
+import com.ollacercana.config.OpenApiConfig;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.dto.request.PlatoRequestDTO;
 import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -23,25 +25,30 @@ import java.util.UUID;
 @RequestMapping("/api/v1/platos")
 public interface PlatoApi {
 
-    @Operation(summary = "Publicar un nuevo plato (HU-04)")
+    @Operation(
+            summary = "Publicar un nuevo plato (HU-04)",
+            security = @SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_NAME)
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Plato publicado exitosamente"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "No autorizado (Requiere rol COCINERA)"),
             @ApiResponse(responseCode = "404", description = "Cocinera no encontrada"),
             @ApiResponse(responseCode = "409", description = "Límite de 3 platos activos o cocinera no habilitada"),
             @ApiResponse(responseCode = "422", description = "Precio, porciones o restricciones fuera de rango")
     })
     @PostMapping
-    ResponseEntity<PlatoResponseDTO> crear(
-            @RequestHeader("X-Cocinera-Id") UUID cocineraId,
-            @Valid @RequestBody PlatoRequestDTO request
-    );
+    ResponseEntity<PlatoResponseDTO> crear(@Valid @RequestBody PlatoRequestDTO request);
 
     @Operation(summary = "Consultar un plato por id")
     @GetMapping("/{id}")
     ResponseEntity<PlatoResponseDTO> obtenerPorId(@PathVariable UUID id);
 
-    @Operation(summary = "Ajustar la disponibilidad de un plato (HU-24)")
+    @Operation(
+            summary = "Ajustar la disponibilidad de un plato (HU-24)",
+            security = @SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_NAME)
+    )
     @PatchMapping("/{id}/disponibilidad")
     ResponseEntity<PlatoResponseDTO> actualizar(
             @PathVariable UUID id,
@@ -50,15 +57,8 @@ public interface PlatoApi {
 
     @Operation(
             summary = "Listar platos cercanos (RN-05)",
-            description = "Retorna los platos disponibles ordenados por cercanía. La distancia se aproxima a múltiplos de 100m y nunca expone la dirección exacta."
+            description = "Retorna los platos disponibles ordenados por cercanía sin revelar la dirección exacta."
     )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Listado de ofertas cercanas",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PlatoCercanoResponseDTO.class)))
-            )
-    })
     @GetMapping("/cercanos")
     ResponseEntity<List<PlatoCercanoResponseDTO>> listarCercanos(
             @Parameter(description = "Latitud actual del comprador", example = "4.6789")
@@ -68,7 +68,10 @@ public interface PlatoApi {
             @RequestParam(required = false) Double longitud
     );
 
-    @Operation(summary = "Eliminar un plato")
+    @Operation(
+            summary = "Eliminar un plato",
+            security = @SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_NAME)
+    )
     @DeleteMapping("/{id}")
     ResponseEntity<Void> eliminar(@PathVariable UUID id);
 }

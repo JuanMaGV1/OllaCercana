@@ -18,7 +18,7 @@ public interface SesionApi {
 
     @Operation(
             summary = "Iniciar sesión de usuario",
-            description = "Autentica un usuario mediante su correo o celular y contraseña, retornando sus datos básicos y el token de acceso."
+            description = "Autentica un usuario mediante su correo o celular y contraseña, retornando sus datos básicos, roles y el token de acceso JWT."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -28,12 +28,12 @@ public interface SesionApi {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Petición inválida o error en los datos de entrada",
+                    description = "Petición inválida o error en los campos de entrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))
             ),
             @ApiResponse(
-                    responseCode = "409",
-                    description = "Credenciales inválidas (correo/celular o contraseña erróneos)",
+                    responseCode = "401",
+                    description = "Credenciales inválidas o cuenta bloqueada",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))
             )
     })

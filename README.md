@@ -10,24 +10,47 @@
 
 - Iterator / Composite: Se aplican conjuntamente para el catálogo de platos. Composite permite tratar un plato individual (PlatoHoja) o un grupo de platos (GrupoPlatos, agrupados por conjunto o cocinera) de forma uniforme, facilitando la organización jerárquica del catálogo. Iterator permite recorrer esa estructura aplicando filtros (tipo de comida, restricciones, precio, distancia) sin exponer la representación interna de la colección. Juntos resuelven la búsqueda y filtrado de platos de forma extensible y desacoplada (OC-006, OC-007, OC-008).
 
-## Diagrama de clases
+### Diagrama de clases
 
-![diagramaClases](/olla-cercana/docs/uml/DiagramaClases.png)
+![diagramaClases](olla-cercana/docs/uml/DiagramaClases.png)
 
-## Diagrama C4
-![diagramaC4](/olla-cercana/docs/uml/DiagramaC4.png)
+### Diagrama C4
+![diagramaC4](olla-cercana/docs/uml/DiagramaC4.png)
 
-## Diagrama de Componentes Generales
-![diagramaComponentesGenerales](/olla-cercana/docs/uml/DiagramaComponentesGeneral.png)
+### Diagrama de Componentes Generales
+![diagramaComponentesGenerales](olla-cercana/docs/uml/DiagramaComponentesGeneral.png)
 
-## Diagrama de Componentes Especificos
-![diagramaComponentesEspecifico](/olla-cercana/docs/uml/DiagramaComponentesEspecifico.png)
+### Diagrama de Componentes Especificos
+![diagramaComponentesEspecifico](olla-cercana/docs/uml/DiagramaComponentesEspecifico.png)
 
-## Diagrama Casos de uso Administrador
-![diagramaCasoAdministrador](/olla-cercana/docs/uml/DiagramaCasosUsoAdministrador.png)
+### Diagrama Casos de uso Administrador
+![diagramaCasoAdministrador](olla-cercana/docs/uml/DiagramaCasosUsoAdministrador.png)
 
-## Diagrama Casos de uso Cocinero
-![diagramaCasoCocinero](/olla-cercana/docs/uml/DiagramaCasosUsoCocinera.png)
+### Diagrama Casos de uso Cocinero
+![diagramaCasoCocinero](olla-cercana/docs/uml/DiagramaCasosUsoCocinera.png)
 
-## Diagrama Casos de uso Comprador
-![diagramaCasoComprador](/olla-cercana/docs/uml/DiagramaCasosUsoComprador.png)
+### Diagrama Casos de uso Comprador
+![diagramaCasoComprador](olla-cercana/docs/uml/DiagramaCasosUsoComprador.png)
+
+
+### Matriz de Roles y Permisos 
+
+La API implementa autenticación stateless mediante JWT y control de acceso basado en roles (`@PreAuthorize`). La identidad
+(`cuentaId`, `cocineraId` y `roles`) se extrae de forma segura a partir de los claims del token Bearer.
+
+| Endpoint | Método | Roles Permitidos | Descripción / Regla |
+| :--- | :---: | :--- | :--- |
+| `/api/v1/sesiones` | `POST` | *Público* | Inicio de sesión, retorna JWT y lista de roles |
+| `/api/v1/cuentas` | `POST` | *Público* | Registro de nueva cuenta |
+| `/api/v1/platos/cercanos` | `GET` | *Público* | Catálogo de platos geolocalizados (RN-05) |
+| `/api/v1/platos/{id}` | `GET` | *Público* | Detalle público de un plato |
+| `/api/v1/perfiles/destacadas` | `GET` | *Público* | Listado de cocineras destacadas |
+| `/api/v1/platos` | `POST` | `COCINERA` | Publicar nuevo plato del día (HU-04) |
+| `/api/v1/platos/{id}/disponibilidad` | `PATCH` | `COCINERA` | Ajustar porciones (solo sobre sus propios platos) |
+| `/api/v1/platos/{id}` | `DELETE` | `COCINERA`, `ADMIN` | Eliminar plato (solo su creadora o admin) |
+| `/api/v1/reservas` | `POST` | `COMPRADOR` | Crear reserva de porciones (HU-04, RN-14, RN-15) |
+| `/api/v1/reservas/{id}/decision` | `PATCH` | `COCINERA` | Confirmar o rechazar reserva (HU-12) |
+| `/api/v1/reservas/pendientes` | `GET` | `COCINERA` | Listar solicitudes pendientes de su cocina |
+| `/api/v1/reservas/{id}/completar` | `POST` | `COMPRADOR`, `COCINERA` | Cerrar transacción con entrega y pago (HU-23) |
+| `/api/v1/reservas/{id}` | `GET` | `Autenticado` | Consultar reserva (solo partes involucradas o admin) |
+| `/api/v1/perfiles/**` | `POST`/`PUT` | `COCINERA`, `ADMIN` | Gestión y verificación OTP de perfil de cocinera |

@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Estructura con la respuesta de sesión exitosa y datos del usuario")
 public class LoginResponseDTO {
 
-    @Schema(description = "Token de autenticación JWT (Mock temporal para Sprint 2)", example = "bearer-token-placeholder")
+    @Schema(description = "Token de autenticación JWT firmado", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     private String token;
 
     @Schema(description = "Identificador único de la cuenta", example = "1")
@@ -26,6 +28,9 @@ public class LoginResponseDTO {
     @Schema(description = "Correo electrónico registrado", example = "carlos@gmail.com")
     private String correo;
 
-    @Schema(description = "Rol asignado a la cuenta", example = "COMPRADOR")
+    @Schema(description = "Rol principal de la cuenta", example = "COMPRADOR")
     private Rol rol;
+
+    @Schema(description = "Lista completa de roles asignados a la cuenta")
+    private List<String> roles;
 }
