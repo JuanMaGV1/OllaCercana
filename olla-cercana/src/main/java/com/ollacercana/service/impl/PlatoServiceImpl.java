@@ -3,6 +3,7 @@ package com.ollacercana.service.impl;
 import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.domain.TipoAjustePorciones;
+import com.ollacercana.observer.PublicadorEventosPorciones;
 import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.filter.FiltroCompuestoPlato;
@@ -13,6 +14,7 @@ import com.ollacercana.service.PlatoService;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,12 @@ public class PlatoServiceImpl implements PlatoService {
     private final PlatoRepository repository;
     private final PlatoValidator validator;
     private final PerfilCocineraRepository perfilCocineraRepository;
+    private PublicadorEventosPorciones publicadorEventosPorciones; // HU-16 (opcional: null en pruebas unitarias)
+
+    @Autowired(required = false)
+    public void setPublicadorEventosPorciones(PublicadorEventosPorciones publicadorEventosPorciones) {
+        this.publicadorEventosPorciones = publicadorEventosPorciones;
+    }
 
     @Override
     public Plato crear(Plato plato) {
@@ -60,11 +68,15 @@ public class PlatoServiceImpl implements PlatoService {
                 .orElseThrow(() -> new PlatoNoEncontradoException(platoId));
 
         validator.validarAjusteDisponibilidad(plato, tipo, cantidad);
+        int disponiblesAntes = plato.getPorcionesDisponibles();
         plato.ajustarDisponibilidad(tipo, cantidad);
         plato.setVersion(version);
 
         try {
             Plato guardado = repository.saveAndFlush(plato);
+            if (publicadorEventosPorciones != null) {
+                publicadorEventosPorciones.publicarSiCambio(disponiblesAntes, guardado);
+            }
             log.info("Disponibilidad actualizada para plato {}", platoId);
             return guardado;
         } catch (ObjectOptimisticLockingFailureException e) {

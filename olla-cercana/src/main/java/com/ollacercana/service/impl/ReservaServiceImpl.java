@@ -2,6 +2,7 @@ package com.ollacercana.service.impl;
 
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.DecisionReservaRequestDTO;
+import com.ollacercana.observer.PublicadorEventosPorciones;
 import com.ollacercana.exception.*;
 import com.ollacercana.observer.PublicadorEventosReserva;
 import com.ollacercana.repository.*;
@@ -33,6 +34,12 @@ public class ReservaServiceImpl implements ReservaService {
     private final EventoReservaRepository eventoReservaRepository;
     private final PublicadorEventosReserva publicador;
     private final ReservaValidator validator;
+    private PublicadorEventosPorciones publicadorEventosPorciones; // HU-16 (opcional: null en pruebas unitarias)
+
+    @Autowired(required = false)
+    public void setPublicadorEventosPorciones(PublicadorEventosPorciones publicadorEventosPorciones) {
+        this.publicadorEventosPorciones = publicadorEventosPorciones;
+    }
 
     @Autowired
     public ReservaServiceImpl(ReservaRepository reservaRepository,
@@ -68,6 +75,7 @@ public class ReservaServiceImpl implements ReservaService {
             validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
         }
 
+        int disponiblesAntes = plato.getPorcionesDisponibles();
         plato.comprometerPorciones(reserva.getCantidadPorciones());
 
         try {
@@ -75,6 +83,7 @@ public class ReservaServiceImpl implements ReservaService {
         } catch (ObjectOptimisticLockingFailureException ex) {
             throw new ConflictoException("El plato fue modificado por otra transacción simultánea, intenta de nuevo");
         }
+        publicarPorciones(disponiblesAntes, plato);
 
         BigDecimal montoTotal = plato.getPrecioPorcion().multiply(BigDecimal.valueOf(reserva.getCantidadPorciones()));
         LocalDateTime ahora = LocalDateTime.now();
@@ -310,12 +319,20 @@ public class ReservaServiceImpl implements ReservaService {
     private void liberarPorciones(Reserva reserva) {
         platoRepository.findById(reserva.getPlatoId()).ifPresentOrElse(
                 plato -> {
+                    int disponiblesAntes = plato.getPorcionesDisponibles();
                     plato.liberarPorciones(reserva.getCantidadPorciones());
                     platoRepository.save(plato);
+                    publicarPorciones(disponiblesAntes, plato);
                 },
                 () -> log.warn("El plato {} de la reserva {} ya no existe; no hay porciones que devolver",
                         reserva.getPlatoId(), reserva.getId())
         );
+    }
+
+    private void publicarPorciones(int disponiblesAntes, Plato plato) {
+        if (publicadorEventosPorciones != null) {
+            publicadorEventosPorciones.publicarSiCambio(disponiblesAntes, plato);
+        }
     }
 
     private Reserva guardar(Reserva reserva) {
