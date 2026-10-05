@@ -19,6 +19,7 @@ public class ErrorResponseDTO {
     private int status;
     private String error;
     private String message;
+    private String mensaje;
     private String path;
     private Map<String, String> detalles;
 }
