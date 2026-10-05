@@ -33,6 +33,10 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    private static final String ERROR_VALIDACION = "Validación fallida";
+    private static final String MENSAJE_VALIDACION = "Existen errores en los campos del formulario";
+    private static final String MENSAJE_ERROR_INESPERADO = "Error inesperado del servidor";
+
     // --------- 404 ---------
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
@@ -89,13 +93,6 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Falta el parámetro obligatorio '" + ex.getParameterName() + "'", request.getRequestURI());
     }
 
-    // Antes respondía 500 (por ejemplo, GET /platos/cercanos sin latitud).
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ErrorResponseDTO> handleParametroFaltante(MissingServletRequestParameterException ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST,
-                "Falta el parámetro obligatorio '" + ex.getParameterName() + "'", request.getRequestURI());
-    }
-
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponseDTO> handleTipoInvalido(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "El parámetro '" + ex.getName() + "' tiene un formato inválido", request.getRequestURI());
@@ -123,19 +120,6 @@ public class GlobalExceptionHandler {
                 errores.put(err.getField(), err.getDefaultMessage())
         );
         return buildValidationResponse(errores, request.getRequestURI());
-    }
-
-        ErrorResponseDTO body = ErrorResponseDTO.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Validación fallida")
-                .mensaje("Existen errores en los campos del formulario")
-                .message("Existen errores en los campos del formulario")
-                .detalles(errores)
-                .path(request.getRequestURI())
-                .build();
-
-        return ResponseEntity.badRequest().body(body);
     }
 
     // --------- 500 ---------
