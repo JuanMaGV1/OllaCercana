@@ -23,6 +23,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manejo centralizado de errores. Todas las respuestas usan ErrorResponseDTO.
+ * 400 solicitud inválida, 403 acceso denegado, 404 no encontrado, 409 conflicto,
+ * 422 regla de negocio y 500 error inesperado sin exponer el detalle al cliente.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -84,6 +89,13 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Falta el parámetro obligatorio '" + ex.getParameterName() + "'", request.getRequestURI());
     }
 
+    // Antes respondía 500 (por ejemplo, GET /platos/cercanos sin latitud).
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponseDTO> handleParametroFaltante(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Falta el parámetro obligatorio '" + ex.getParameterName() + "'", request.getRequestURI());
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponseDTO> handleTipoInvalido(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "El parámetro '" + ex.getName() + "' tiene un formato inválido", request.getRequestURI());
@@ -110,6 +122,8 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(err ->
                 errores.put(err.getField(), err.getDefaultMessage())
         );
+        return buildValidationResponse(errores, request.getRequestURI());
+    }
 
         ErrorResponseDTO body = ErrorResponseDTO.builder()
                 .timestamp(LocalDateTime.now())
@@ -128,7 +142,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(Exception ex, HttpServletRequest request) {
         log.error("Error no controlado en {}", request.getRequestURI(), ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI());
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, MENSAJE_ERROR_INESPERADO, request.getRequestURI());
+    }
+
+    // ---------- util ----------
+
+    private ResponseEntity<ErrorResponseDTO> buildValidationResponse(Map<String, String> errores, String path) {
+        ErrorResponseDTO body = ErrorResponseDTO.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(ERROR_VALIDACION)
+                .mensaje(MENSAJE_VALIDACION)
+                .message(MENSAJE_VALIDACION)
+                .detalles(errores)
+                .path(path)
+                .build();
+        return ResponseEntity.badRequest().body(body);
     }
 
     private ResponseEntity<ErrorResponseDTO> buildResponse(HttpStatus status, String mensaje, String path) {
