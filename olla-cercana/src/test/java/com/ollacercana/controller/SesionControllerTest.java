@@ -3,7 +3,6 @@ package com.ollacercana.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.LoginRequestDTO;
-import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.security.JwtService;
 import com.ollacercana.service.ICuentaService;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Set;
@@ -64,14 +64,15 @@ class SesionControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nombre").value("Carlos Perez"))
                 .andExpect(jsonPath("$.correo").value("carlos@gmail.com"))
-                .andExpect(jsonPath("$.rol").value("COMPRADOR"));
+                .andExpect(jsonPath("$.rol").value("COMPRADOR"))
+                .andExpect(jsonPath("$.roles[0]").value("COMPRADOR"));
     }
 
     @Test
-    @DisplayName("POST /api/v1/sesiones - 409 Conflict ante credenciales erróneas")
-    void iniciarSesion_CredencialesInvalidas_Retorna409() throws Exception {
+    @DisplayName("POST /api/v1/sesiones - 401 Unauthorized ante credenciales erróneas")
+    void iniciarSesion_CredencialesInvalidas_Retorna401() throws Exception {
         when(cuentaService.autenticar("carlos@gmail.com", "PasswordErroneo"))
-                .thenThrow(new ConflictoException("Credenciales inválidas"));
+                .thenThrow(new BadCredentialsException("Credenciales inválidas"));
 
         LoginRequestDTO request = LoginRequestDTO.builder()
                 .identificador("carlos@gmail.com")
@@ -81,7 +82,7 @@ class SesionControllerTest {
         mockMvc.perform(post("/api/v1/sesiones")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.mensaje").value("Credenciales inválidas"));
     }
 

@@ -1,10 +1,6 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.Credenciales;
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.EstadoCuenta;
-import com.ollacercana.domain.Identidad;
-import com.ollacercana.domain.Rol;
+import com.ollacercana.domain.*;
 import com.ollacercana.exception.ConflictoException;
 import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.mapper.CuentaEntityMapper;
@@ -18,8 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 import java.util.Set;
@@ -40,6 +40,9 @@ class CuentaServiceImplTest {
 
     @Mock
     private ICuentaValidator cuentaValidator;
+
+    @Spy
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @InjectMocks
     private CuentaServiceImpl cuentaService;
@@ -128,31 +131,26 @@ class CuentaServiceImplTest {
         @Test
         @DisplayName("1. Autenticación exitosa con correo o celular (Happy Path)")
         void autenticar_CredencialesValidas_RetornaCuenta() {
-            // Arrange: Cuenta con hash real de BCrypt
             cuentaBase.getCredenciales().setContrasenaHash(bCryptHash);
             when(cuentaRepository.findByIdentificador("juan@gmail.com"))
                     .thenReturn(Optional.of(cuentaBase));
 
-            // Act
             Cuenta resultado = cuentaService.autenticar("juan@gmail.com", rawPassword);
 
-            // Assert
             assertNotNull(resultado);
             assertEquals("juan@gmail.com", resultado.getIdentidad().getCorreo());
             assertEquals(EstadoCuenta.ACTIVO, resultado.getEstado());
         }
 
         @Test
-        @DisplayName("2. Contraseña incorrecta (409 ConflictoException)")
-        void autenticar_PasswordIncorrecta_LanzaConflictoException() {
-            // Arrange
+        @DisplayName("2. Contraseña incorrecta (401 BadCredentialsException)")
+        void autenticar_PasswordIncorrecta_LanzaBadCredentialsException() {
             cuentaBase.getCredenciales().setContrasenaHash(bCryptHash);
             when(cuentaRepository.findByIdentificador("juan@gmail.com"))
                     .thenReturn(Optional.of(cuentaBase));
 
-            // Act & Assert
-            ConflictoException exception = assertThrows(
-                    ConflictoException.class,
+            BadCredentialsException exception = assertThrows(
+                    BadCredentialsException.class,
                     () -> cuentaService.autenticar("juan@gmail.com", "PasswordErronea123")
             );
 
@@ -160,15 +158,13 @@ class CuentaServiceImplTest {
         }
 
         @Test
-        @DisplayName("3. Identificador inexistente (409 ConflictoException)")
-        void autenticar_IdentificadorNoExiste_LanzaConflictoException() {
-            // Arrange
+        @DisplayName("3. Identificador inexistente (401 BadCredentialsException)")
+        void autenticar_IdentificadorNoExiste_LanzaBadCredentialsException() {
             when(cuentaRepository.findByIdentificador("noexiste@gmail.com"))
                     .thenReturn(Optional.empty());
 
-            // Act & Assert
-            ConflictoException exception = assertThrows(
-                    ConflictoException.class,
+            BadCredentialsException exception = assertThrows(
+                    BadCredentialsException.class,
                     () -> cuentaService.autenticar("noexiste@gmail.com", rawPassword)
             );
 
@@ -176,17 +172,14 @@ class CuentaServiceImplTest {
         }
 
         @Test
-        @DisplayName("4. Cuenta bloqueada (409 ConflictoException)")
-        void autenticar_CuentaBloqueada_LanzaConflictoException() {
-            // Arrange
+        @DisplayName("4. Cuenta bloqueada (LockedException)")
+        void autenticar_CuentaBloqueada_LanzaLockedException() {
             cuentaBase.setEstado(EstadoCuenta.BLOQUEADO);
-            cuentaBase.getCredenciales().setContrasenaHash(bCryptHash);
             when(cuentaRepository.findByIdentificador("juan@gmail.com"))
                     .thenReturn(Optional.of(cuentaBase));
 
-            // Act & Assert
-            ConflictoException exception = assertThrows(
-                    ConflictoException.class,
+            LockedException exception = assertThrows(
+                    LockedException.class,
                     () -> cuentaService.autenticar("juan@gmail.com", rawPassword)
             );
 

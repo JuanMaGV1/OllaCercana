@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser(username = "1", roles = {"COCINERA", "ADMIN"})
 class PerfilCocineraControllerTest {
 
     @Autowired
@@ -148,7 +150,7 @@ class PerfilCocineraControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/perfiles/destacadas - 200 OK retorna lista")
+    @DisplayName("GET /api/v1/perfiles/destacadas - 200 OK retorna lista pública")
     void listarDestacadas_Exitoso() throws Exception {
         PerfilCocinera destacada = PerfilCocinera.builder()
                 .id(perfilId)

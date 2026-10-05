@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
 
     @Override
     @PostMapping
+    @PreAuthorize("hasRole('COCINERA') or hasRole('ADMIN')")
     public ResponseEntity<PerfilCocineraResponseDTO> crearPerfil(@Valid @RequestBody PerfilCocineraRequestDTO request) {
         PerfilCocinera dominio = perfilMapper.toDomain(request);
         PerfilCocinera creado = perfilService.crearPerfil(dominio, request.getCuentaId());
@@ -35,6 +37,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
 
     @Override
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('COCINERA') or hasRole('ADMIN')")
     public ResponseEntity<PerfilCocineraResponseDTO> actualizarPerfil(
             @PathVariable UUID id,
             @Valid @RequestBody PerfilCocineraRequestDTO request) {
@@ -45,6 +48,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
 
     @Override
     @PostMapping("/{id}/verificar-telefono")
+    @PreAuthorize("hasRole('COCINERA') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> verificarTelefono(
             @PathVariable UUID id,
             @Valid @RequestBody VerificarOtpRequestDTO request) {
@@ -54,6 +58,7 @@ public class PerfilCocineraController implements PerfilCocineraApi {
 
     @Override
     @GetMapping("/cuenta/{cuentaId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PerfilCocineraResponseDTO> obtenerPorCuentaId(@PathVariable Long cuentaId) {
         PerfilCocinera perfil = perfilService.obtenerPorCuentaId(cuentaId);
         return ResponseEntity.ok(perfilMapper.toResponseDTO(perfil));

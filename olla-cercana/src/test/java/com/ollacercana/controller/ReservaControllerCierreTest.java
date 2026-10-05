@@ -3,17 +3,20 @@ package com.ollacercana.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ollacercana.domain.*;
 import com.ollacercana.dto.request.CierreTransaccionRequestDTO;
-import com.ollacercana.repository.mongo.NotificacionRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReporteRepository;
 import com.ollacercana.repository.ReservaRepository;
+import com.ollacercana.repository.mongo.NotificacionRepository;
+import com.ollacercana.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -24,16 +27,14 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * OC-160: POST /api/v1/reservas/{id}/completar — HU-23.
- * Las tareas programadas se apagan para que no interfieran con los datos de la prueba.
- */
 @SpringBootTest(properties = "ollacercana.reservas.tareas-programadas=false")
 @AutoConfigureMockMvc
+@WithMockUser(username = "42", roles = {"COMPRADOR"})
 class ReservaControllerCierreTest {
 
     @Autowired
@@ -54,11 +55,17 @@ class ReservaControllerCierreTest {
     @Autowired
     private NotificacionRepository notificacionRepository;
 
+    @MockBean
+    private UsuarioActual usuarioActual;
+
     private Plato plato;
-    private com.ollacercana.domain.Reserva reserva;
+    private Reserva reserva;
 
     @BeforeEach
     void setUp() {
+        lenient().when(usuarioActual.getCuentaId()).thenReturn(42L);
+        lenient().when(usuarioActual.tieneRol(Rol.ADMIN)).thenReturn(false);
+
         plato = platoRepository.save(Plato.builder()
                 .id(UUID.randomUUID())
                 .cocineraId(UUID.randomUUID())
@@ -78,8 +85,10 @@ class ReservaControllerCierreTest {
                 .longitud(-74.0567)
                 .build());
 
+        lenient().when(usuarioActual.getCocineraId()).thenReturn(plato.getCocineraId());
+
         LocalDateTime ahora = LocalDateTime.now();
-        com.ollacercana.domain.Reserva nueva = com.ollacercana.domain.Reserva.crear(plato, 42L, 2, MedioPago.EFECTIVO, "Sin cebolla", ahora.minusMinutes(1));
+        Reserva nueva = Reserva.crear(plato, 42L, 2, MedioPago.EFECTIVO, "Sin cebolla", ahora.minusMinutes(1));
         nueva.confirmar(ahora.plusMinutes(45), ahora);
         reserva = reservaRepository.save(nueva);
     }
@@ -106,9 +115,9 @@ class ReservaControllerCierreTest {
                 .andExpect(jsonPath("$.comentarioCierre").value("Todo llegó caliente"))
                 .andExpect(jsonPath("$.fechaCompletada").exists());
 
-        com.ollacercana.domain.Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
+        Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
         assertEquals(EstadoReserva.COMPLETADA, guardada.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.SOLO_LECTURA, guardada.getEstadoChat());
+        assertEquals(EstadoChat.SOLO_LECTURA, guardada.getEstadoChat());
     }
 
     @Test
@@ -126,9 +135,9 @@ class ReservaControllerCierreTest {
     @Test
     @DisplayName("Escenario 3: con un reporte ABIERTO el cierre se bloquea con 422")
     void completar_conReporteAbierto_debeRetornar422() throws Exception {
-        reporteRepository.save(com.ollacercana.domain.Reporte.builder()
+        reporteRepository.save(Reporte.builder()
                 .reservaId(reserva.getId())
-                .estado(com.ollacercana.domain.EstadoReporte.ABIERTO)
+                .estado(EstadoReporte.ABIERTO)
                 .fechaCreacion(LocalDateTime.now())
                 .build());
 
@@ -136,17 +145,17 @@ class ReservaControllerCierreTest {
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.status").value(422));
 
-        com.ollacercana.domain.Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
+        Reserva guardada = reservaRepository.findById(reserva.getId()).orElseThrow();
         assertEquals(EstadoReserva.CONFIRMADA, guardada.getEstado());
-        assertEquals(com.ollacercana.domain.EstadoChat.ACTIVO, guardada.getEstadoChat());
+        assertEquals(EstadoChat.ACTIVO, guardada.getEstadoChat());
     }
 
     @Test
     @DisplayName("Un reporte RESUELTO ya no bloquea el cierre")
     void completar_conReporteResuelto_debeRetornar200() throws Exception {
-        reporteRepository.save(com.ollacercana.domain.Reporte.builder()
+        reporteRepository.save(Reporte.builder()
                 .reservaId(reserva.getId())
-                .estado(com.ollacercana.domain.EstadoReporte.RESUELTO)
+                .estado(EstadoReporte.RESUELTO)
                 .fechaCreacion(LocalDateTime.now())
                 .build());
 

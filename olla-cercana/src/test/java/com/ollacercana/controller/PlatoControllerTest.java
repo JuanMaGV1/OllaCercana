@@ -2,17 +2,21 @@ package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ollacercana.domain.RestriccionAlimentaria;
+import com.ollacercana.domain.Rol;
 import com.ollacercana.domain.TipoAjustePorciones;
 import com.ollacercana.domain.TipoComida;
 import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.dto.request.PlatoRequestDTO;
+import com.ollacercana.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -20,11 +24,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.Mockito.lenient;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser(username = "cocinera@ollacercana.com", roles = {"COCINERA"})
 class PlatoControllerTest {
 
     @Autowired
@@ -36,15 +42,23 @@ class PlatoControllerTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @MockBean
+    private UsuarioActual usuarioActual;
+
+    private static final UUID COCINERA_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+
     @BeforeEach
     void asegurarCocineraSembrada() {
-        UUID cocineraId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        lenient().when(usuarioActual.getCocineraId()).thenReturn(COCINERA_ID);
+        lenient().when(usuarioActual.getCuentaId()).thenReturn(1L);
+        lenient().when(usuarioActual.tieneRol(Rol.ADMIN)).thenReturn(false);
+
         Integer existe = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM perfiles_cocinera WHERE id = ?", Integer.class, cocineraId);
+                "SELECT COUNT(*) FROM perfiles_cocinera WHERE id = ?", Integer.class, COCINERA_ID);
         if (existe == null || existe == 0) {
             jdbcTemplate.update(
                     "INSERT INTO perfiles_cocinera (id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    cocineraId, "Torres del Parque", true, false, false, 0.0, 0);
+                    COCINERA_ID, "Torres del Parque", true, false, false, 0.0, 0);
         }
     }
 
@@ -65,7 +79,6 @@ class PlatoControllerTest {
         );
 
         mockMvc.perform(post("/api/v1/platos")
-                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -92,7 +105,6 @@ class PlatoControllerTest {
         );
 
         mockMvc.perform(post("/api/v1/platos")
-                        .header("X-Cocinera-Id", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -119,7 +131,6 @@ class PlatoControllerTest {
         );
 
         String responseJson = mockMvc.perform(post("/api/v1/platos")
-                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -141,7 +152,6 @@ class PlatoControllerTest {
         );
 
         String responseJson = mockMvc.perform(post("/api/v1/platos")
-                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -169,7 +179,6 @@ class PlatoControllerTest {
         );
 
         String responseJson = mockMvc.perform(post("/api/v1/platos")
-                        .header("X-Cocinera-Id", "11111111-1111-1111-1111-111111111111")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
