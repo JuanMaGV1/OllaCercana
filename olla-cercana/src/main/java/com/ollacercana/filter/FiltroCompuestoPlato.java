@@ -1,8 +1,9 @@
 package com.ollacercana.filter;
 
-import com.ollacercana.domain.Plato;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.ollacercana.model.domain.Plato;
 
 public class FiltroCompuestoPlato implements FiltroPlato {
 

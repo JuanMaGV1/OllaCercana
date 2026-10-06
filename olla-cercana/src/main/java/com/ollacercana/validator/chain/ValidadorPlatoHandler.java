@@ -1,6 +1,6 @@
 package com.ollacercana.validator.chain;
 
-import com.ollacercana.domain.Plato;
+import com.ollacercana.model.domain.Plato;
 
 public interface ValidadorPlatoHandler {
     void setSiguiente(ValidadorPlatoHandler siguiente);

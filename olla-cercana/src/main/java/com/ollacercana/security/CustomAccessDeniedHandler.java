@@ -2,7 +2,8 @@ package com.ollacercana.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.ollacercana.dto.response.ErrorResponseDTO;
+import com.ollacercana.model.dto.response.ErrorResponseDTO;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;

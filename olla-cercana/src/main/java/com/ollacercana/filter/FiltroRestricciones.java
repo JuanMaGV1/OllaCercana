@@ -1,8 +1,9 @@
 package com.ollacercana.filter;
 
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.RestriccionAlimentaria;
 import java.util.List;
+
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.RestriccionAlimentaria;
 
 public record FiltroRestricciones(List<RestriccionAlimentaria> requeridas) implements FiltroPlato {
     @Override

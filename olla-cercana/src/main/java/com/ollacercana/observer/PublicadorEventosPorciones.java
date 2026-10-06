@@ -1,8 +1,8 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.dto.response.PorcionesActualizadasResponseDTO;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.dto.response.PorcionesActualizadasResponseDTO;
 
-import com.ollacercana.domain.Plato;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 

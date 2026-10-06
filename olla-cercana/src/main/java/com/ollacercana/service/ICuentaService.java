@@ -1,6 +1,6 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.Cuenta;
+import com.ollacercana.model.domain.Cuenta;
 
 public interface ICuentaService {
 

@@ -3,6 +3,8 @@ package com.ollacercana.domain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.ollacercana.model.domain.CodigoOTP;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 

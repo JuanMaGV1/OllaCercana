@@ -1,6 +1,6 @@
 package com.ollacercana.filter;
 
-import com.ollacercana.domain.Plato;
+import com.ollacercana.model.domain.Plato;
 import com.ollacercana.util.GeoUtils;
 
 public record FiltroDistanciaMaxima(Double latUsuario, Double lonUsuario, double distanciaMaxMetros) implements FiltroPlato {

@@ -1,9 +1,10 @@
 package com.ollacercana.security;
 
-import com.ollacercana.domain.Cuenta;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.ollacercana.model.domain.Cuenta;
 
 import java.util.Collection;
 import java.util.UUID;

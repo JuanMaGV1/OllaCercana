@@ -1,6 +1,5 @@
 package com.ollacercana.service.impl;
 
-import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.exception.CocineraNoEncontradaException;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.validator.CocineraQueryPort;
@@ -18,14 +17,14 @@ public class PerfilCocineraQueryServiceImpl implements CocineraQueryPort {
     @Override
     public boolean estaVerificada(UUID cocineraId) {
         return repository.findById(cocineraId)
-                .map(PerfilCocinera::verificada)
+                .map(entity -> entity.isVerificada())
                 .orElseThrow(() -> new CocineraNoEncontradaException(cocineraId));
     }
 
     @Override
     public boolean estaPausada(UUID cocineraId) {
         return repository.findById(cocineraId)
-                .map(PerfilCocinera::pausada)
+                .map(entity -> entity.isPausada())
                 .orElseThrow(() -> new CocineraNoEncontradaException(cocineraId));
     }
 }

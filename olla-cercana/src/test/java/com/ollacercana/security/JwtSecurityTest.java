@@ -1,8 +1,8 @@
 package com.ollacercana.security;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.Identidad;
-import com.ollacercana.domain.Rol;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.Identidad;
+import com.ollacercana.model.domain.Rol;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

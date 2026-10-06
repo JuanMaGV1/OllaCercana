@@ -1,9 +1,10 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.dto.request.RegistroRequestDTO;
-import com.ollacercana.dto.response.RegistroResponseDTO;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.dto.request.RegistroRequestDTO;
+import com.ollacercana.model.dto.response.RegistroResponseDTO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

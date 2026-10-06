@@ -1,9 +1,10 @@
 package com.ollacercana.config;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.MedioPago;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.Reserva;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.EstadoReserva;
+import com.ollacercana.model.domain.MedioPago;
+import com.ollacercana.persistence.entity.PlatoEntity;
+import com.ollacercana.persistence.entity.ReservaEntity;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReservaRepository;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -42,34 +44,74 @@ public class ReservaSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (reservaRepository.count() > 0) {
-            return;
-        }
-        try {
-            Optional<Plato> platoDemo = platoRepository.findByCocineraIdAndEstado(COCINERA_DEMO, EstadoPlato.ACTIVO)
-                    .stream()
-                    .filter(plato -> plato.getPorcionesDisponibles() >= PORCIONES_NECESARIAS)
-                    .max(Comparator.comparingInt(Plato::getPorcionesDisponibles));
+        if (reservaRepository.count() > 0) return;
 
-            if (platoDemo.isEmpty()) {
+        try {
+            Optional<PlatoEntity> platoDemoOpt = platoRepository
+                    .findByCocineraIdAndEstado(COCINERA_DEMO, EstadoPlato.ACTIVO)
+                    .stream()
+                    .filter(p -> (p.getPorcionesTotales() -
+                            (p.getPorcionesComprometidas() == null ? 0 : p.getPorcionesComprometidas()))
+                            >= PORCIONES_NECESARIAS)
+                    .max(Comparator.comparingInt(p ->
+                            p.getPorcionesTotales() -
+                            (p.getPorcionesComprometidas() == null ? 0 : p.getPorcionesComprometidas())));
+
+            if (platoDemoOpt.isEmpty()) {
                 log.info("No hay un plato de la cocinera demo con porciones suficientes; no se crean reservas de prueba.");
                 return;
             }
 
-            Plato plato = platoDemo.get();
+            PlatoEntity plato = platoDemoOpt.get();
             LocalDateTime ahora = LocalDateTime.now();
 
-            Reserva paraConfirmar = Reserva.crear(plato, 1L, 2, MedioPago.NEQUI, "Sin cebolla, por favor", ahora);
-            paraConfirmar.setId(RESERVA_PARA_CONFIRMAR);
+            ReservaEntity paraConfirmar = ReservaEntity.builder()
+                    .id(RESERVA_PARA_CONFIRMAR)
+                    .platoId(plato.getId())
+                    .cocineraId(plato.getCocineraId())
+                    .compradorId(1L)
+                    .cantidadPorciones(2)
+                    .montoTotal(plato.getPrecioPorcion().multiply(BigDecimal.valueOf(2)))
+                    .medioPago(MedioPago.NEQUI)
+                    .estado(EstadoReserva.PENDIENTE)
+                    .notaComprador("Sin cebolla, por favor")
+                    .fechaCreacion(ahora)
+                    .fechaLimiteConfirmacion(ahora.plusMinutes(10))
+                    .build();
 
-            Reserva paraRechazar = Reserva.crear(plato, 2L, 1, MedioPago.EFECTIVO, null, ahora);
-            paraRechazar.setId(RESERVA_PARA_RECHAZAR);
+            ReservaEntity paraRechazar = ReservaEntity.builder()
+                    .id(RESERVA_PARA_RECHAZAR)
+                    .platoId(plato.getId())
+                    .cocineraId(plato.getCocineraId())
+                    .compradorId(2L)
+                    .cantidadPorciones(1)
+                    .montoTotal(plato.getPrecioPorcion())
+                    .medioPago(MedioPago.EFECTIVO)
+                    .estado(EstadoReserva.PENDIENTE)
+                    .fechaCreacion(ahora)
+                    .fechaLimiteConfirmacion(ahora.plusMinutes(10))
+                    .build();
 
-            Reserva porVencer = Reserva.crear(plato, 3L, 1, MedioPago.DAVIPLATA, "Timbrar en la portería", ahora.minusMinutes(8));
-            porVencer.setId(RESERVA_POR_VENCER);
+            ReservaEntity porVencer = ReservaEntity.builder()
+                    .id(RESERVA_POR_VENCER)
+                    .platoId(plato.getId())
+                    .cocineraId(plato.getCocineraId())
+                    .compradorId(3L)
+                    .cantidadPorciones(1)
+                    .montoTotal(plato.getPrecioPorcion())
+                    .medioPago(MedioPago.DAVIPLATA)
+                    .estado(EstadoReserva.PENDIENTE)
+                    .notaComprador("Timbrar en la portería")
+                    .fechaCreacion(ahora.minusMinutes(8))
+                    .fechaLimiteConfirmacion(ahora.minusMinutes(8).plusMinutes(10)) // ya casi vence
+                    .build();
 
-            plato.comprometerPorciones(PORCIONES_NECESARIAS);
+            // Compromete porciones en el plato
+            plato.setPorcionesComprometidas(
+                    (plato.getPorcionesComprometidas() == null ? 0 : plato.getPorcionesComprometidas())
+                            + PORCIONES_NECESARIAS);
             platoRepository.save(plato);
+
             reservaRepository.saveAll(List.of(paraConfirmar, paraRechazar, porVencer));
 
             log.info("Reservas de prueba (HU-12) creadas sobre el plato '{}'. Usa X-Cocinera-Id: {}",

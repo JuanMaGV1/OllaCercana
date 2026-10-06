@@ -1,6 +1,10 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.domain.*;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.RestriccionAlimentaria;
+import com.ollacercana.model.domain.TipoComida;
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
+import com.ollacercana.persistence.entity.PlatoEntity;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,31 +30,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class PlatoCercanoControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private PlatoRepository platoRepository;
-
-    @Autowired
-    private PerfilCocineraRepository perfilRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private PlatoRepository platoRepository;
+    @Autowired private PerfilCocineraRepository perfilRepository;
 
     @BeforeEach
     void setUp() {
         platoRepository.deleteAll();
         perfilRepository.deleteAll();
 
-        // 1. Dejar que JPA autogenere el ID del perfil
-        PerfilCocinera perfil = PerfilCocinera.builder()
+        // ✅ Entity JPA (no dominio)
+        PerfilCocineraEntity perfil = PerfilCocineraEntity.builder()
                 .conjuntoResidencial("Torres del Sol")
                 .numeroNequi("3001234567")
                 .numeroDaviplata("3007654321")
                 .verificada(true)
+                .pausada(false)
+                .esDestacada(false)
+                .promedioCalificacion(0.0)
+                .resenasPositivas(0)
                 .build();
-        PerfilCocinera guardado = perfilRepository.save(perfil);
+        PerfilCocineraEntity guardado = perfilRepository.save(perfil);
 
-        // 2. Asociar el ID autogenerado al plato
-        Plato plato = Plato.builder()
+        PlatoEntity plato = PlatoEntity.builder()
                 .id(UUID.randomUUID())
                 .cocineraId(guardado.getId())
                 .nombre("Sancocho de Pollo")
@@ -64,7 +66,7 @@ class PlatoCercanoControllerTest {
                 .estado(EstadoPlato.ACTIVO)
                 .fechaPublicacion(LocalDateTime.now())
                 .fechaExpiracion(LocalDateTime.now().plusHours(3))
-                .puntoEntrega("Torre 3 Apto 502, Calle 123 #45-67") // Datos sensibles para probar seguridad
+                .puntoEntrega("Torre 3 Apto 502, Calle 123 #45-67")
                 .latitud(4.6789)
                 .longitud(-74.0567)
                 .build();
@@ -87,7 +89,6 @@ class PlatoCercanoControllerTest {
 
         String jsonResponse = result.getResponse().getContentAsString().toLowerCase();
 
-        // Verificaciones de no exposición de datos privados exigidas por la historia
         assertFalse(jsonResponse.contains("puntoentrega"), "No debe contener 'puntoEntrega'");
         assertFalse(jsonResponse.contains("torre 3"), "No debe exponer la torre");
         assertFalse(jsonResponse.contains("apto"), "No debe exponer el número de apartamento");

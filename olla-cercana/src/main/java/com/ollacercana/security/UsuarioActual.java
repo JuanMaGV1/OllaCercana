@@ -1,9 +1,7 @@
 package com.ollacercana.security;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Rol;
 import com.ollacercana.exception.AccesoDenegadoException;
+import com.ollacercana.model.domain.Rol;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +42,9 @@ public class UsuarioActual {
         try {
             return Long.parseLong(username);
         } catch (NumberFormatException e) {
+            // ✅ el repo devuelve CuentaEntity, no Cuenta
             return cuentaRepository.findByIdentificador(username)
-                    .map(Cuenta::getId)
+                    .map(cuentaEntity -> cuentaEntity.getId())
                     .orElseThrow(() -> new AccesoDenegadoException("No se pudo resolver el ID de cuenta del usuario actual"));
         }
     }
@@ -55,9 +54,6 @@ public class UsuarioActual {
                 .orElseThrow(() -> new AccesoDenegadoException("La cuenta autenticada no tiene un perfil de cocinera asociado"));
     }
 
-    /**
-     * Consulta segura del ID de cocinera sin lanzar excepciones si la cuenta no tiene perfil de cocinera.
-     */
     public Optional<UUID> getCocineraIdOpt() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -71,7 +67,8 @@ public class UsuarioActual {
 
         try {
             Long cuentaId = getCuentaId();
-            return perfilCocineraRepository.findByCuentaId(cuentaId).map(PerfilCocinera::getId);
+            return perfilCocineraRepository.findByCuentaId(cuentaId)
+                    .map(perfilEntity -> perfilEntity.getId());
         } catch (Exception e) {
             return Optional.empty();
         }

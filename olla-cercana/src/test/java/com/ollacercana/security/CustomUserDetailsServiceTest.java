@@ -1,10 +1,11 @@
 package com.ollacercana.security;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.EstadoCuenta;
-import com.ollacercana.domain.Identidad;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Rol;
+import com.ollacercana.model.domain.EstadoCuenta;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.persistence.entity.CredencialesEmbeddable;
+import com.ollacercana.persistence.entity.CuentaEntity;
+import com.ollacercana.persistence.entity.IdentidadEmbeddable;
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -26,35 +27,35 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CustomUserDetailsServiceTest {
 
-    @Mock
-    private CuentaRepository cuentaRepository;
+    @Mock private CuentaRepository cuentaRepository;
+    @Mock private PerfilCocineraRepository perfilCocineraRepository;
 
-    @Mock
-    private PerfilCocineraRepository perfilCocineraRepository;
-
-    @InjectMocks
-    private CustomUserDetailsService userDetailsService;
+    @InjectMocks private CustomUserDetailsService userDetailsService;
 
     @Test
     @DisplayName("loadUserByUsername - Cuenta activa existente carga UserDetails con ROLE_*")
     void loadUserByUsername_usuarioExiste_retornaUserDetailsActivo() {
-        // Arrange
         UUID cocineraId = UUID.randomUUID();
-        Cuenta cuenta = Cuenta.builder()
+
+        CuentaEntity cuenta = CuentaEntity.builder()
                 .id(1L)
-                .identidad(Identidad.builder().correo("maria@ollacercana.com").build())
+                .identidad(IdentidadEmbeddable.builder()
+                        .correo("maria@ollacercana.com")
+                        .build())
+                .credenciales(CredencialesEmbeddable.builder()
+                        .contrasenaHash("$2a$10$dummyhash")
+                        .celularVerificado(true)
+                        .build())
                 .roles(Set.of(Rol.COCINERA))
                 .estado(EstadoCuenta.ACTIVO)
                 .build();
 
         when(cuentaRepository.findByIdentificador("maria@ollacercana.com")).thenReturn(Optional.of(cuenta));
         when(perfilCocineraRepository.findByCuentaId(1L))
-                .thenReturn(Optional.of(PerfilCocinera.builder().id(cocineraId).build()));
+                .thenReturn(Optional.of(PerfilCocineraEntity.builder().id(cocineraId).build()));
 
-        // Act
         UserDetails userDetails = userDetailsService.loadUserByUsername("maria@ollacercana.com");
 
-        // Assert
         assertNotNull(userDetails);
         assertEquals("maria@ollacercana.com", userDetails.getUsername());
         assertTrue(userDetails.isEnabled());
@@ -66,10 +67,8 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername - Cuenta no encontrada lanza UsernameNotFoundException")
     void loadUserByUsername_usuarioNoExiste_lanzaExcepcion() {
-        // Arrange
         when(cuentaRepository.findByIdentificador("desconocido@ollacercana.com")).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(UsernameNotFoundException.class, () ->
                 userDetailsService.loadUserByUsername("desconocido@ollacercana.com"));
     }
@@ -77,10 +76,14 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername - Cuenta bloqueada queda deshabilitada")
     void loadUserByUsername_cuentaBloqueada_retornaUserDetailsDeshabilitado() {
-        // Arrange
-        Cuenta cuentaBloqueada = Cuenta.builder()
+        CuentaEntity cuentaBloqueada = CuentaEntity.builder()
                 .id(2L)
-                .identidad(Identidad.builder().correo("bloqueado@ollacercana.com").build())
+                .identidad(IdentidadEmbeddable.builder()
+                        .correo("bloqueado@ollacercana.com")
+                        .build())
+                .credenciales(CredencialesEmbeddable.builder()
+                        .contrasenaHash("$2a$10$dummyhash")
+                        .build())
                 .roles(Set.of(Rol.COMPRADOR))
                 .estado(EstadoCuenta.BLOQUEADO)
                 .build();
@@ -88,10 +91,8 @@ class CustomUserDetailsServiceTest {
         when(cuentaRepository.findByIdentificador("bloqueado@ollacercana.com")).thenReturn(Optional.of(cuentaBloqueada));
         when(perfilCocineraRepository.findByCuentaId(2L)).thenReturn(Optional.empty());
 
-        // Act
         UserDetails userDetails = userDetailsService.loadUserByUsername("bloqueado@ollacercana.com");
 
-        // Assert
         assertNotNull(userDetails);
         assertFalse(userDetails.isEnabled());
         assertFalse(userDetails.isAccountNonLocked());

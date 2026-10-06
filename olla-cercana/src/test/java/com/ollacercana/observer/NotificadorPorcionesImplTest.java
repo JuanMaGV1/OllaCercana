@@ -1,8 +1,7 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.domain.EstadoPorciones;
-
-import com.ollacercana.dto.response.PorcionesActualizadasResponseDTO;
+import com.ollacercana.model.domain.EstadoPorciones;
+import com.ollacercana.model.dto.response.PorcionesActualizadasResponseDTO;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

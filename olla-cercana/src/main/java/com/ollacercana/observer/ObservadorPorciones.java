@@ -1,8 +1,8 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.dto.response.PorcionesActualizadasResponseDTO;
-
 import java.io.IOException;
+
+import com.ollacercana.model.dto.response.PorcionesActualizadasResponseDTO;
 
 /**
  * Destino de las actualizaciones de porciones de un plato.

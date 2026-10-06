@@ -1,7 +1,7 @@
 package com.ollacercana.filter;
 
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoComida;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoComida;
 
 public record FiltroTipoComida(TipoComida tipoEsperado) implements FiltroPlato {
     @Override

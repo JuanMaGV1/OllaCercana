@@ -1,11 +1,10 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.domain.EstadoPorciones;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.EstadoPorciones;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.dto.response.PorcionesActualizadasResponseDTO;
 
-import com.ollacercana.dto.response.PorcionesActualizadasResponseDTO;
-
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

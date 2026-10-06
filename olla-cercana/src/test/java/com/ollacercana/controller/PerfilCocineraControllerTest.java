@@ -1,10 +1,11 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.request.VerificarOtpRequestDTO;
 import com.ollacercana.exception.ConflictoException;
+import com.ollacercana.model.domain.MedioPago;
+import com.ollacercana.model.domain.PerfilCocinera;
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
 import com.ollacercana.service.IPerfilCocineraService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,14 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(username = "1", roles = {"COCINERA", "ADMIN"})
 class PerfilCocineraControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private IPerfilCocineraService perfilService;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @MockBean private IPerfilCocineraService perfilService;
 
     private final UUID perfilId = UUID.randomUUID();
 
@@ -53,8 +49,10 @@ class PerfilCocineraControllerTest {
                 .numeroNequi("3001234567")
                 .build();
 
+        // dominio puro — cuentaId se setea como campo independiente
         PerfilCocinera perfilDominio = PerfilCocinera.builder()
                 .id(perfilId)
+                .cuentaId(1L)
                 .presentacion("Especialista en comida típica")
                 .conjuntoResidencial("Torres del Parque")
                 .build();
@@ -82,6 +80,7 @@ class PerfilCocineraControllerTest {
 
         PerfilCocinera perfilDominio = PerfilCocinera.builder()
                 .id(perfilId)
+                .cuentaId(1L)
                 .presentacion("Presentación actualizada")
                 .conjuntoResidencial("Torres del Parque")
                 .build();
@@ -98,9 +97,7 @@ class PerfilCocineraControllerTest {
     @Test
     @DisplayName("POST /api/v1/perfiles/{id}/verificar-telefono - 200 OK")
     void verificarTelefono_Exitoso() throws Exception {
-        VerificarOtpRequestDTO request = VerificarOtpRequestDTO.builder()
-                .codigo("123456")
-                .build();
+        VerificarOtpRequestDTO request = VerificarOtpRequestDTO.builder().codigo("123456").build();
 
         when(perfilService.verificarTelefono(perfilId, "123456")).thenReturn(true);
 
@@ -114,9 +111,7 @@ class PerfilCocineraControllerTest {
     @Test
     @DisplayName("POST /api/v1/perfiles/{id}/verificar-telefono - 409 Conflict ante OTP inválido")
     void verificarTelefono_Invalido_Retorna409() throws Exception {
-        VerificarOtpRequestDTO request = VerificarOtpRequestDTO.builder()
-                .codigo("999999")
-                .build();
+        VerificarOtpRequestDTO request = VerificarOtpRequestDTO.builder().codigo("999999").build();
 
         when(perfilService.verificarTelefono(perfilId, "999999"))
                 .thenThrow(new ConflictoException("Código OTP inválido o expirado"));
@@ -131,13 +126,12 @@ class PerfilCocineraControllerTest {
     @Test
     @DisplayName("GET /api/v1/perfiles/cuenta/{cuentaId} - 200 OK")
     void obtenerPorCuentaId_Exitoso() throws Exception {
+        // ✅ NO hay Cuenta anidada en el dominio. Solo cuentaId + nombreCocinera.
         PerfilCocinera perfil = PerfilCocinera.builder()
                 .id(perfilId)
+                .cuentaId(1L)
+                .nombreCocinera("Maria")
                 .conjuntoResidencial("Torres del Parque")
-                .cuenta(Cuenta.builder()
-                        .id(1L)
-                        .identidad(Identidad.builder().nombre("Maria").build())
-                        .build())
                 .build();
 
         when(perfilService.obtenerPorCuentaId(1L)).thenReturn(perfil);
@@ -150,7 +144,7 @@ class PerfilCocineraControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/perfiles/destacadas - 200 OK retorna lista pública")
+    @DisplayName("GET /api/v1/perfiles/destacadas - 200 OK")
     void listarDestacadas_Exitoso() throws Exception {
         PerfilCocinera destacada = PerfilCocinera.builder()
                 .id(perfilId)

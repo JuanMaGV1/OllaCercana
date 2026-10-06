@@ -1,8 +1,9 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.PerfilCocinera;
 import java.util.List;
 import java.util.UUID;
+
+import com.ollacercana.model.domain.PerfilCocinera;
 
 public interface IPerfilCocineraService {
     PerfilCocinera crearPerfil(PerfilCocinera perfil, Long cuentaId);

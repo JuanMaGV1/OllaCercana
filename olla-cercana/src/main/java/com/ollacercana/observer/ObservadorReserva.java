@@ -1,6 +1,6 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.domain.EventoReserva;
+import com.ollacercana.model.domain.EventoReserva;
 
 public interface ObservadorReserva {
 

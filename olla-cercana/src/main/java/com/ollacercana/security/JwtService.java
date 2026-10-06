@@ -1,8 +1,7 @@
 package com.ollacercana.security;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Rol;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.Rol;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -58,8 +57,8 @@ public class JwtService {
 
         if (cuenta.getId() != null) {
             claims.put("cuentaId", cuenta.getId());
-            Optional<PerfilCocinera> perfil = perfilCocineraRepository.findByCuentaId(cuenta.getId());
-            perfil.ifPresent(p -> claims.put("cocineraId", p.getId().toString()));
+            perfilCocineraRepository.findByCuentaId(cuenta.getId())
+            .ifPresent(perfilEntity -> claims.put("cocineraId", perfilEntity.getId().toString()));
         }
 
         Date ahora = new Date();

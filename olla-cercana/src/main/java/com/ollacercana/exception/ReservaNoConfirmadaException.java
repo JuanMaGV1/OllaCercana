@@ -1,6 +1,6 @@
 package com.ollacercana.exception;
 
-import com.ollacercana.domain.EstadoReserva;
+import com.ollacercana.model.domain.EstadoReserva;
 
 // HU-23 Escenario 4: solo se puede cerrar una reserva CONFIRMADA (422).
 public class ReservaNoConfirmadaException extends ReglaDeNegocioException {

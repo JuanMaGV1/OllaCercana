@@ -1,7 +1,10 @@
 package com.ollacercana.service.impl;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.EstadoCuenta;
+import com.ollacercana.exception.ConflictoException;
+import com.ollacercana.mapper.CuentaEntityMapper;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.EstadoCuenta;
+import com.ollacercana.persistence.entity.CuentaEntity;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.service.ICuentaService;
 import com.ollacercana.validator.ICuentaValidator;
@@ -21,11 +24,12 @@ public class CuentaServiceImpl implements ICuentaService {
     private final CuentaRepository cuentaRepository;
     private final ICuentaValidator cuentaValidator;
     private final PasswordEncoder passwordEncoder;
+    private final CuentaEntityMapper entityMapper;
 
     @Override
     @Transactional
     public Cuenta registrar(Cuenta cuenta) {
-        log.info("Iniciando proceso de registro de cuenta para correo: {}",
+        log.info("Registrando cuenta para correo: {}",
                 cuenta.getIdentidad() != null ? cuenta.getIdentidad().getCorreo() : "N/A");
 
         if (cuenta.getIdentidad() != null) {
@@ -35,32 +39,31 @@ public class CuentaServiceImpl implements ICuentaService {
 
         if (cuenta.getCredenciales() != null) {
             cuentaValidator.validarPasswordSegura(cuenta.getCredenciales().getContrasenaHash());
-
-            String passwordPlana = cuenta.getCredenciales().getContrasenaHash();
-            String passwordHasheada = passwordEncoder.encode(passwordPlana);
-            cuenta.getCredenciales().setContrasenaHash(passwordHasheada);
+            String hasheada = passwordEncoder.encode(cuenta.getCredenciales().getContrasenaHash());
+            cuenta.getCredenciales().setContrasenaHash(hasheada);
         }
 
-        Cuenta guardada = cuentaRepository.save(cuenta);
-        log.info("Cuenta registrada exitosamente con ID: {}", guardada.getId());
-        return guardada;
+        cuenta.inicializar();  // ← asigna defaults de dominio
+
+        CuentaEntity guardada = cuentaRepository.save(entityMapper.toEntity(cuenta));
+        return entityMapper.toDomain(guardada);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Cuenta autenticar(String identificador, String password) {
-        Cuenta cuenta = cuentaRepository.findByIdentificador(identificador)
+        CuentaEntity entity = cuentaRepository.findByIdentificador(identificador)
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
+
+        Cuenta cuenta = entityMapper.toDomain(entity);
 
         if (cuenta.getEstado() == EstadoCuenta.BLOQUEADO) {
             throw new LockedException("La cuenta se encuentra bloqueada");
         }
-
         if (cuenta.getCredenciales() == null ||
                 !passwordEncoder.matches(password, cuenta.getCredenciales().getContrasenaHash())) {
             throw new BadCredentialsException("Credenciales inválidas");
         }
-
         return cuenta;
     }
 }

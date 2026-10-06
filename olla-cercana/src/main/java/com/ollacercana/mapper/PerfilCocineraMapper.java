@@ -1,12 +1,22 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
+import com.ollacercana.model.domain.PerfilCocinera;
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring")
+import java.util.List;
+
+/**
+ * Mapper de PRESENTACIÓN para PerfilCocinera.
+ * Traduce entre RequestDTO ↔ dominio y dominio → ResponseDTO.
+ * Lo usa el Controller.
+ *
+ * No confundir con PerfilCocineraEntityMapper (persistencia: dominio ↔ entity).
+ */
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface PerfilCocineraMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -15,10 +25,13 @@ public interface PerfilCocineraMapper {
     @Mapping(target = "esDestacada", ignore = true)
     @Mapping(target = "verificada", ignore = true)
     @Mapping(target = "pausada", ignore = true)
-    @Mapping(target = "cuenta", ignore = true)
+    @Mapping(target = "cuentaId", source = "cuentaId")
+    @Mapping(target = "nombreCocinera", ignore = true)
     PerfilCocinera toDomain(PerfilCocineraRequestDTO request);
 
-    @Mapping(target = "cuentaId", source = "cuenta.id")
-    @Mapping(target = "nombreCocinera", source = "cuenta.identidad.nombre")
+    @Mapping(target = "cuentaId", source = "cuentaId")
+    @Mapping(target = "nombreCocinera", source = "nombreCocinera")
     PerfilCocineraResponseDTO toResponseDTO(PerfilCocinera perfil);
+
+    List<PerfilCocineraResponseDTO> toResponseList(List<PerfilCocinera> perfiles);
 }

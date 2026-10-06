@@ -1,10 +1,15 @@
 package com.ollacercana.service.impl;
 
-import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.DecisionReservaRequestDTO;
+import com.ollacercana.mapper.EventoMapper;
 import com.ollacercana.exception.*;
+import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.mapper.ReservaEntityMapper;
+import com.ollacercana.model.domain.*;
+import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
 import com.ollacercana.observer.PublicadorEventosPorciones;
 import com.ollacercana.observer.PublicadorEventosReserva;
+import com.ollacercana.persistence.entity.PlatoEntity;
+import com.ollacercana.persistence.entity.ReservaEntity;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReporteRepository;
@@ -36,11 +41,14 @@ public class ReservaServiceImpl implements ReservaService {
     private final EventoReservaRepository eventoReservaRepository;
     private final PublicadorEventosReserva publicador;
     private final ReservaValidator validator;
+    private final ReservaEntityMapper reservaEntityMapper;
+    private final PlatoEntityMapper platoEntityMapper;
     private PublicadorEventosPorciones publicadorEventosPorciones;
+    private final EventoMapper eventoMapper;
 
     @Autowired(required = false)
-    public void setPublicadorEventosPorciones(PublicadorEventosPorciones publicadorEventosPorciones) {
-        this.publicadorEventosPorciones = publicadorEventosPorciones;
+    public void setPublicadorEventosPorciones(PublicadorEventosPorciones p) {
+        this.publicadorEventosPorciones = p;
     }
 
     @Autowired
@@ -50,7 +58,10 @@ public class ReservaServiceImpl implements ReservaService {
                               ReporteRepository reporteRepository,
                               EventoReservaRepository eventoReservaRepository,
                               PublicadorEventosReserva publicador,
-                              ReservaValidator validator) {
+                              ReservaValidator validator,
+                              ReservaEntityMapper reservaEntityMapper,
+                              PlatoEntityMapper platoEntityMapper,
+                              EventoMapper eventoMapper) {
         this.reservaRepository = reservaRepository;
         this.platoRepository = platoRepository;
         this.perfilCocineraRepository = perfilCocineraRepository;
@@ -58,81 +69,57 @@ public class ReservaServiceImpl implements ReservaService {
         this.eventoReservaRepository = eventoReservaRepository;
         this.publicador = publicador;
         this.validator = validator;
-    }
-
-    public ReservaServiceImpl(ReservaRepository reservaRepository,
-                              PlatoRepository platoRepository,
-                              ReporteRepository reporteRepository,
-                              PublicadorEventosReserva publicador) {
-        this(reservaRepository, platoRepository, null, reporteRepository, null, publicador, null);
+        this.reservaEntityMapper = reservaEntityMapper;
+        this.platoEntityMapper = platoEntityMapper;
+        this.eventoMapper = eventoMapper;
     }
 
     @Override
     @Transactional
     public Reserva crear(Long compradorId, Reserva reserva) {
-        Plato plato = platoRepository.findById(reserva.getPlatoId())
+        PlatoEntity platoEntity = platoRepository.findById(reserva.getPlatoId())
                 .orElseThrow(() -> new PlatoNoEncontradoException(reserva.getPlatoId()));
+        Plato plato = platoEntityMapper.toDomain(platoEntity);
 
-        if (validator != null) {
-            validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
-        }
+        if (validator != null) validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
 
         int disponiblesAntes = plato.getPorcionesDisponibles();
         plato.comprometerPorciones(reserva.getCantidadPorciones());
 
         try {
-            platoRepository.saveAndFlush(plato);
+            platoRepository.saveAndFlush(platoEntityMapper.toEntity(plato));
         } catch (ObjectOptimisticLockingFailureException ex) {
             throw new ConflictoException("El plato fue modificado por otra transacción simultánea, intenta de nuevo");
         }
         publicarPorciones(disponiblesAntes, plato);
 
         LocalDateTime ahora = LocalDateTime.now();
-        Reserva nuevaReserva = Reserva.crear(
-                plato,
-                compradorId,
-                reserva.getCantidadPorciones(),
-                reserva.getMedioPago(),
-                reserva.getNotaComprador(),
-                ahora
-        );
+        Reserva nueva = Reserva.crear(plato, compradorId, reserva.getCantidadPorciones(),
+                reserva.getMedioPago(), reserva.getNotaComprador(), ahora);
+        if (reserva.getId() != null) nueva.setId(reserva.getId());
 
-        if (reserva.getId() != null) {
-            nuevaReserva.setId(reserva.getId());
-        }
+        ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(nueva));
+        Reserva dominioGuardado = reservaEntityMapper.toDomain(guardada);
 
-        Reserva guardada = reservaRepository.save(nuevaReserva);
-
-        EventoReserva evento = EventoReserva.builder()
-                .tipo(TipoEvento.RESERVA_CREADA)
-                .reservaId(guardada.getId())
-                .platoId(plato.getId())
-                .compradorId(compradorId)
-                .cocineraId(plato.getCocineraId())
-                .timestamp(ahora)
-                .payload(Map.of("porciones", guardada.getCantidadPorciones(), "monto", guardada.getMontoTotal()))
-                .payloadJson("Reserva creada por " + guardada.getCantidadPorciones() + " porciones. Monto: " + guardada.getMontoTotal())
-                .build();
+        EventoReserva evento = EventoReserva.de(TipoEvento.RESERVA_CREADA, dominioGuardado,
+                Map.of("porciones", dominioGuardado.getCantidadPorciones(),
+                        "monto", dominioGuardado.getMontoTotal()));
 
         if (eventoReservaRepository != null) {
-            try {
-                eventoReservaRepository.save(evento);
-            } catch (Exception e) {
-                log.warn("No se pudo registrar evento en Mongo (modo local/test): {}", e.getMessage());
-            }
+        try {
+            eventoReservaRepository.save(eventoMapper.toDocument(evento));
+        } catch (Exception e) {
+            log.warn("No se pudo registrar evento en Mongo: {}", e.getMessage());
         }
-        if (publicador != null) {
-            publicador.publicar(evento);
-        }
+    }
+        if (publicador != null) publicador.publicar(evento);
 
-        return guardada;
+        return dominioGuardado;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Reserva obtenerPorId(UUID reservaId) {
-        return buscar(reservaId);
-    }
+    public Reserva obtenerPorId(UUID reservaId) { return buscar(reservaId); }
 
     @Override
     @Transactional(readOnly = true)
@@ -141,7 +128,8 @@ public class ReservaServiceImpl implements ReservaService {
         return reservaRepository
                 .findByCocineraIdAndEstadoOrderByFechaLimiteConfirmacionAsc(cocineraId, EstadoReserva.PENDIENTE)
                 .stream()
-                .filter(reserva -> !reserva.estaVencida(ahora))
+                .map(reservaEntityMapper::toDomain)
+                .filter(r -> !r.estaVencida(ahora))
                 .toList();
     }
 
@@ -149,9 +137,8 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional
     public Reserva decidir(UUID reservaId, UUID cocineraId, DecisionReservaRequestDTO request) {
         Reserva reserva = buscar(reservaId);
-        if (!reserva.perteneceACocinera(cocineraId)) {
+        if (!reserva.perteneceACocinera(cocineraId))
             throw new AccesoDenegadoException("Esta solicitud de reserva no pertenece a tu cocina");
-        }
 
         return switch (request.decision()) {
             case CONFIRMAR -> confirmar(reserva, request.horaEstimada());
@@ -176,9 +163,7 @@ public class ReservaServiceImpl implements ReservaService {
     public List<UUID> buscarReservasVencidas() {
         return reservaRepository
                 .findByEstadoAndFechaLimiteConfirmacionLessThanEqual(EstadoReserva.PENDIENTE, LocalDateTime.now())
-                .stream()
-                .map(Reserva::getId)
-                .toList();
+                .stream().map(ReservaEntity::getId).toList();
     }
 
     @Override
@@ -186,19 +171,16 @@ public class ReservaServiceImpl implements ReservaService {
     public Reserva expirar(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
         LocalDateTime ahora = LocalDateTime.now();
-
-        if (!reserva.estaPendiente() || !reserva.estaVencida(ahora)) {
-            return reserva;
-        }
+        if (!reserva.estaPendiente() || !reserva.estaVencida(ahora)) return reserva;
 
         reserva.expirar(ahora);
         liberarPorciones(reserva);
-        Reserva guardada = guardar(reserva);
+        ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
+        Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
-        if (publicador != null) {
-            publicador.publicar(EventoReserva.de(TipoEvento.RESERVA_EXPIRADA, guardada, Map.of()));
-        }
-        return guardada;
+        if (publicador != null)
+            publicador.publicar(EventoReserva.de(TipoEvento.RESERVA_EXPIRADA, dominio, Map.of()));
+        return dominio;
     }
 
     @Override
@@ -210,9 +192,7 @@ public class ReservaServiceImpl implements ReservaService {
                         EstadoReserva.PENDIENTE,
                         ahora.minusMinutes(Reserva.MINUTOS_PARA_RECORDATORIO),
                         ahora)
-                .stream()
-                .map(Reserva::getId)
-                .toList();
+                .stream().map(ReservaEntity::getId).toList();
     }
 
     @Override
@@ -220,19 +200,16 @@ public class ReservaServiceImpl implements ReservaService {
     public void enviarRecordatorio(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
         LocalDateTime ahora = LocalDateTime.now();
-
-        if (!reserva.requiereRecordatorio(ahora)) {
-            return;
-        }
+        if (!reserva.requiereRecordatorio(ahora)) return;
 
         reserva.marcarRecordatorioEnviado();
-        Reserva guardada = guardar(reserva);
+        ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
+        Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
-        long minutosRestantes = Math.max(1, Duration.between(ahora, reserva.getFechaLimiteConfirmacion()).toMinutes());
-        if (publicador != null) {
-            publicador.publicar(EventoReserva.de(
-                    TipoEvento.RECORDATORIO_RESERVA, guardada, Map.of("minutosRestantes", minutosRestantes)));
-        }
+        long minutos = Math.max(1, Duration.between(ahora, reserva.getFechaLimiteConfirmacion()).toMinutes());
+        if (publicador != null)
+            publicador.publicar(EventoReserva.de(TipoEvento.RECORDATORIO_RESERVA, dominio,
+                    Map.of("minutosRestantes", minutos)));
     }
 
     @Override
@@ -248,85 +225,77 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional(readOnly = true)
     public List<UUID> buscarReservasParaCierreAutomatico() {
         LocalDateTime limite = LocalDateTime.now().minusHours(Reserva.HORAS_PARA_CIERRE_AUTOMATICO);
-        return reservaRepository
-                .findByEstadoAndFechaDecisionLessThanEqual(EstadoReserva.CONFIRMADA, limite)
-                .stream()
-                .map(Reserva::getId)
-                .toList();
+        return reservaRepository.findByEstadoAndFechaDecisionLessThanEqual(EstadoReserva.CONFIRMADA, limite)
+                .stream().map(ReservaEntity::getId).toList();
     }
 
     @Override
     @Transactional
     public Reserva completarAutomaticamente(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
-
-        if (!reserva.cierreAutomaticoVencido(LocalDateTime.now())) {
-            return reserva;
-        }
-
-        if (tieneReporteAbierto(reserva)) {
-            log.info("La reserva {} tiene un reporte abierto; no se completa automáticamente", reservaId);
-            return reserva;
-        }
+        if (!reserva.cierreAutomaticoVencido(LocalDateTime.now())) return reserva;
+        if (tieneReporteAbierto(reserva)) return reserva;
         return cerrar(reserva, null, true);
     }
 
     private Reserva cerrar(Reserva reserva, String comentario, boolean automatica) {
         reserva.completar(comentario, LocalDateTime.now());
-        Reserva guardada = guardar(reserva);
+        ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
+        Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
-        if (publicador != null) {
-            publicador.publicar(EventoReserva.de(
-                    TipoEvento.RESERVA_COMPLETADA, guardada, Map.of("automatica", automatica)));
-        }
-        return guardada;
+        if (publicador != null)
+            publicador.publicar(EventoReserva.de(TipoEvento.RESERVA_COMPLETADA, dominio,
+                    Map.of("automatica", automatica)));
+        return dominio;
     }
 
     private void verificarSinReporteAbierto(Reserva reserva) {
-        if (tieneReporteAbierto(reserva)) {
+        if (tieneReporteAbierto(reserva))
             throw new ReglaDeNegocioException(
                     "No se puede cerrar la transacción: la reserva tiene un reporte abierto pendiente de moderación");
-        }
     }
 
     private boolean tieneReporteAbierto(Reserva reserva) {
-        return reporteRepository != null && reporteRepository.existsByReservaIdAndEstado(reserva.getId(), EstadoReporte.ABIERTO);
+        return reporteRepository != null
+                && reporteRepository.existsByReservaIdAndEstado(reserva.getId(), EstadoReporte.ABIERTO);
     }
 
     private Reserva confirmar(Reserva reserva, LocalDateTime horaEstimada) {
         reserva.confirmar(horaEstimada, LocalDateTime.now());
-        Reserva guardada = guardar(reserva);
+        ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
+        Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
-        if (publicador != null) {
-            publicador.publicar(EventoReserva.de(
-                    TipoEvento.RESERVA_CONFIRMADA, guardada, Map.of("horaEstimada", guardada.getHoraEstimadaEntrega())));
-        }
-        return guardada;
+        if (publicador != null)
+            publicador.publicar(EventoReserva.de(TipoEvento.RESERVA_CONFIRMADA, dominio,
+                    Map.of("horaEstimada", dominio.getHoraEstimadaEntrega())));
+        return dominio;
     }
 
     private Reserva rechazar(Reserva reserva, MotivoRechazo motivo, String comentario) {
         reserva.rechazar(motivo, comentario, LocalDateTime.now());
         liberarPorciones(reserva);
-        Reserva guardada = guardar(reserva);
+        ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
+        Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("motivo", guardada.getMotivoRechazo().getDescripcion());
-        if (guardada.getComentarioRechazo() != null) {
-            payload.put("comentario", guardada.getComentarioRechazo());
+        payload.put("motivo", dominio.getMotivoRechazo().getDescripcion());
+        if (dominio.getComentarioRechazo() != null) {
+            payload.put("comentario", dominio.getComentarioRechazo());
         }
-        if (publicador != null) {
-            publicador.publicar(EventoReserva.de(TipoEvento.RESERVA_RECHAZADA, guardada, payload));
-        }
-        return guardada;
+
+        if (publicador != null)
+            publicador.publicar(EventoReserva.de(TipoEvento.RESERVA_RECHAZADA, dominio, payload));
+        return dominio;
     }
 
     private void liberarPorciones(Reserva reserva) {
         platoRepository.findById(reserva.getPlatoId()).ifPresentOrElse(
-                plato -> {
-                    int disponiblesAntes = plato.getPorcionesDisponibles();
+                platoEntity -> {
+                    Plato plato = platoEntityMapper.toDomain(platoEntity);
+                    int antes = plato.getPorcionesDisponibles();
                     plato.liberarPorciones(reserva.getCantidadPorciones());
-                    platoRepository.save(plato);
-                    publicarPorciones(disponiblesAntes, plato);
+                    platoRepository.save(platoEntityMapper.toEntity(plato));
+                    publicarPorciones(antes, plato);
                 },
                 () -> log.warn("El plato {} de la reserva {} ya no existe; no hay porciones que devolver",
                         reserva.getPlatoId(), reserva.getId())
@@ -334,21 +303,13 @@ public class ReservaServiceImpl implements ReservaService {
     }
 
     private void publicarPorciones(int disponiblesAntes, Plato plato) {
-        if (publicadorEventosPorciones != null) {
+        if (publicadorEventosPorciones != null)
             publicadorEventosPorciones.publicarSiCambio(disponiblesAntes, plato);
-        }
-    }
-
-    private Reserva guardar(Reserva reserva) {
-        try {
-            return reservaRepository.saveAndFlush(reserva);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw new ReservaModificadaException();
-        }
     }
 
     private Reserva buscar(UUID reservaId) {
         return reservaRepository.findById(reservaId)
+                .map(reservaEntityMapper::toDomain)
                 .orElseThrow(() -> new ReservaNoEncontradaException(reservaId));
     }
 }

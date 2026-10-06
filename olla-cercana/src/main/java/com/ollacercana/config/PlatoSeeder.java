@@ -1,9 +1,9 @@
 package com.ollacercana.config;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.RestriccionAlimentaria;
-import com.ollacercana.domain.TipoComida;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.RestriccionAlimentaria;
+import com.ollacercana.model.domain.TipoComida;
+import com.ollacercana.persistence.entity.PlatoEntity;
 import com.ollacercana.repository.PlatoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public class PlatoSeeder implements CommandLineRunner {
         if (platoRepository.count() == 0) {
             UUID cocinera1 = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
-            Plato plato1 = Plato.builder()
+            PlatoEntity plato1 = PlatoEntity.builder()
                     .id(UUID.randomUUID())
                     .cocineraId(cocinera1)
                     .nombre("Bandeja Paisa Tradicional")
@@ -54,7 +54,7 @@ public class PlatoSeeder implements CommandLineRunner {
                     .longitud(-74.0550)
                     .build();
 
-            Plato plato2 = Plato.builder()
+            PlatoEntity plato2 = PlatoEntity.builder()
                     .id(UUID.randomUUID())
                     .cocineraId(cocinera1)
                     .nombre("Ajiaco Santafereño")

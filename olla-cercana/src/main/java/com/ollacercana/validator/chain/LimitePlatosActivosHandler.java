@@ -1,8 +1,8 @@
 package com.ollacercana.validator.chain;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
 import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
 import com.ollacercana.repository.PlatoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

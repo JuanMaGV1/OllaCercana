@@ -1,7 +1,8 @@
 package com.ollacercana.config;
 
-import com.ollacercana.dto.response.ErrorResponseDTO;
 import com.ollacercana.exception.*;
+import com.ollacercana.model.dto.response.ErrorResponseDTO;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;

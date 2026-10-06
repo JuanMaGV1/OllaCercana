@@ -1,8 +1,8 @@
 package com.ollacercana.security;
 
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.EstadoCuenta;
-import com.ollacercana.domain.PerfilCocinera;
+import com.ollacercana.model.domain.EstadoCuenta;
+import com.ollacercana.persistence.entity.CuentaEntity;
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +27,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String identificador) throws UsernameNotFoundException {
-        Cuenta cuenta = cuentaRepository.findByIdentificador(identificador)
-                .orElseThrow(() -> new UsernameNotFoundException("No se encontró cuenta con el identificador: " + identificador));
+        CuentaEntity cuenta = cuentaRepository.findByIdentificador(identificador)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "No se encontró cuenta con el identificador: " + identificador));
 
         boolean habilitada = cuenta.getEstado() != EstadoCuenta.BLOQUEADO;
 
@@ -47,7 +48,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 : "";
 
         UUID cocineraId = perfilCocineraRepository.findByCuentaId(cuenta.getId())
-                .map(PerfilCocinera::getId)
+                .map(PerfilCocineraEntity::getId)
                 .orElse(null);
 
         return new CuentaUserDetails(

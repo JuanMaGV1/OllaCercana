@@ -1,11 +1,11 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoAjustePorciones;
 import com.ollacercana.exception.CantidadAjusteInvalidaException;
 import com.ollacercana.exception.PlatoExpiradoException;
 import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoAjustePorciones;
 import com.ollacercana.validator.chain.CocineraHabilitadaHandler;
 import com.ollacercana.validator.chain.LimitePlatosActivosHandler;
 import com.ollacercana.validator.chain.PrecioPlatoHandler;

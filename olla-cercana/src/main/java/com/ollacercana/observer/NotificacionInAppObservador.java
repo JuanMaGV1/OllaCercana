@@ -1,13 +1,15 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.domain.EventoReserva;
-import com.ollacercana.domain.Notificacion;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.domain.TipoNotificacion;
+import com.ollacercana.mapper.NotificacionDocumentMapper;
+import com.ollacercana.model.domain.EventoReserva;
+import com.ollacercana.model.domain.Notificacion;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.domain.TipoNotificacion;
 import com.ollacercana.repository.mongo.NotificacionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +24,7 @@ public class NotificacionInAppObservador implements ObservadorReserva {
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final NotificacionRepository notificacionRepository;
+    private final NotificacionDocumentMapper notificacionMapper;
 
     @Override
     public void notificar(EventoReserva evento) {
@@ -55,7 +58,7 @@ public class NotificacionInAppObservador implements ObservadorReserva {
 
         if (notificacionRepository != null) {
             try {
-                notificaciones.forEach(notificacionRepository::save);
+                notificaciones.forEach(n -> notificacionRepository.save(notificacionMapper.toDocument(n)));
             } catch (Exception e) {
                 log.warn("No se pudo persistir la notificación en Mongo: {}", e.getMessage());
             }

@@ -1,13 +1,11 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoAjustePorciones;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.exception.CantidadAjusteInvalidaException;
-import com.ollacercana.exception.ConflictoVersionException;
-import com.ollacercana.exception.PlatoNoEncontradoException;
-import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
+import com.ollacercana.exception.*;
+import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoAjustePorciones;
+import com.ollacercana.persistence.entity.PlatoEntity;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.service.impl.PlatoServiceImpl;
 import com.ollacercana.validator.PlatoValidator;
@@ -31,19 +29,31 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PlatoServiceImplAjusteTest {
 
-    @Mock
-    private PlatoRepository platoRepository;
+    @Mock private PlatoRepository platoRepository;
+    @Mock private PlatoValidator validator;
+    @Mock private PlatoEntityMapper entityMapper;
 
-    @Mock
-    private PlatoValidator validator;
-
-    @InjectMocks
-    private PlatoServiceImpl platoService;
+    @InjectMocks private PlatoServiceImpl platoService;
 
     @BeforeEach
     void setUp() {
-        lenient().when(platoRepository.saveAndFlush(any(Plato.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        // entityMapper.toDomain(entity) → devuelve el dominio que le pasamos por "side-channel"
+        // Se usa thenAnswer para que Mockito reconstruya siempre un objeto consistente.
+        lenient().when(entityMapper.toEntity(any(Plato.class))).thenAnswer(inv -> {
+            Plato p = inv.getArgument(0);
+            return PlatoEntity.builder()
+                    .id(p.getId())
+                    .cocineraId(p.getCocineraId())
+                    .nombre(p.getNombre())
+                    .porcionesTotales(p.getPorcionesTotales())
+                    .porcionesComprometidas(p.getPorcionesComprometidas())
+                    .precioPorcion(p.getPrecioPorcion())
+                    .estado(p.getEstado())
+                    .version(p.getVersion())
+                    .build();
+        });
+
+        // Platos del mock: solo se registran los necesarios dentro de cada test.
     }
 
     private Plato platoActivo(UUID id, int totales, int comprometidas, int version) {
@@ -59,23 +69,40 @@ class PlatoServiceImplAjusteTest {
                 .build();
     }
 
+    /**
+     * Configura el mock de forma que:
+     *   - findById(id)  → entity del plato ORIGINAL
+     *   - entityMapper.toDomain(entity) → devuelve el dominio que se está mutando en el Service
+     *   - saveAndFlush(entity) → devuelve el entity reflejando el dominio mutado
+     *   - entityMapper.toDomain(any(PlatoEntity)) en el resultado → devuelve el plato mutado
+     */
+    private void registrarPlatoQueSeMuta(Plato platoOriginal) {
+        // Mapa simple: id -> dominio original (mutable)
+        when(platoRepository.findById(platoOriginal.getId()))
+                .thenReturn(Optional.of(PlatoEntity.builder().id(platoOriginal.getId()).build()));
+        when(entityMapper.toDomain(any(PlatoEntity.class))).thenAnswer(inv -> platoOriginal);
+        when(platoRepository.saveAndFlush(any(PlatoEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+    }
+
     @Test
     void ajustar_conAumentar_debeIncrementarTotalYVersion() {
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 0, 0);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        registrarPlatoQueSeMuta(plato);
 
         Plato actualizado = platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.AUMENTAR, 2, 0);
 
+        // El Service muta el MISMO objeto que devolvió toDomain → por eso el resultado es 5.
         assertEquals(5, actualizado.getPorcionesTotales());
-        verify(platoRepository, times(1)).saveAndFlush(any(Plato.class));
+        verify(platoRepository, times(1)).saveAndFlush(any(PlatoEntity.class));
     }
 
     @Test
     void ajustar_conReduccionPorDebajoDeComprometidas_debeLanzarExcepcion() {
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 3, 0);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(PlatoEntity.builder().id(platoId).build()));
+        when(entityMapper.toDomain(any(PlatoEntity.class))).thenReturn(plato);
 
         doThrow(new ReduccionPorDebajoDeComprometidasException(3))
                 .when(validator).validarAjusteDisponibilidad(plato, TipoAjustePorciones.DISMINUIR, 1);
@@ -83,14 +110,14 @@ class PlatoServiceImplAjusteTest {
         assertThrows(ReduccionPorDebajoDeComprometidasException.class,
                 () -> platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.DISMINUIR, 1, 0));
 
-        verify(platoRepository, never()).saveAndFlush(any());
+        verify(platoRepository, never()).saveAndFlush(any(PlatoEntity.class));
     }
 
     @Test
     void ajustar_conMarcarAgotado_noDebeCancelarReservasExistentes() {
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 5, 3, 0);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        registrarPlatoQueSeMuta(plato);
 
         Plato actualizado = platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.MARCAR_AGOTADO, null, 0);
 
@@ -103,9 +130,10 @@ class PlatoServiceImplAjusteTest {
     void ajustar_conVersionDesactualizada_debeLanzarConflictoVersion() {
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 0, 5);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
-        when(platoRepository.saveAndFlush(any(Plato.class)))
-                .thenThrow(new ObjectOptimisticLockingFailureException(Plato.class, platoId));
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(PlatoEntity.builder().id(platoId).build()));
+        when(entityMapper.toDomain(any(PlatoEntity.class))).thenReturn(plato);
+        when(platoRepository.saveAndFlush(any(PlatoEntity.class)))
+                .thenThrow(new ObjectOptimisticLockingFailureException(PlatoEntity.class, platoId));
 
         assertThrows(ConflictoVersionException.class,
                 () -> platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.AUMENTAR, 1, 4));
@@ -124,7 +152,8 @@ class PlatoServiceImplAjusteTest {
     void ajustar_conCantidadInvalidaParaAumentar_debeLanzarExcepcion() {
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 3, 0, 0);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(PlatoEntity.builder().id(platoId).build()));
+        when(entityMapper.toDomain(any(PlatoEntity.class))).thenReturn(plato);
 
         doThrow(new CantidadAjusteInvalidaException())
                 .when(validator).validarAjusteDisponibilidad(plato, TipoAjustePorciones.AUMENTAR, 0);
@@ -137,11 +166,11 @@ class PlatoServiceImplAjusteTest {
     void ajustar_conDisminuir_debeDecrementarTotalSinQuedarPorDebajoDeComprometidas() {
         UUID platoId = UUID.randomUUID();
         Plato plato = platoActivo(platoId, 5, 2, 0);
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        registrarPlatoQueSeMuta(plato);
 
         Plato actualizado = platoService.ajustarDisponibilidad(platoId, TipoAjustePorciones.DISMINUIR, 2, 0);
 
         assertEquals(3, actualizado.getPorcionesTotales());
-        verify(platoRepository, times(1)).saveAndFlush(any(Plato.class));
+        verify(platoRepository, times(1)).saveAndFlush(any(PlatoEntity.class));
     }
 }

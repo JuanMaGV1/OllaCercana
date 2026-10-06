@@ -1,15 +1,15 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.Plato;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.dto.response.PlatoResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
-/**
- * OC-89: Sin logica manual.
- */
-@Mapper(componentModel = "spring")
+import java.util.List;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface PlatoMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -22,4 +22,6 @@ public interface PlatoMapper {
     Plato toDomain(PlatoRequestDTO dto);
 
     PlatoResponseDTO toResponse(Plato plato);
+
+    List<PlatoResponseDTO> toResponseList(List<Plato> platos);
 }

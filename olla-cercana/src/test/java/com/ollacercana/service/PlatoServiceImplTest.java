@@ -1,12 +1,11 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoComida;
-import com.ollacercana.exception.CocineraNoEncontradaException;
-import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
-import com.ollacercana.exception.PlatoNoEncontradoException;
-import com.ollacercana.exception.PrecioFueraDeRangoException;
+import com.ollacercana.exception.*;
+import com.ollacercana.mapper.PlatoEntityMapper;
+import com.ollacercana.model.domain.EstadoPlato;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoComida;
+import com.ollacercana.persistence.entity.PlatoEntity;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.service.impl.PlatoServiceImpl;
 import com.ollacercana.validator.PlatoValidator;
@@ -31,14 +30,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PlatoServiceImplTest {
 
-    @Mock
-    private PlatoRepository platoRepository;
+    @Mock private PlatoRepository platoRepository;
+    @Mock private PlatoValidator validator;
+    @Mock private PlatoEntityMapper entityMapper;
 
-    @Mock
-    private PlatoValidator validator;
-
-    @InjectMocks
-    private PlatoServiceImpl platoService;
+    @InjectMocks private PlatoServiceImpl platoService;
 
     private static final UUID COCINERA_ID = UUID.randomUUID();
 
@@ -60,18 +56,22 @@ class PlatoServiceImplTest {
     @DisplayName("Escenario 1: Happy path - Guardar plato correctamente")
     void crear_conDatosValidos_debePublicarPlato() {
         Plato plato = platoEjemplo();
-        when(platoRepository.save(any(Plato.class))).thenAnswer(i -> {
-            Plato p = i.getArgument(0);
-            p.setId(UUID.randomUUID());
-            return p;
-        });
+        PlatoEntity entityGuardada = PlatoEntity.builder()
+                .id(UUID.randomUUID()).nombre("Bandeja paisa").build();
+        Plato dominioGuardado = platoEjemplo();
+        dominioGuardado.setId(entityGuardada.getId());
+        dominioGuardado.setEstado(EstadoPlato.ACTIVO);
+
+        when(entityMapper.toEntity(any(Plato.class))).thenReturn(entityGuardada);
+        when(platoRepository.save(any(PlatoEntity.class))).thenReturn(entityGuardada);
+        when(entityMapper.toDomain(any(PlatoEntity.class))).thenReturn(dominioGuardado);
 
         Plato resultado = platoService.crear(plato);
 
         assertNotNull(resultado.getId());
         assertEquals(EstadoPlato.ACTIVO, resultado.getEstado());
-        verify(validator, times(1)).validarParaPublicar(any(Plato.class));
-        verify(platoRepository, times(1)).save(plato);
+        verify(validator).validarParaPublicar(any(Plato.class));
+        verify(platoRepository).save(any(PlatoEntity.class));
     }
 
     @Test
@@ -124,13 +124,16 @@ class PlatoServiceImplTest {
     void obtenerPorId_evaluacion() {
         UUID platoId = UUID.randomUUID();
         Plato plato = platoEjemplo();
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        PlatoEntity entity = PlatoEntity.builder().id(platoId).build();
+
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(entity));
+        when(entityMapper.toDomain(entity)).thenReturn(plato);
+
         assertEquals(plato, platoService.obtenerPorId(platoId));
 
-        when(platoRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000000")))
-                .thenReturn(Optional.empty());
-        assertThrows(PlatoNoEncontradoException.class,
-                () -> platoService.obtenerPorId(UUID.fromString("00000000-0000-0000-0000-000000000000")));
+        UUID otro = UUID.randomUUID();
+        when(platoRepository.findById(otro)).thenReturn(Optional.empty());
+        assertThrows(PlatoNoEncontradoException.class, () -> platoService.obtenerPorId(otro));
     }
 
     @Test
@@ -142,16 +145,18 @@ class PlatoServiceImplTest {
         verify(platoRepository).deleteById(platoId);
 
         when(platoRepository.existsById(platoId)).thenReturn(false);
-        assertThrows(PlatoNoEncontradoException.class,
-                () -> platoService.eliminar(platoId));
+        assertThrows(PlatoNoEncontradoException.class, () -> platoService.eliminar(platoId));
     }
 
     @Test
     @DisplayName("Buscar cercanos - Sin coordenadas de cliente no aplica filtro de distancia")
     void buscarCercanos_sinCoordenadas_retornaTodosLosActivos() {
         Plato plato = platoEjemplo();
+        PlatoEntity entity = PlatoEntity.builder().id(UUID.randomUUID()).build();
+
         when(platoRepository.findActivosVigentes(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
-                .thenReturn(List.of(plato));
+                .thenReturn(List.of(entity));
+        when(entityMapper.toDomain(entity)).thenReturn(plato);
 
         List<Plato> resultado = platoService.buscarCercanos(null, null);
         assertEquals(1, resultado.size());

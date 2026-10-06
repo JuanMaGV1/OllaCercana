@@ -1,14 +1,14 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.PlatoApi;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.dto.request.PlatoRequestDTO;
-import com.ollacercana.dto.response.PlatoCercanoResponseDTO;
-import com.ollacercana.dto.response.PlatoResponseDTO;
 import com.ollacercana.exception.AccesoDenegadoException;
 import com.ollacercana.mapper.PlatoMapper;
+import com.ollacercana.model.domain.PerfilCocinera;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.model.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
+import com.ollacercana.model.dto.response.PlatoResponseDTO;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.security.UsuarioActual;
 import com.ollacercana.service.PlatoService;
@@ -73,8 +73,8 @@ public class PlatoController implements PlatoApi {
 
         List<PlatoCercanoResponseDTO> dtos = platos.stream().map(p -> {
             String conjunto = perfilCocineraRepository.findById(p.getCocineraId())
-                    .map(PerfilCocinera::getConjuntoResidencial)
-                    .orElse("Conjunto Residencial");
+                            .map(perfil -> perfil.getConjuntoResidencial())
+                            .orElse("Conjunto Residencial");
 
             Integer distancia = null;
             if (latitud != null && longitud != null && p.getLatitud() != null && p.getLongitud() != null) {
@@ -105,7 +105,7 @@ public class PlatoController implements PlatoApi {
     @PreAuthorize("hasRole('COCINERA') or hasRole('ADMIN')")
     public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
         Plato existente = platoService.obtenerPorId(id);
-        if (!usuarioActual.tieneRol(com.ollacercana.domain.Rol.ADMIN) &&
+        if (!usuarioActual.tieneRol(com.ollacercana.model.domain.Rol.ADMIN) &&
                 !existente.getCocineraId().equals(usuarioActual.getCocineraId())) {
             throw new AccesoDenegadoException("No tienes permiso para eliminar este plato");
         }

@@ -1,10 +1,10 @@
 package com.ollacercana.validator.chain;
 
-import com.ollacercana.domain.Plato;
 import com.ollacercana.exception.CocineraNoEncontradaException;
 import com.ollacercana.exception.CocineraNoVerificadaException;
 import com.ollacercana.exception.CocineraPausadaException;
 import com.ollacercana.exception.PlatoSinCocineraException;
+import com.ollacercana.model.domain.Plato;
 import com.ollacercana.validator.CocineraQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

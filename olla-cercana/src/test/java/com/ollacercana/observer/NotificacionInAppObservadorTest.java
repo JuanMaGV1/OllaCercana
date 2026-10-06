@@ -1,11 +1,14 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.domain.EventoReserva;
-import com.ollacercana.domain.Notificacion;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.domain.TipoEvento;
-import com.ollacercana.domain.TipoNotificacion;
+import com.ollacercana.mapper.NotificacionDocumentMapper;
+import com.ollacercana.model.domain.EventoReserva;
+import com.ollacercana.model.domain.Notificacion;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.domain.TipoEvento;
+import com.ollacercana.model.domain.TipoNotificacion;
+import com.ollacercana.persistence.document.NotificacionDocument;
 import com.ollacercana.repository.mongo.NotificacionRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -19,31 +22,53 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
-/**
- * HU-12 Escenario 3 (aviso al comprador) y OC-149 (recordatorio a la cocinera).
- */
 @ExtendWith(MockitoExtension.class)
 class NotificacionInAppObservadorTest {
 
     private static final Long COMPRADOR_ID = 42L;
     private static final UUID COCINERA_ID = UUID.randomUUID();
 
-    @Mock
-    private NotificacionRepository notificacionRepository;
+    @Mock private NotificacionRepository notificacionRepository;
+    @Mock private NotificacionDocumentMapper notificacionMapper;
 
-    @InjectMocks
-    private com.ollacercana.observer.NotificacionInAppObservador observador;
+    @InjectMocks private NotificacionInAppObservador observador;
 
-    private EventoReserva evento(TipoEvento tipo, Map<String, Object> payload) {
-        return new EventoReserva(UUID.randomUUID(), tipo, UUID.randomUUID(), UUID.randomUUID(),
-                COMPRADOR_ID, COCINERA_ID, LocalDateTime.now(), payload);
+    @BeforeEach
+    void setUp() {
+        // ✅ Mapper bidireccional mínimo
+        lenient().when(notificacionMapper.toDocument(any(Notificacion.class))).thenAnswer(i -> {
+            Notificacion n = i.getArgument(0);
+            return NotificacionDocument.builder()
+                    .reservaId(n.getReservaId())
+                    .rolDestinatario(n.getRolDestinatario())
+                    .compradorId(n.getCompradorId())
+                    .cocineraId(n.getCocineraId())
+                    .titulo(n.getTitulo())
+                    .mensaje(n.getMensaje())
+                    .tipo(n.getTipo())
+                    .leida(n.isLeida())
+                    .fechaCreacion(n.getFechaCreacion())
+                    .build();
+        });
     }
 
-    private Notificacion notificacionGuardada() {
-        ArgumentCaptor<Notificacion> captor = ArgumentCaptor.forClass(Notificacion.class);
+    private EventoReserva evento(TipoEvento tipo, Map<String, Object> payload) {
+        // ✅ id String, no UUID
+        return new EventoReserva(
+                UUID.randomUUID().toString(),
+                tipo,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                COMPRADOR_ID,
+                COCINERA_ID,
+                LocalDateTime.now(),
+                payload);
+    }
+
+    private NotificacionDocument notificacionGuardada() {
+        ArgumentCaptor<NotificacionDocument> captor = ArgumentCaptor.forClass(NotificacionDocument.class);
         verify(notificacionRepository).save(captor.capture());
         return captor.getValue();
     }
@@ -55,7 +80,7 @@ class NotificacionInAppObservadorTest {
 
         observador.notificar(evento);
 
-        Notificacion notificacion = notificacionGuardada();
+        NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(Rol.COMPRADOR, notificacion.getRolDestinatario());
         assertEquals(COMPRADOR_ID, notificacion.getCompradorId());
         assertEquals(TipoNotificacion.RESERVA_CONFIRMADA, notificacion.getTipo());
@@ -69,7 +94,7 @@ class NotificacionInAppObservadorTest {
         observador.notificar(evento(TipoEvento.RESERVA_RECHAZADA,
                 Map.of("motivo", "Otro motivo", "comentario", "Se me dañó la estufa")));
 
-        Notificacion notificacion = notificacionGuardada();
+        NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(TipoNotificacion.RESERVA_RECHAZADA, notificacion.getTipo());
         assertEquals(COMPRADOR_ID, notificacion.getCompradorId());
         assertTrue(notificacion.getMensaje().contains("Otro motivo (Se me dañó la estufa)"));
@@ -79,7 +104,7 @@ class NotificacionInAppObservadorTest {
     void reservaExpirada_debeAvisarAlComprador() {
         observador.notificar(evento(TipoEvento.RESERVA_EXPIRADA, Map.of()));
 
-        Notificacion notificacion = notificacionGuardada();
+        NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(TipoNotificacion.RESERVA_EXPIRADA, notificacion.getTipo());
         assertEquals(Rol.COMPRADOR, notificacion.getRolDestinatario());
     }
@@ -88,7 +113,7 @@ class NotificacionInAppObservadorTest {
     void recordatorio_debeAvisarALaCocinera() {
         observador.notificar(evento(TipoEvento.RECORDATORIO_RESERVA, Map.of("minutosRestantes", 3L)));
 
-        Notificacion notificacion = notificacionGuardada();
+        NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(Rol.COCINERA, notificacion.getRolDestinatario());
         assertEquals(COCINERA_ID, notificacion.getCocineraId());
         assertNull(notificacion.getCompradorId());
@@ -106,9 +131,7 @@ class NotificacionInAppObservadorTest {
     @Test
     void marcarLeida_debeCambiarElEstado() {
         Notificacion notificacion = Notificacion.builder().leida(false).build();
-
         notificacion.marcarLeida();
-
         assertTrue(notificacion.isLeida());
     }
 }

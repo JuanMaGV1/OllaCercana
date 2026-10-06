@@ -1,14 +1,15 @@
 package com.ollacercana.mapper;
 
-import com.ollacercana.domain.Reserva;
-import com.ollacercana.dto.request.ReservaRequestDTO;
-import com.ollacercana.dto.response.ReservaResponseDTO;
+import com.ollacercana.model.domain.Reserva;
+import com.ollacercana.model.dto.request.ReservaRequestDTO;
+import com.ollacercana.model.dto.response.ReservaResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface ReservaMapper {
 
     @Mapping(target = "id", ignore = true)

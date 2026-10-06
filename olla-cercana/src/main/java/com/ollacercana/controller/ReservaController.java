@@ -1,16 +1,16 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.ReservaApi;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.Reserva;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.dto.request.CierreTransaccionRequestDTO;
-import com.ollacercana.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.dto.request.ReservaRequestDTO;
-import com.ollacercana.dto.response.ReservaResponseDTO;
-import com.ollacercana.exception.AccesoDenegadoException;
 import com.ollacercana.mapper.ReservaMapper;
+import com.ollacercana.model.domain.PerfilCocinera;
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.Reserva;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.dto.request.CierreTransaccionRequestDTO;
+import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
+import com.ollacercana.model.dto.request.ReservaRequestDTO;
+import com.ollacercana.model.dto.response.ReservaResponseDTO;
+import com.ollacercana.exception.AccesoDenegadoException;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.security.UsuarioActual;
 import com.ollacercana.service.PlatoService;
@@ -45,8 +45,9 @@ public class ReservaController implements ReservaApi {
         Reserva guardada = reservaService.crear(compradorId, reserva);
 
         Plato plato = platoService.obtenerPorId(guardada.getPlatoId());
+
         String conjunto = perfilCocineraRepository.findById(guardada.getCocineraId())
-                .map(PerfilCocinera::getConjuntoResidencial)
+                .map(perfil -> perfil.getConjuntoResidencial())
                 .orElse("Conjunto Residencial");
 
         ReservaResponseDTO response = reservaMapper.toResponseDTO(guardada, plato.getNombre(), conjunto);

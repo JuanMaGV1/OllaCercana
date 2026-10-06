@@ -1,11 +1,11 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.PerfilCocineraApi;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.mapper.PerfilCocineraMapper;
+import com.ollacercana.model.domain.PerfilCocinera;
+import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
+import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
+import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
 import com.ollacercana.service.IPerfilCocineraService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +24,13 @@ import java.util.UUID;
 public class PerfilCocineraController implements PerfilCocineraApi {
 
     private final IPerfilCocineraService perfilService;
-    private final PerfilCocineraMapper perfilMapper;
+    private final PerfilCocineraMapper perfilMapper;   // ← presentación
 
     @Override
     @PostMapping
     @PreAuthorize("hasRole('COCINERA') or hasRole('ADMIN')")
-    public ResponseEntity<PerfilCocineraResponseDTO> crearPerfil(@Valid @RequestBody PerfilCocineraRequestDTO request) {
+    public ResponseEntity<PerfilCocineraResponseDTO> crearPerfil(
+            @Valid @RequestBody PerfilCocineraRequestDTO request) {
         PerfilCocinera dominio = perfilMapper.toDomain(request);
         PerfilCocinera creado = perfilService.crearPerfil(dominio, request.getCuentaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(perfilMapper.toResponseDTO(creado));
@@ -68,6 +69,6 @@ public class PerfilCocineraController implements PerfilCocineraApi {
     @GetMapping("/destacadas")
     public ResponseEntity<List<PerfilCocineraResponseDTO>> listarDestacadas() {
         List<PerfilCocinera> destacadas = perfilService.listarDestacadas();
-        return ResponseEntity.ok(destacadas.stream().map(perfilMapper::toResponseDTO).toList());
+        return ResponseEntity.ok(perfilMapper.toResponseList(destacadas));
     }
 }

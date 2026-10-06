@@ -1,9 +1,12 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.RegistroRequestDTO;
 import com.ollacercana.exception.ConflictoException;
+import com.ollacercana.model.domain.Cuenta;
+import com.ollacercana.model.domain.EstadoCuenta;
+import com.ollacercana.model.domain.Identidad;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.dto.request.RegistroRequestDTO;
 import com.ollacercana.service.ICuentaService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,14 +29,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class CuentaControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private ICuentaService cuentaService;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @MockBean private ICuentaService cuentaService;
 
     @Test
     @DisplayName("POST /api/v1/cuentas - 201 Created cuando los datos son válidos")
@@ -70,13 +68,13 @@ class CuentaControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/cuentas - 400 Bad Request cuando el celular o correo tienen formato inválido")
+    @DisplayName("POST /api/v1/cuentas - 400 Bad Request cuando hay formato inválido")
     void registrar_formatoInvalido_retorna400() throws Exception {
         RegistroRequestDTO requestInvalido = RegistroRequestDTO.builder()
                 .nombre("Laura")
                 .correo("correo-invalido")
-                .celular("12345") // Debe iniciar con 3 y tener 10 dígitos
-                .contrasena("123") // Menor a 8 caracteres
+                .celular("12345")
+                .contrasena("123")
                 .build();
 
         mockMvc.perform(post("/api/v1/cuentas")

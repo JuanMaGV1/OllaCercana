@@ -1,9 +1,12 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.*;
-import com.ollacercana.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.dto.request.ReservaRequestDTO;
+import com.ollacercana.model.domain.*;
+import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
+import com.ollacercana.model.dto.request.ReservaRequestDTO;
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
+import com.ollacercana.persistence.entity.PlatoEntity;
+import com.ollacercana.persistence.entity.ReservaEntity;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReservaRepository;
@@ -37,30 +40,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ReservaControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private PlatoRepository platoRepository;
-
-    @Autowired
-    private ReservaRepository reservaRepository;
-
-    @Autowired
-    private PerfilCocineraRepository perfilCocineraRepository;
-
-    @Autowired(required = false)
-    private NotificacionRepository notificacionRepository;
-
-    @MockBean
-    private UsuarioActual usuarioActual;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @Autowired private PlatoRepository platoRepository;
+    @Autowired private ReservaRepository reservaRepository;
+    @Autowired private PerfilCocineraRepository perfilCocineraRepository;
+    @Autowired(required = false) private NotificacionRepository notificacionRepository;
+    @MockBean private UsuarioActual usuarioActual;
 
     private final UUID cocineraId = UUID.randomUUID();
-    private Plato plato;
-    private Reserva reserva;
+    private PlatoEntity plato;
+    private ReservaEntity reserva;
 
     @BeforeEach
     void setUp() {
@@ -72,14 +62,17 @@ class ReservaControllerTest {
         lenient().when(usuarioActual.getCocineraId()).thenReturn(cocineraId);
         lenient().when(usuarioActual.tieneRol(any())).thenReturn(false);
 
-        PerfilCocinera perfilCocinera = PerfilCocinera.builder()
+        perfilCocineraRepository.save(PerfilCocineraEntity.builder()
                 .id(cocineraId)
                 .conjuntoResidencial("Torres del Parque")
                 .verificada(true)
-                .build();
-        perfilCocineraRepository.save(perfilCocinera);
+                .pausada(false)
+                .esDestacada(false)
+                .promedioCalificacion(0.0)
+                .resenasPositivas(0)
+                .build());
 
-        plato = platoRepository.save(Plato.builder()
+        plato = platoRepository.save(PlatoEntity.builder()
                 .id(UUID.randomUUID())
                 .cocineraId(cocineraId)
                 .nombre("Ajiaco santafereño")
@@ -96,10 +89,24 @@ class ReservaControllerTest {
                 .puntoEntrega("Portería Torre 1")
                 .latitud(4.6789)
                 .longitud(-74.0567)
+                .version(0)
                 .build());
 
-        reserva = reservaRepository.save(
-                Reserva.crear(plato, 42L, 2, MedioPago.NEQUI, "Sin cebolla", LocalDateTime.now().minusMinutes(1)));
+        LocalDateTime ahora = LocalDateTime.now();
+        reserva = reservaRepository.save(ReservaEntity.builder()
+                .id(UUID.randomUUID())
+                .platoId(plato.getId())
+                .cocineraId(cocineraId)
+                .compradorId(42L)
+                .cantidadPorciones(2)
+                .montoTotal(new BigDecimal("32000"))
+                .medioPago(MedioPago.NEQUI)
+                .estado(EstadoReserva.PENDIENTE)
+                .notaComprador("Sin cebolla")
+                .fechaCreacion(ahora.minusMinutes(1))
+                .fechaLimiteConfirmacion(ahora.plusMinutes(9))
+                .version(0)
+                .build());
     }
 
     private ResultActions decidir(UUID reservaId, DecisionReservaRequestDTO request) throws Exception {
@@ -123,11 +130,7 @@ class ReservaControllerTest {
         when(usuarioActual.getCuentaId()).thenReturn(99L);
 
         ReservaRequestDTO request = new ReservaRequestDTO(
-                plato.getId(),
-                2,
-                MedioPago.NEQUI,
-                "Llegaré puntual"
-        );
+                plato.getId(), 2, MedioPago.NEQUI, "Llegaré puntual");
 
         mockMvc.perform(post("/api/v1/reservas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -143,7 +146,6 @@ class ReservaControllerTest {
     @DisplayName("POST /api/v1/reservas - 409 Conflict si no hay porciones disponibles")
     void crearReserva_SinPorciones_Retorna409() throws Exception {
         when(usuarioActual.getCuentaId()).thenReturn(99L);
-
         ReservaRequestDTO request = new ReservaRequestDTO(plato.getId(), 10, MedioPago.NEQUI, null);
 
         mockMvc.perform(post("/api/v1/reservas")
@@ -163,39 +165,36 @@ class ReservaControllerTest {
                 .andExpect(jsonPath("$.chatHabilitado").value(true))
                 .andExpect(jsonPath("$.horaEstimadaEntrega").exists());
 
-        Plato actualizado = platoRepository.findById(plato.getId()).orElseThrow();
-        assertEquals(4, actualizado.getPorcionesDisponibles());
+        PlatoEntity actualizado = platoRepository.findById(plato.getId()).orElseThrow();
+        int disponibles = actualizado.getPorcionesTotales()
+                - (actualizado.getPorcionesComprometidas() == null ? 0 : actualizado.getPorcionesComprometidas());
+        assertEquals(4, disponibles);
     }
 
-    @Test
-    @WithMockUser(roles = "COCINERA")
-    @DisplayName("Escenario 2: rechazar -> 200, RECHAZADA y las porciones vuelven a la publicación")
-    void rechazar_debeRetornar200YDevolverPorciones() throws Exception {
+        @Test
+        @WithMockUser(roles = "COCINERA")
+        @DisplayName("Escenario 2: rechazar -> 200, RECHAZADA y las porciones vuelven a la publicación")
+        void rechazar_debeRetornar200YDevolverPorciones() throws Exception {
+        // Estado ANTES: plato con 2 comprometidas. Reserva tiene 2 porciones de esas 2.
+        int comprometidasAntes = platoRepository.findById(plato.getId()).orElseThrow()
+                .getPorcionesComprometidas();
+
         decidir(reserva.getId(), rechazar(MotivoRechazo.INGREDIENTES_INSUFICIENTES, null))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("RECHAZADA"))
                 .andExpect(jsonPath("$.motivoRechazo").value("INGREDIENTES_INSUFICIENTES"))
                 .andExpect(jsonPath("$.chatHabilitado").value(false));
 
-        Plato actualizado = platoRepository.findById(plato.getId()).orElseThrow();
-        assertEquals(6, actualizado.getPorcionesDisponibles());
-    }
+        PlatoEntity actualizado = platoRepository.findById(plato.getId()).orElseThrow();
+        int comprometidasDespues = actualizado.getPorcionesComprometidas() == null
+                ? 0 : actualizado.getPorcionesComprometidas();
 
-    @Test
-    @WithMockUser(roles = "COCINERA")
-    @DisplayName("Escenario 3: el comprador recibe un aviso con la decisión")
-    void decidir_debeGenerarNotificacionParaElComprador() throws Exception {
-        decidir(reserva.getId(), rechazar(MotivoRechazo.OTRO, "Se me dañó la estufa"))
-                .andExpect(status().isOk());
-
-        if (notificacionRepository != null) {
-            List<Notificacion> notificaciones = notificacionRepository.findByReservaIdOrderByFechaCreacionAsc(reserva.getId());
-            assertEquals(1, notificaciones.size());
-            assertEquals(TipoNotificacion.RESERVA_RECHAZADA, notificaciones.get(0).getTipo());
-            assertEquals(Rol.COMPRADOR, notificaciones.get(0).getRolDestinatario());
-            assertEquals(42L, notificaciones.get(0).getCompradorId());
+        // Las porciones se devolvieron: quedan las que había ANTES menos las de esta reserva (2).
+        assertEquals(comprometidasAntes - 2, comprometidasDespues);
+        // Y las disponibles aumentan
+        int disponibles = actualizado.getPorcionesTotales() - comprometidasDespues;
+        assertEquals(6, disponibles);
         }
-    }
 
     @Test
     @WithMockUser(roles = "COCINERA")

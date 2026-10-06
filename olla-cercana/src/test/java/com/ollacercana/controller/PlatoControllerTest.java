@@ -1,12 +1,12 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.RestriccionAlimentaria;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.domain.TipoAjustePorciones;
-import com.ollacercana.domain.TipoComida;
-import com.ollacercana.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.domain.RestriccionAlimentaria;
+import com.ollacercana.model.domain.Rol;
+import com.ollacercana.model.domain.TipoAjustePorciones;
+import com.ollacercana.model.domain.TipoComida;
+import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.model.dto.request.PlatoRequestDTO;
 import com.ollacercana.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,17 +33,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(username = "cocinera@ollacercana.com", roles = {"COCINERA"})
 class PlatoControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @MockBean
-    private UsuarioActual usuarioActual;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @Autowired private JdbcTemplate jdbcTemplate;
+    @MockBean private UsuarioActual usuarioActual;
 
     private static final UUID COCINERA_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
@@ -65,17 +58,12 @@ class PlatoControllerTest {
     @Test
     void publicar_debeRetornar201() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
-                "Arroz con pollo",
-                "Arroz con pollo criollo con ensalada",
-                "http://foto.com/arroz.jpg",
-                TipoComida.ALMUERZO,
+                "Arroz con pollo", "Arroz con pollo criollo con ensalada",
+                "http://foto.com/arroz.jpg", TipoComida.ALMUERZO,
                 List.of(RestriccionAlimentaria.SIN_GLUTEN),
-                10,
-                new BigDecimal("12000.00"),
+                10, new BigDecimal("12000.00"),
                 LocalDateTime.now().plusHours(2),
-                "Portería Torre 1",
-                4.6789,
-                -74.0567
+                "Portería Torre 1", 4.6789, -74.0567
         );
 
         mockMvc.perform(post("/api/v1/platos")
@@ -91,17 +79,8 @@ class PlatoControllerTest {
     @Test
     void publicar_conDatosInvalidos_debeRetornar400() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
-                "ab",
-                "corta",
-                "",
-                null,
-                List.of(),
-                0,
-                new BigDecimal("100"),
-                null,
-                "",
-                null,
-                null
+                "ab", "corta", "", null, List.of(), 0,
+                new BigDecimal("100"), null, "", null, null
         );
 
         mockMvc.perform(post("/api/v1/platos")
@@ -130,13 +109,13 @@ class PlatoControllerTest {
                 LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
         );
 
-        String responseJson = mockMvc.perform(post("/api/v1/platos")
+        String json = mockMvc.perform(post("/api/v1/platos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(responseJson).get("id").asText();
+        String id = objectMapper.readTree(json).get("id").asText();
 
         mockMvc.perform(get("/api/v1/platos/{id}", id))
                 .andExpect(status().isOk())
@@ -144,31 +123,36 @@ class PlatoControllerTest {
     }
 
     @Test
-    void actualizarDisponibilidad_debeRetornar200() throws Exception {
+        void actualizarDisponibilidad_debeRetornar200() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
                 "Mondongo", "Sopa típica tradicional", "http://foto.com/m.jpg",
                 TipoComida.ALMUERZO, List.of(), 6, new BigDecimal("15000.00"),
                 LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
         );
 
-        String responseJson = mockMvc.perform(post("/api/v1/platos")
+        String json = mockMvc.perform(post("/api/v1/platos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(responseJson).get("id").asText();
+        String id = objectMapper.readTree(json).get("id").asText();
 
-        AjusteDisponibilidadRequest ajusteRequest = new AjusteDisponibilidadRequest(
-                TipoAjustePorciones.AUMENTAR, 2, "Cocinó más", 0
-        );
+        // ✅ Lee la versión desde el repositorio, no del JSON.
+        UUID platoUuid = UUID.fromString(id);
+        Integer version = jdbcTemplate.queryForObject(
+                "SELECT version FROM platos WHERE id = ?", Integer.class, platoUuid);
+        if (version == null) version = 0;
+
+        AjusteDisponibilidadRequest ajuste = new AjusteDisponibilidadRequest(
+                TipoAjustePorciones.AUMENTAR, 2, "Cocinó más", version);
 
         mockMvc.perform(patch("/api/v1/platos/{id}/disponibilidad", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(ajusteRequest)))
+                        .content(objectMapper.writeValueAsString(ajuste)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.porcionesTotales").value(8));
-    }
+        }
 
     @Test
     void eliminar_conPlatoExistente_debeRetornar204() throws Exception {
@@ -178,13 +162,13 @@ class PlatoControllerTest {
                 LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
         );
 
-        String responseJson = mockMvc.perform(post("/api/v1/platos")
+        String json = mockMvc.perform(post("/api/v1/platos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(responseJson).get("id").asText();
+        String id = objectMapper.readTree(json).get("id").asText();
 
         mockMvc.perform(delete("/api/v1/platos/{id}", id))
                 .andExpect(status().isNoContent());

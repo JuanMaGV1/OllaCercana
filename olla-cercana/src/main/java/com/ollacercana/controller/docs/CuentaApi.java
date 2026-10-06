@@ -1,7 +1,5 @@
 package com.ollacercana.controller.docs;
 
-import com.ollacercana.dto.request.RegistroRequestDTO;
-import com.ollacercana.dto.response.RegistroResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,6 +9,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import com.ollacercana.model.dto.request.RegistroRequestDTO;
+import com.ollacercana.model.dto.response.RegistroResponseDTO;
 
 @Tag(name = "Gestión de Cuentas", description = "API para el registro y administración de cuentas de usuario")
 public interface CuentaApi {

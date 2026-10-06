@@ -1,10 +1,10 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.TipoAjustePorciones;
-
 import java.util.List;
 import java.util.UUID;
+
+import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.TipoAjustePorciones;
 
 public interface PlatoService {
 
