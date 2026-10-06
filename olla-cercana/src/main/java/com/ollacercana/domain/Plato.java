@@ -93,7 +93,7 @@ public class Plato {
      * RN-03: recalcula el estado según las porciones disponibles.
      */
     public void recalcularEstado() {
-        if (this.estado == EstadoPlato.EXPIRADO) return;
+        if (this.estado == EstadoPlato.EXPIRADO || this.estado == EstadoPlato.OCULTO) return;
         if (getPorcionesDisponibles() <= 0) {
             this.estado = EstadoPlato.AGOTADO;
         } else if (this.estado == EstadoPlato.AGOTADO) {

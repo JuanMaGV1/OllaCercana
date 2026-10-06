@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -22,7 +23,29 @@ public class Reporte {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    private ObjetivoReporte objetivo;
+
+    @Column(nullable = false)
+    private UUID objetivoId; // ID of the Plato or Cuenta being reported
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MotivoReporte motivo;
+
+    @Column(length = 1000)
+    private String descripcion;
+
+    @ElementCollection
+    @CollectionTable(name = "reporte_evidencias", joinColumns = @JoinColumn(name = "reporte_id"))
+    @Column(name = "evidencia_url")
+    private List<String> evidencias;
+
+    @Column(nullable = false)
+    private UUID reportanteId;
+
+    @Column(nullable = true)
     private UUID reservaId;
 
     @Enumerated(EnumType.STRING)
@@ -31,4 +54,5 @@ public class Reporte {
 
     @Column(nullable = false)
     private LocalDateTime fechaCreacion;
+
 }

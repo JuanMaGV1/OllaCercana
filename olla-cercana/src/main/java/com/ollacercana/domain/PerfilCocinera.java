@@ -3,6 +3,7 @@ package com.ollacercana.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -61,6 +62,9 @@ public class PerfilCocinera {
     @Builder.Default
     @Column(name = "pausada")
     private boolean pausada = false;
+
+    @Column(name = "fecha_reactivacion")
+    private LocalDateTime fechaReactivacion;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cuenta_id", unique = true)
