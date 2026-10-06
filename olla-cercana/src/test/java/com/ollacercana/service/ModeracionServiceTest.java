@@ -120,13 +120,13 @@ class ModeracionServiceTest {
     @Test
     void testResolver_Descartar() {
         when(reporteRepository.findById(reporteId)).thenReturn(Optional.of(reportePlato));
-        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato)); // applyDecision will still be called and load plato
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
 
         EjecutarDecisionDto dto = new EjecutarDecisionDto(TipoDecision.DESCARTAR, "Falsa alarma");
         moderacionService.resolver(reporteId, dto, adminId);
 
         assertEquals(EstadoReporte.RESUELTO, reportePlato.getEstado());
-        assertEquals(EstadoPlato.ACTIVO, plato.getEstado()); // Unchanged
+        assertEquals(EstadoPlato.ACTIVO, plato.getEstado());
         
         verify(decisionRepository, times(1)).save(any(DecisionModeracion.class));
         verify(notificacionRepository, times(1)).save(any(Notificacion.class));
@@ -141,7 +141,7 @@ class ModeracionServiceTest {
         moderacionService.resolver(reporteId, dto, adminId);
 
         assertEquals(EstadoReporte.RESUELTO, reportePlato.getEstado());
-        assertEquals(EstadoPlato.ACTIVO, plato.getEstado()); // Unchanged
+        assertEquals(EstadoPlato.ACTIVO, plato.getEstado());
 
         verify(decisionRepository, times(1)).save(any(DecisionModeracion.class));
         verify(notificacionRepository, times(1)).save(any(Notificacion.class));

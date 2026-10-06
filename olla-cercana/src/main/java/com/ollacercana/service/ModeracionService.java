@@ -75,7 +75,6 @@ public class ModeracionService {
                 plato.setEstado(EstadoPlato.OCULTO);
                 platoRepository.save(plato);
             } else if (decision == TipoDecision.RESTAURAR_PUBLICACION) {
-                // Return to ACTIVO or AGOTADO depending on portions
                 if (plato.getPorcionesDisponibles() > 0) {
                     plato.setEstado(EstadoPlato.ACTIVO);
                 } else {
@@ -109,7 +108,6 @@ public class ModeracionService {
                 rolDestinatario = Rol.COCINERA;
             }
         } else {
-            // For cuenta, let's assume it's cocineraId for now.
             cocineraId = reporte.getObjetivoId();
             rolDestinatario = Rol.COCINERA;
         }

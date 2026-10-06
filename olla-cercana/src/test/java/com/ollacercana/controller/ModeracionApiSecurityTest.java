@@ -20,9 +20,6 @@ class ModeracionApiSecurityTest {
     @MockBean
     private ModeracionService moderacionService;
 
-    // We can test that a non-admin role gets a 403 Forbidden
-    // The exact message is returned by the CustomAccessDeniedHandler which might not be loaded in a simple WebMvcTest 
-    // unless explicitly imported, but we can verify the 403 status.
     @Test
     @WithMockUser(roles = "COMPRADOR")
     void testAccesoDenegadoParaComprador() throws Exception {
