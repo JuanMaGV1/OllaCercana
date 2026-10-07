@@ -86,6 +86,9 @@ public class Reserva {
 
     private boolean calificacionHabilitada;
 
+    // Calificación (1-5) que el comprador le dio a la cocinera; nula mientras no la haya publicado.
+    private Integer calificacion;
+
     @Version
     private Integer version;
 
