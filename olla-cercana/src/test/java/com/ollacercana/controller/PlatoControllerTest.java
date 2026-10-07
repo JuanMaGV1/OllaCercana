@@ -9,6 +9,7 @@ import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
 import com.ollacercana.model.dto.request.PlatoRequestDTO;
 import com.ollacercana.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -54,6 +55,25 @@ class PlatoControllerTest {
                     COCINERA_ID, "Torres del Parque", true, false, false, 0.0, 0);
         }
     }
+    @BeforeEach
+void setUp() {
+    // Limpia la tabla de platos para evitar acumulación entre tests
+    jdbcTemplate.execute("DELETE FROM plato_restricciones");
+        jdbcTemplate.execute("DELETE FROM platos");
+
+    lenient().when(usuarioActual.getCocineraId()).thenReturn(COCINERA_ID);
+    lenient().when(usuarioActual.getCuentaId()).thenReturn(1L);
+    lenient().when(usuarioActual.tieneRol(Rol.ADMIN)).thenReturn(false);
+
+    Integer existe = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM perfiles_cocinera WHERE id = ?",
+            Integer.class, COCINERA_ID);
+    if (existe == null || existe == 0) {
+        jdbcTemplate.update(
+                "INSERT INTO perfiles_cocinera (id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                COCINERA_ID, "Torres del Parque", true, false, false, 0.0, 0);
+    }
+}
 
     @Test
     void publicar_debeRetornar201() throws Exception {
@@ -173,4 +193,74 @@ class PlatoControllerTest {
         mockMvc.perform(delete("/api/v1/platos/{id}", id))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+        @DisplayName("HU-06: consulta platos cercanos con GPS → 200 y lista")
+        void cercanos_conGps_debeRetornar200() throws Exception {
+        // Primero publicar un plato con coordenadas
+        PlatoRequestDTO request = new PlatoRequestDTO(
+                "Ajiaco cercano", "Sopa tradicional", "http://foto.com/a.jpg",
+                TipoComida.ALMUERZO, List.of(),
+                5, new BigDecimal("14000.00"),
+                LocalDateTime.now().plusHours(2),
+                "Portería Torre 1", 4.6789, -74.0567
+        );
+
+        mockMvc.perform(post("/api/v1/platos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lat", "4.6789")
+                        .param("lng", "-74.0567")
+                        .param("radioMetros", "1000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido").isArray())
+                .andExpect(jsonPath("$.page").value(0));
+        }
+
+        @Test
+        @DisplayName("HU-06 Escenario 3: sin platos cerca → 200 con contenido vacío")
+        void cercanos_sinResultados_debeRetornar200Vacio() throws Exception {
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lat", "0.0")
+                        .param("lng", "0.0")
+                        .param("radioMetros", "500"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido").isEmpty())
+                .andExpect(jsonPath("$.totalElementos").value(0));
+        }
+
+        @Test
+        @DisplayName("HU-06: sin lat → 400 Bad Request")
+        void cercanos_sinLat_debeRetornar400() throws Exception {
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lng", "-74.0567"))
+                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("HU-07: filtrar por tipoComida")
+        void cercanos_porTipoComida() throws Exception {
+        PlatoRequestDTO request = new PlatoRequestDTO(
+                "Postre de natas", "Dulce típico", "http://foto.com/p.jpg",
+                TipoComida.POSTRE, List.of(),
+                4, new BigDecimal("8000.00"),
+                LocalDateTime.now().plusHours(2),
+                "Portería", 4.6789, -74.0567
+        );
+
+        mockMvc.perform(post("/api/v1/platos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lat", "4.6789")
+                        .param("lng", "-74.0567")
+                        .param("tipoComida", "POSTRE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido[0].tipoComida").value("POSTRE"));
+        }
 }

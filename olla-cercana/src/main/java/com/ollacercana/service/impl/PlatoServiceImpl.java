@@ -4,25 +4,37 @@ import com.ollacercana.exception.ConflictoVersionException;
 import com.ollacercana.exception.PlatoNoEncontradoException;
 import com.ollacercana.filter.FiltroCompuestoPlato;
 import com.ollacercana.filter.FiltroDistanciaMaxima;
+import com.ollacercana.filter.FiltroRestricciones;
 import com.ollacercana.mapper.PlatoEntityMapper;
 import com.ollacercana.model.domain.EstadoPlato;
 import com.ollacercana.model.domain.Plato;
+import com.ollacercana.model.domain.RestriccionAlimentaria;
 import com.ollacercana.model.domain.TipoAjustePorciones;
+import com.ollacercana.model.dto.request.ConsultaPlatosRequest;
+import com.ollacercana.model.dto.response.PaginaResponseDTO;
+import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.observer.PublicadorEventosPorciones;
+import com.ollacercana.persistence.entity.PerfilCocineraEntity;
 import com.ollacercana.persistence.entity.PlatoEntity;
 import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.service.PlatoService;
+import com.ollacercana.util.GeoUtils;
 import com.ollacercana.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -33,6 +45,7 @@ public class PlatoServiceImpl implements PlatoService {
     private final PlatoValidator validator;
     private final PlatoEntityMapper entityMapper;
     private PublicadorEventosPorciones publicadorEventosPorciones;
+    private final PerfilCocineraRepository perfilCocineraRepository;
 
     @Autowired(required = false)
     public void setPublicadorEventosPorciones(PublicadorEventosPorciones publicadorEventosPorciones) {
@@ -100,4 +113,86 @@ public class PlatoServiceImpl implements PlatoService {
         }
         return activos.stream().filter(filtro::cumple).toList();
     }
+
+@Override
+@Transactional(readOnly = true)
+public PaginaResponseDTO<PlatoCercanoResponseDTO> consultarCercanos(ConsultaPlatosRequest request) {
+
+    int radio = normalizarRadio(request.getRadioMetros());
+
+    Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+    Page<Object[]> pagina = repository.buscarCercanosConDistancia(
+            request.getLat(),
+            request.getLng(),
+            radio,
+            request.getTipoComida(),
+            EstadoPlato.ACTIVO,
+            pageable
+    );
+
+    List<Plato> dominio = pagina.getContent().stream()
+            .map(row -> (PlatoEntity) row[0])
+            .map(entityMapper::toDomain)
+            .toList();
+
+    // HU-07: aplicar filtros Composite (tipoComida ya viene filtrado desde SQL)
+    FiltroCompuestoPlato filtros = new FiltroCompuestoPlato();
+    if (request.getRestricciones() != null && !request.getRestricciones().isEmpty()) {
+        filtros.agregar(new FiltroRestricciones(request.getRestricciones()));
+    }
+
+    List<PlatoCercanoResponseDTO> dtos = dominio.stream()
+            .filter(filtros::cumple)
+            .map(p -> mapearACercano(p, request.getLat(), request.getLng()))
+            .sorted(Comparator.comparing(
+                    PlatoCercanoResponseDTO::getDistanciaAproximada,
+                    Comparator.nullsLast(Comparator.naturalOrder())))
+            .toList();
+
+    return PaginaResponseDTO.<PlatoCercanoResponseDTO>builder()
+            .contenido(dtos)
+            .page(pagina.getNumber())
+            .size(pagina.getSize())
+            .totalElementos(pagina.getTotalElements())
+            .totalPaginas(pagina.getTotalPages())
+            .hayMas(pagina.hasNext())
+            .build();
+}
+
+private int normalizarRadio(Integer radio) {
+    if (radio == null) return 2000;
+    if (radio < 500) return 500;
+    if (radio > 2000) return 2000;
+    return radio;
+}
+
+private PlatoCercanoResponseDTO mapearACercano(Plato plato, Double lat, Double lng) {
+    Integer distanciaAproximada = null;
+
+    if (lat != null && lng != null
+            && plato.getLatitud() != null && plato.getLongitud() != null) {
+        double distancia = GeoUtils.calcularDistanciaEnMetros(
+                lat, lng, plato.getLatitud(), plato.getLongitud());
+        distanciaAproximada = GeoUtils.redondearDistanciaMultiplo100(distancia);
+    }
+
+    // ✅ Obtener el conjunto residencial desde el perfil de la cocinera
+    //    (NUNCA exponer plato.getPuntoEntrega() — viola RN-05)
+    String conjunto = perfilCocineraRepository.findById(plato.getCocineraId())
+            .map(PerfilCocineraEntity::getConjuntoResidencial)
+            .orElse("Conjunto no especificado");
+
+    return PlatoCercanoResponseDTO.builder()
+            .id(plato.getId())
+            .nombre(plato.getNombre())
+            .fotoUrl(plato.getFotoUrl())
+            .tipoComida(plato.getTipoComida())
+            .restricciones(plato.getRestricciones())
+            .precioPorcion(plato.getPrecioPorcion())
+            .porcionesDisponibles(plato.getPorcionesDisponibles())
+            .conjunto(conjunto)   // ← ahora sí viene del perfil
+            .distanciaAproximada(distanciaAproximada)
+            .tiempoRestante(GeoUtils.formatearTiempoRestante(plato.getFechaExpiracion()))
+            .build();
+}
 }

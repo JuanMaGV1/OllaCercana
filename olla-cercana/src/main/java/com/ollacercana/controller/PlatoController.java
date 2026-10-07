@@ -6,7 +6,9 @@ import com.ollacercana.mapper.PlatoMapper;
 import com.ollacercana.model.domain.PerfilCocinera;
 import com.ollacercana.model.domain.Plato;
 import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.model.dto.request.ConsultaPlatosRequest;
 import com.ollacercana.model.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.dto.response.PaginaResponseDTO;
 import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.model.dto.response.PlatoResponseDTO;
 import com.ollacercana.repository.PerfilCocineraRepository;
@@ -15,6 +17,8 @@ import com.ollacercana.service.PlatoService;
 import com.ollacercana.util.GeoUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,13 +30,15 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/platos")
 @RequiredArgsConstructor
+
+
 public class PlatoController implements PlatoApi {
 
     private final PlatoService platoService;
     private final PlatoMapper platoMapper;
     private final PerfilCocineraRepository perfilCocineraRepository;
     private final UsuarioActual usuarioActual;
-
+    
     @Override
     @PostMapping
     @PreAuthorize("hasRole('COCINERA')")
@@ -65,42 +71,6 @@ public class PlatoController implements PlatoApi {
     }
 
     @Override
-    @GetMapping("/cercanos")
-    public ResponseEntity<List<PlatoCercanoResponseDTO>> listarCercanos(
-            @RequestParam(required = false) Double latitud,
-            @RequestParam(required = false) Double longitud) {
-        List<Plato> platos = platoService.buscarCercanos(latitud, longitud);
-
-        List<PlatoCercanoResponseDTO> dtos = platos.stream().map(p -> {
-            String conjunto = perfilCocineraRepository.findById(p.getCocineraId())
-                            .map(perfil -> perfil.getConjuntoResidencial())
-                            .orElse("Conjunto Residencial");
-
-            Integer distancia = null;
-            if (latitud != null && longitud != null && p.getLatitud() != null && p.getLongitud() != null) {
-                distancia = GeoUtils.redondearDistanciaMultiplo100(
-                        GeoUtils.calcularDistanciaEnMetros(latitud, longitud, p.getLatitud(), p.getLongitud())
-                );
-            }
-
-            return PlatoCercanoResponseDTO.builder()
-                    .id(p.getId())
-                    .nombre(p.getNombre())
-                    .fotoUrl(p.getFotoUrl())
-                    .tipoComida(p.getTipoComida())
-                    .restricciones(p.getRestricciones())
-                    .precioPorcion(p.getPrecioPorcion())
-                    .porcionesDisponibles(p.getPorcionesDisponibles())
-                    .conjunto(conjunto)
-                    .distanciaAproximada(distancia)
-                    .tiempoRestante(GeoUtils.formatearTiempoRestante(p.getFechaExpiracion()))
-                    .build();
-        }).toList();
-
-        return ResponseEntity.ok(dtos);
-    }
-
-    @Override
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('COCINERA') or hasRole('ADMIN')")
     public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
@@ -111,5 +81,12 @@ public class PlatoController implements PlatoApi {
         }
         platoService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/cercanos")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<PaginaResponseDTO<PlatoCercanoResponseDTO>> consultarCercanos(
+            @ParameterObject @Valid @ModelAttribute ConsultaPlatosRequest request) {
+        return ResponseEntity.ok(platoService.consultarCercanos(request));
     }
 }

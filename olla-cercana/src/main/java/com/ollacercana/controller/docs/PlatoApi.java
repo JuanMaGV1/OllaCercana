@@ -2,13 +2,14 @@ package com.ollacercana.controller.docs;
 
 import com.ollacercana.config.OpenApiConfig;
 import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
+import com.ollacercana.model.dto.request.ConsultaPlatosRequest;
 import com.ollacercana.model.dto.request.PlatoRequestDTO;
+import com.ollacercana.model.dto.response.PaginaResponseDTO;
 import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
 import com.ollacercana.model.dto.response.PlatoResponseDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,10 +17,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Platos", description = "Gestión de ofertas de comida casera")
@@ -56,18 +58,22 @@ public interface PlatoApi {
             @Valid @RequestBody AjusteDisponibilidadRequest request
     );
 
-    @Operation(
-            summary = "Listar platos cercanos (RN-05)",
-            description = "Retorna los platos disponibles ordenados por cercanía sin revelar la dirección exacta."
-    )
-    @GetMapping("/cercanos")
-    ResponseEntity<List<PlatoCercanoResponseDTO>> listarCercanos(
-            @Parameter(description = "Latitud actual del comprador", example = "4.6789")
-            @RequestParam(required = false) Double latitud,
-
-            @Parameter(description = "Longitud actual del comprador", example = "-74.0567")
-            @RequestParam(required = false) Double longitud
-    );
+   @Operation(
+        summary = "Consultar platos cercanos (HU-06 + HU-07, RN-05)",
+        description = """
+            Retorna los platos disponibles dentro del radio especificado, ordenados por cercanía.
+            No revela la dirección exacta de la cocinera (RN-05).
+            Filtros opcionales: tipoComida (HU-07) y restricciones alimentarias (HU-07).
+            """
+        )
+        @ApiResponses({
+                @ApiResponse(responseCode = "200", description = "Listado paginado de platos cercanos"),
+                @ApiResponse(responseCode = "400", description = "Latitud/longitud faltantes o fuera de rango")
+        })
+        @GetMapping("/cercanos")
+        ResponseEntity<PaginaResponseDTO<PlatoCercanoResponseDTO>> consultarCercanos(
+                @ParameterObject @Valid @ModelAttribute ConsultaPlatosRequest request
+        );
 
     @Operation(
             summary = "Eliminar un plato",
