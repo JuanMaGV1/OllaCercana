@@ -104,18 +104,18 @@ class PlatoTest {
 
     @Test
     void cambiarPorcionesTotales_validaciones() {
-        // Fuera de rango [1, 30]
+                                 
         assertThatThrownBy(() -> plato.cambiarPorcionesTotales(0))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> plato.cambiarPorcionesTotales(31))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        // Por debajo de comprometidas
+                                      
         plato.setPorcionesComprometidas(4);
         assertThatThrownBy(() -> plato.cambiarPorcionesTotales(3))
                 .isInstanceOf(IllegalStateException.class);
 
-        // Válido
+                 
         plato.cambiarPorcionesTotales(10);
         assertThat(plato.getPorcionesTotales()).isEqualTo(10);
     }

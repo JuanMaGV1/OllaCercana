@@ -94,6 +94,7 @@ class ReservaServiceImplTest {
                 .porcionesTotales(totales)
                 .porcionesComprometidas(comprometidas)
                 .estado(EstadoPlato.ACTIVO)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .build();
     }
 
@@ -106,6 +107,7 @@ class ReservaServiceImplTest {
                 .porcionesComprometidas(comprometidas)
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(estado)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .version(0)
                 .build();
     }
@@ -123,14 +125,14 @@ class ReservaServiceImplTest {
         return captor.getValue();
     }
 
-    // ==========================================
-    // PRUEBAS DE CREACIÓN DE RESERVAS (RN-03, RN-14, RN-15)
-    // ==========================================
+                                                 
+                                                            
+                                                 
 
     @Test
     @DisplayName("1. Happy path: Crear reserva exitosa retorna dominio Reserva")
     void crearReserva_Exitoso() {
-        // Arrange
+                  
         Plato plato = platoMock(5, 0);
         PerfilCocinera perfil = PerfilCocinera.builder().id(COCINERA_ID).conjuntoResidencial("Torres del Parque").build();
 
@@ -144,10 +146,10 @@ class ReservaServiceImplTest {
                 .medioPago(MedioPago.NEQUI)
                 .build();
 
-        // Act
+              
         Reserva respuesta = reservaService.crear(COMPRADOR_ID, reserva);
 
-        // Assert
+                 
         assertNotNull(respuesta);
         assertEquals(EstadoReserva.PENDIENTE, respuesta.getEstado());
         assertEquals(new BigDecimal("30000"), respuesta.getMontoTotal());
@@ -222,9 +224,9 @@ class ReservaServiceImplTest {
         assertThrows(ConflictoException.class, () -> reservaService.crear(COMPRADOR_ID, reserva));
     }
 
-    // ==========================================
-    // PRUEBAS DE CONFIRMACIÓN, RECHAZO, RECORDATORIO (HU-12)
-    // ==========================================
+                                                 
+                                                             
+                                                 
 
     @Test
     void confirmar_debeCambiarAConfirmadaConservarPorcionesYHabilitarChat() {
@@ -371,7 +373,7 @@ class ReservaServiceImplTest {
     @DisplayName("Expirar - Si no está vencida no altera la reserva")
     void expirar_noVencida_noHaceNada() {
         Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
-        Reserva reserva = reservaPendiente(plato, 2, 1); // 1 minuto, vencen a los 10
+        Reserva reserva = reservaPendiente(plato, 2, 1);                             
 
         Reserva resultado = reservaService.expirar(reserva.getId());
 
@@ -383,7 +385,7 @@ class ReservaServiceImplTest {
     @DisplayName("Enviar recordatorio - Si no lo requiere aún, no lo envía")
     void enviarRecordatorio_noRequerido_noHaceNada() {
         Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
-        Reserva reserva = reservaPendiente(plato, 2, 1); // Creada hace 1 min (requiere a los 7)
+        Reserva reserva = reservaPendiente(plato, 2, 1);                                        
 
         reservaService.enviarRecordatorio(reserva.getId());
 

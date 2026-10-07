@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +24,7 @@ import java.util.UUID;
 public class ModeracionApi {
 
     private final ModeracionService moderacionService;
+    private final UsuarioActual usuarioActual;
 
     @GetMapping("/reportes")
     public ResponseEntity<Page<Reporte>> listarReportes(
@@ -41,9 +41,8 @@ public class ModeracionApi {
     @PostMapping("/reportes/{reporteId}/decision")
     public ResponseEntity<Void> ejecutarDecision(
             @PathVariable UUID reporteId,
-            @Valid @RequestBody EjecutarDecisionDto dto,
-            @AuthenticationPrincipal UsuarioActual usuarioActual) {
-        moderacionService.resolver(reporteId, dto, usuarioActual.getId());
+            @Valid @RequestBody EjecutarDecisionDto dto) {
+        moderacionService.resolver(reporteId, dto, usuarioActual.getCuentaId());
         return ResponseEntity.ok().build();
     }
 
@@ -55,9 +54,8 @@ public class ModeracionApi {
     @PostMapping("/perfiles/{cocineraId}/reactivar")
     public ResponseEntity<Void> reactivarPerfil(
             @PathVariable UUID cocineraId,
-            @RequestBody String justificacion,
-            @AuthenticationPrincipal UsuarioActual usuarioActual) {
-        moderacionService.reactivarPerfil(cocineraId, justificacion, usuarioActual.getId());
+            @RequestBody String justificacion) {
+        moderacionService.reactivarPerfil(cocineraId, justificacion, usuarioActual.getCuentaId());
         return ResponseEntity.ok().build();
     }
 }

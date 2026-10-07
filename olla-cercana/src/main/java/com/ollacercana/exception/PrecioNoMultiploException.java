@@ -1,6 +1,6 @@
 package com.ollacercana.exception;
 
-// Se lanza cuando el precio de un plato no es multiplo de 100 (RN-27).
+                                                                       
 public class PrecioNoMultiploException extends BusinessRuleException {
 
     public PrecioNoMultiploException() {

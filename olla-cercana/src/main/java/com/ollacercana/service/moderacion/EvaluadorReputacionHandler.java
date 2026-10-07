@@ -12,6 +12,6 @@ public class EvaluadorReputacionHandler extends AbstractModeracionReporteHandler
     @Override
     protected void procesar(Reporte reporte) {
         log.info("Evaluando impacto en reputación por el reporte {}...", reporte.getId());
-        // En el futuro: actualizar score de la cocinera o comprador si aplica.
+                                                                               
     }
 }

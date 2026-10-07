@@ -12,9 +12,9 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 
-/**
- * OC-148 / OC-149 / OC-157: las tareas programadas procesan cada reserva por separado.
- */
+   
+                                                                                       
+   
 @ExtendWith(MockitoExtension.class)
 class ReservaSchedulerTest {
 

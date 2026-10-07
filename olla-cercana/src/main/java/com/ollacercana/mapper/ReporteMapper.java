@@ -16,6 +16,7 @@ public class ReporteMapper {
                 .id(reporte.getId())
                 .objetivo(reporte.getObjetivo())
                 .objetivoId(reporte.getObjetivoId())
+                .cuentaObjetivoId(reporte.getCuentaObjetivoId())
                 .motivo(reporte.getMotivo())
                 .descripcion(reporte.getDescripcion())
                 .evidencias(reporte.getEvidencias())

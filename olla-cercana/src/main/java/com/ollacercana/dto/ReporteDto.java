@@ -20,10 +20,11 @@ public class ReporteDto {
     private UUID id;
     private ObjetivoReporte objetivo;
     private UUID objetivoId;
+    private Long cuentaObjetivoId;
     private MotivoReporte motivo;
     private String descripcion;
     private List<String> evidencias;
-    private UUID reportanteId;
+    private Long reportanteId;
     private UUID reservaId;
     private EstadoReporte estado;
     private LocalDateTime fechaCreacion;

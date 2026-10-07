@@ -37,7 +37,7 @@ class JwtServiceUnitTest {
     @Test
     @DisplayName("Token válido: genera, valida y extrae claims correctamente")
     void generarToken_tokenValido_extraeClaims() {
-        // Arrange
+                  
         UUID cocineraId = UUID.randomUUID();
         Cuenta cuenta = Cuenta.builder()
                 .id(7L)
@@ -47,10 +47,10 @@ class JwtServiceUnitTest {
         when(perfilCocineraRepository.findByCuentaId(7L))
                 .thenReturn(Optional.of(PerfilCocinera.builder().id(cocineraId).build()));
 
-        // Act
+              
         String token = jwtService.generarToken(cuenta);
 
-        // Assert
+                 
         assertNotNull(token);
         assertTrue(jwtService.validarToken(token));
         assertEquals("7", jwtService.extraerSubject(token));
@@ -63,44 +63,44 @@ class JwtServiceUnitTest {
     @Test
     @DisplayName("Token expirado: retorna false en validarToken")
     void validarToken_tokenExpirado_retornaFalse() {
-        // Arrange (Servicio con 0ms de expiración)
+                                                   
         JwtService servicioExpirado = new JwtService(SECRET_TEST, -1000L, perfilCocineraRepository);
         Cuenta cuenta = Cuenta.builder().id(1L).roles(Set.of(Rol.COMPRADOR)).build();
         when(perfilCocineraRepository.findByCuentaId(1L)).thenReturn(Optional.empty());
 
-        // Act
+              
         String tokenExpirado = servicioExpirado.generarToken(cuenta);
 
-        // Assert
+                 
         assertFalse(jwtService.validarToken(tokenExpirado));
     }
 
     @Test
     @DisplayName("Token alterado: firma no coincide y retorna false")
     void validarToken_tokenAlterado_retornaFalse() {
-        // Arrange
+                  
         Cuenta cuenta = Cuenta.builder().id(1L).roles(Set.of(Rol.COMPRADOR)).build();
         when(perfilCocineraRepository.findByCuentaId(1L)).thenReturn(Optional.empty());
         String tokenOriginal = jwtService.generarToken(cuenta);
 
-        // Act (Modificar un carácter de la firma)
+                                                  
         String tokenAlterado = tokenOriginal.substring(0, tokenOriginal.length() - 4) + "XXXX";
 
-        // Assert
+                 
         assertFalse(jwtService.validarToken(tokenAlterado));
     }
 
     @Test
     @DisplayName("Token malformado: no cumple sintaxis JWT y retorna false")
     void validarToken_tokenMalformado_retornaFalse() {
-        // Arrange & Act & Assert
+                                 
         assertFalse(jwtService.validarToken("token.invalido.malformado"));
     }
 
     @Test
     @DisplayName("Token vacío o nulo: retorna false sin lanzar excepción")
     void validarToken_tokenVacioONulo_retornaFalse() {
-        // Arrange & Act & Assert
+                                 
         assertFalse(jwtService.validarToken(""));
         assertFalse(jwtService.validarToken(null));
     }

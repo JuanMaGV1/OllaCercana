@@ -21,18 +21,18 @@ class CodigoOTPTest {
                 .usado(false)
                 .build();
 
-        // Válido
+                 
         assertTrue(otp.esValido("123456"));
 
-        // Código incorrecto
+                            
         assertFalse(otp.esValido("000000"));
 
-        // Ya usado
+                   
         otp.setUsado(true);
         assertFalse(otp.esValido("123456"));
         otp.setUsado(false);
 
-        // Expirado
+                   
         otp.setFechaExpiracion(LocalDateTime.now().minusMinutes(1));
         assertFalse(otp.esValido("123456"));
     }

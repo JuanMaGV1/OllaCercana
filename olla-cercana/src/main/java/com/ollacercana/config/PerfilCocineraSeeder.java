@@ -28,17 +28,17 @@ public class PerfilCocineraSeeder implements CommandLineRunner {
                     "(id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-            // 1. Perfil verificado y no pausado
+                                                
             jdbcTemplate.update(sql,
                     UUID.fromString("11111111-1111-1111-1111-111111111111"),
                     "Torres del Parque", true, false, false, 0.0, 0);
 
-            // 2. Perfil no verificado
+                                      
             jdbcTemplate.update(sql,
                     UUID.fromString("22222222-2222-2222-2222-222222222222"),
                     "Altos de la Colina", false, false, false, 0.0, 0);
 
-            // 3. Perfil verificado y pausado
+                                             
             jdbcTemplate.update(sql,
                     UUID.fromString("33333333-3333-3333-3333-333333333333"),
                     "Portal del Norte", true, true, false, 0.0, 0);

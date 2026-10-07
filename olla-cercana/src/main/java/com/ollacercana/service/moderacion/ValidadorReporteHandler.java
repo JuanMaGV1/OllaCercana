@@ -12,6 +12,6 @@ public class ValidadorReporteHandler extends AbstractModeracionReporteHandler {
     @Override
     protected void procesar(Reporte reporte) {
         log.info("Validando reporte {} contra reglas de moderación automáticas...", reporte.getId());
-        // En una implementación real, aquí se podrían integrar APIs de análisis de texto para la descripción.
+                                                                                                              
     }
 }

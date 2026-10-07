@@ -7,9 +7,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Reporte sobre una reserva (OC-34). Mientras esté ABIERTO no se puede cerrar la transacción (HU-23).
- */
+   
+                                                                                  
+                                                    
+   
 @Entity
 @Table(name = "reportes")
 @Getter
@@ -27,8 +28,11 @@ public class Reporte {
     @Column(nullable = false)
     private ObjetivoReporte objetivo;
 
-    @Column(nullable = false)
-    private UUID objetivoId; // ID of the Plato or Cuenta being reported
+    @Column(nullable = true)
+    private UUID objetivoId;                                                                       
+
+    @Column(name = "cuenta_objetivo_id")
+    private Long cuentaObjetivoId;                                                            
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -43,7 +47,7 @@ public class Reporte {
     private List<String> evidencias;
 
     @Column(nullable = false)
-    private UUID reportanteId;
+    private Long reportanteId;
 
     @Column(nullable = true)
     private UUID reservaId;

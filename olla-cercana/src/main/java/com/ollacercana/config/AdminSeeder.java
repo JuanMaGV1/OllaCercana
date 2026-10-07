@@ -23,11 +23,11 @@ public class AdminSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!cuentaRepository.existsByIdentidadCorreo("admin@ollacercana.com")) {
+        if (!cuentaRepository.existsByCorreo("admin@ollacercana.com")) {
             log.info("Creando cuenta de administrador por defecto...");
             Cuenta admin = Cuenta.builder()
-                    .identidad(new Identidad("Admin", "Olla Cercana", "admin@ollacercana.com", "3000000000"))
-                    .credenciales(new Credenciales(passwordEncoder.encode("Admin123!"), true))
+                    .identidad(new Identidad("Administrador", "admin@ollacercana.com", "3000000000", null))
+                    .credenciales(new Credenciales(passwordEncoder.encode("Admin123!"), null, true))
                     .roles(Set.of(Rol.ADMIN))
                     .build();
             cuentaRepository.save(admin);

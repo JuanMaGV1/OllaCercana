@@ -29,8 +29,6 @@ public class ModeracionService {
 
     public Page<Reporte> obtenerReportes(EstadoReporte estado, Pageable pageable) {
         if (estado != null) {
-            // Need a method in repository or just use findAll if not present.
-            // For now let's assume we create findByEstado in ReporteRepository.
             return reporteRepository.findByEstado(estado, pageable);
         }
         return reporteRepository.findAll(pageable);
@@ -38,16 +36,12 @@ public class ModeracionService {
 
     public Reporte obtenerDetalle(UUID reporteId) {
         return reporteRepository.findById(reporteId)
-                .orElseThrow(() -> new ResourceNotFoundException("Reporte no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reporte", reporteId));
     }
 
     @Transactional
     public void resolver(UUID reporteId, EjecutarDecisionDto dto, Long administradorId) {
         Reporte reporte = obtenerDetalle(reporteId);
-        if (reporte.getEstado() == EstadoReporte.RESUELTO) {
-            throw new ReglaDeNegocioException("El reporte ya ha sido resuelto");
-        }
-
         DecisionModeracion decision = DecisionModeracion.builder()
                 .reporte(reporte)
                 .decision(dto.getDecision())
@@ -69,7 +63,7 @@ public class ModeracionService {
     private void aplicarDecision(Reporte reporte, TipoDecision decision) {
         if (reporte.getObjetivo() == ObjetivoReporte.PLATO) {
             Plato plato = platoRepository.findById(reporte.getObjetivoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Plato no encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Plato", reporte.getObjetivoId()));
             
             if (decision == TipoDecision.INHABILITAR_PUBLICACION) {
                 plato.setEstado(EstadoPlato.OCULTO);
@@ -84,20 +78,15 @@ public class ModeracionService {
             }
         } else if (reporte.getObjetivo() == ObjetivoReporte.CUENTA) {
             if (decision == TipoDecision.SUSPENDER_CUENTA) {
-                PerfilCocinera perfil = perfilRepository.findById(reporte.getObjetivoId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Perfil no encontrado"));
-                
-                Cuenta cuenta = perfil.getCuenta();
-                if (cuenta != null) {
-                    cuenta.setEstado(EstadoCuenta.SUSPENDIDO);
-                    cuentaRepository.save(cuenta);
-                }
+                Cuenta cuenta = obtenerCuentaObjetivo(reporte);
+                cuenta.setEstado(EstadoCuenta.SUSPENDIDO);
+                cuentaRepository.save(cuenta);
             }
         }
     }
 
     private void enviarNotificacionDecision(Reporte reporte, EjecutarDecisionDto dto) {
-        Long destinatarioId = null;
+        Long compradorId = null;
         UUID cocineraId = null;
         Rol rolDestinatario = Rol.COMPRADOR;
 
@@ -108,14 +97,23 @@ public class ModeracionService {
                 rolDestinatario = Rol.COCINERA;
             }
         } else {
-            cocineraId = reporte.getObjetivoId();
-            rolDestinatario = Rol.COCINERA;
+            Cuenta afectada = obtenerCuentaObjetivo(reporte);
+            if (afectada.getRoles() != null && afectada.getRoles().contains(Rol.COCINERA)) {
+                cocineraId = perfilRepository.findByCuentaId(afectada.getId())
+                        .map(PerfilCocinera::getId)
+                        .orElse(null);
+                rolDestinatario = Rol.COCINERA;
+            } else {
+                compradorId = afectada.getId();
+                rolDestinatario = Rol.COMPRADOR;
+            }
         }
 
         Notificacion notif = Notificacion.builder()
                 .tipo(TipoNotificacion.MODERACION_DECISION)
                 .titulo("Decisión de Moderación")
                 .mensaje("Resolución: " + dto.getDecision() + ". Razón: " + dto.getJustificacion())
+                .compradorId(compradorId)
                 .cocineraId(cocineraId)
                 .rolDestinatario(rolDestinatario)
                 .fechaCreacion(LocalDateTime.now())
@@ -125,6 +123,17 @@ public class ModeracionService {
         notificacionRepository.save(notif);
     }
 
+    private Cuenta obtenerCuentaObjetivo(Reporte reporte) {
+        if (reporte.getCuentaObjetivoId() != null) {
+            return cuentaRepository.findById(reporte.getCuentaObjetivoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cuenta no encontrada con id: " + reporte.getCuentaObjetivoId()));
+        }
+        PerfilCocinera perfil = perfilRepository.findById(reporte.getObjetivoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil", reporte.getObjetivoId()));
+        if (perfil.getCuenta() == null) throw new ResourceNotFoundException("Cuenta", reporte.getObjetivoId());
+        return perfil.getCuenta();
+    }
+
     public List<PerfilCocinera> listarPerfilesPausados() {
         return perfilRepository.findByPausadaTrue();
     }
@@ -132,7 +141,7 @@ public class ModeracionService {
     @Transactional
     public void reactivarPerfil(UUID cocineraId, String justificacion, Long administradorId) {
         PerfilCocinera perfil = perfilRepository.findById(cocineraId)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil", cocineraId));
         
         if (!perfil.isPausada()) {
             throw new ReglaDeNegocioException("El perfil no está pausado");

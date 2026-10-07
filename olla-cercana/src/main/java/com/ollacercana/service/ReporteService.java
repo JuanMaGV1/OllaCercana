@@ -25,12 +25,13 @@ public class ReporteService {
     private final ModeracionReporteChainConfig moderacionChain;
 
     @Transactional
-    public ReporteDto crear(ReporteCrearDto dto, UUID reportanteId) {
+    public ReporteDto crear(ReporteCrearDto dto, Long reportanteId) {
         reporteValidator.validarParaCreacion(dto, reportanteId);
 
         Reporte reporte = Reporte.builder()
                 .objetivo(dto.getObjetivo())
                 .objetivoId(dto.getObjetivoId())
+                .cuentaObjetivoId(dto.getCuentaObjetivoId())
                 .motivo(dto.getMotivo())
                 .descripcion(dto.getDescripcion())
                 .evidencias(dto.getEvidencias())
@@ -42,7 +43,7 @@ public class ReporteService {
 
         reporte = reporteRepository.save(reporte);
 
-        // Disparar cadena de moderación
+                                        
         moderacionChain.getChain().handle(reporte);
 
         return reporteMapper.toDto(reporte);

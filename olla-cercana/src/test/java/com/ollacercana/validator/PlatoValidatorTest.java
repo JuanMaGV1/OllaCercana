@@ -98,7 +98,7 @@ class PlatoValidatorTest {
         plato.setPorcionesTotales(5);
         plato.setPorcionesComprometidas(3);
 
-        // Nuevo total sería 5 - 3 = 2 < 3
+                                          
         assertThrows(ReduccionPorDebajoDeComprometidasException.class,
                 () -> validator.validarAjusteDisponibilidad(plato, TipoAjustePorciones.DISMINUIR, 3));
     }
@@ -118,10 +118,10 @@ class PlatoValidatorTest {
         plato.setPorcionesTotales(5);
         plato.setPorcionesComprometidas(2);
 
-        // Disminuir 2: nuevo total 3 >= 2 comprometidas
+                                                        
         assertDoesNotThrow(() -> validator.validarAjusteDisponibilidad(plato, TipoAjustePorciones.DISMINUIR, 2));
 
-        // Aumentar 3
+                     
         assertDoesNotThrow(() -> validator.validarAjusteDisponibilidad(plato, TipoAjustePorciones.AUMENTAR, 3));
     }
 }

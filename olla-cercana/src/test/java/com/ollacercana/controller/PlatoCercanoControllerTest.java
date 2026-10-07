@@ -40,7 +40,7 @@ class PlatoCercanoControllerTest {
         platoRepository.deleteAll();
         perfilRepository.deleteAll();
 
-        // 1. Dejar que JPA autogenere el ID del perfil
+                                                       
         PerfilCocinera perfil = PerfilCocinera.builder()
                 .conjuntoResidencial("Torres del Sol")
                 .numeroNequi("3001234567")
@@ -49,7 +49,7 @@ class PlatoCercanoControllerTest {
                 .build();
         PerfilCocinera guardado = perfilRepository.save(perfil);
 
-        // 2. Asociar el ID autogenerado al plato
+                                                 
         Plato plato = Plato.builder()
                 .id(UUID.randomUUID())
                 .cocineraId(guardado.getId())
@@ -64,7 +64,7 @@ class PlatoCercanoControllerTest {
                 .estado(EstadoPlato.ACTIVO)
                 .fechaPublicacion(LocalDateTime.now())
                 .fechaExpiracion(LocalDateTime.now().plusHours(3))
-                .puntoEntrega("Torre 3 Apto 502, Calle 123 #45-67") // Datos sensibles para probar seguridad
+                .puntoEntrega("Torre 3 Apto 502, Calle 123 #45-67")                                         
                 .latitud(4.6789)
                 .longitud(-74.0567)
                 .build();
@@ -87,7 +87,7 @@ class PlatoCercanoControllerTest {
 
         String jsonResponse = result.getResponse().getContentAsString().toLowerCase();
 
-        // Verificaciones de no exposición de datos privados exigidas por la historia
+                                                                                     
         assertFalse(jsonResponse.contains("puntoentrega"), "No debe contener 'puntoEntrega'");
         assertFalse(jsonResponse.contains("torre 3"), "No debe exponer la torre");
         assertFalse(jsonResponse.contains("apto"), "No debe exponer el número de apartamento");

@@ -19,10 +19,10 @@ public class ReporteCrearDto {
     @NotNull(message = "El objetivo del reporte es obligatorio")
     private ObjetivoReporte objetivo;
 
-    @NotNull(message = "El id del objetivo es obligatorio")
     private UUID objetivoId;
 
-    @NotNull(message = "Debe seleccionar un motivo de reporte")
+    private Long cuentaObjetivoId;
+
     private MotivoReporte motivo;
 
     private String descripcion;

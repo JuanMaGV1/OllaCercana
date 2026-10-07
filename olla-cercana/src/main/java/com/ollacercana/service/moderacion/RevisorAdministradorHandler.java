@@ -12,6 +12,6 @@ public class RevisorAdministradorHandler extends AbstractModeracionReporteHandle
     @Override
     protected void procesar(Reporte reporte) {
         log.info("Reporte {} encolado para revisión manual por un administrador.", reporte.getId());
-        // En el futuro: enviar notificación o insertar en una cola para el panel de admin.
+                                                                                           
     }
 }

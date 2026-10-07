@@ -70,7 +70,7 @@ public class PerfilCocinera {
     @JoinColumn(name = "cuenta_id", unique = true)
     private Cuenta cuenta;
 
-    // Métodos puente para mantener compatibilidad con CocineraQueryPort
+                                                                        
     public boolean verificada() {
         return this.verificada;
     }

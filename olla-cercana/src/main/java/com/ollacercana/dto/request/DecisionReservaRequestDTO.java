@@ -11,9 +11,9 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
-/**
- * HU-12 / OC-145: decisión de la cocinera sobre una solicitud de reserva.
- */
+   
+                                                                          
+   
 @Schema(description = "Decisión de la cocinera sobre una solicitud de reserva pendiente (HU-12)")
 public record DecisionReservaRequestDTO(
 

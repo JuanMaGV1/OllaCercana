@@ -9,6 +9,7 @@ import com.ollacercana.dto.ReporteCrearDto;
 import com.ollacercana.dto.ReporteDto;
 import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.mapper.ReporteMapper;
+import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.CuentaRepository;
 import com.ollacercana.repository.PlatoRepository;
 import com.ollacercana.repository.ReporteRepository;
@@ -39,6 +40,9 @@ class ReporteServiceTest {
     private PlatoRepository platoRepository;
 
     @Mock
+    private PerfilCocineraRepository perfilCocineraRepository;
+
+    @Mock
     private CuentaRepository cuentaRepository;
 
     @Mock
@@ -55,13 +59,13 @@ class ReporteServiceTest {
 
     @BeforeEach
     void setUp() {
-        reporteValidator = new ReporteValidator(platoRepository, cuentaRepository, reporteRepository);
+        reporteValidator = new ReporteValidator(platoRepository, perfilCocineraRepository, cuentaRepository, reporteRepository);
         reporteService = new ReporteService(reporteRepository, reporteValidator, reporteMapper, moderacionChain);
     }
 
     @Test
     void testCreacionExitosa() {
-        UUID reportanteId = UUID.randomUUID();
+        Long reportanteId = 42L;
         UUID objetivoId = UUID.randomUUID();
         UUID cocineraId = UUID.randomUUID();
         
@@ -77,6 +81,7 @@ class ReporteServiceTest {
         plato.setEstado(EstadoPlato.ACTIVO);
 
         when(platoRepository.findById(objetivoId)).thenReturn(Optional.of(plato));
+        when(perfilCocineraRepository.findByCuentaId(reportanteId)).thenReturn(Optional.empty());
         when(reporteRepository.existsByReportanteIdAndObjetivoIdAndObjetivo(reportanteId, objetivoId, ObjetivoReporte.PLATO))
                 .thenReturn(false);
         when(reporteRepository.save(any(Reporte.class))).thenAnswer(i -> i.getArgument(0));
@@ -92,11 +97,11 @@ class ReporteServiceTest {
 
     @Test
     void testFalloPorFaltaDeMotivo() {
-        UUID reportanteId = UUID.randomUUID();
+        Long reportanteId = 42L;
         ReporteCrearDto dto = ReporteCrearDto.builder()
                 .objetivo(ObjetivoReporte.PLATO)
                 .objetivoId(UUID.randomUUID())
-                .build(); // Sin motivo
+                .build();              
 
         ReglaDeNegocioException exception = assertThrows(ReglaDeNegocioException.class, () -> 
                 reporteService.crear(dto, reportanteId));
@@ -106,7 +111,7 @@ class ReporteServiceTest {
 
     @Test
     void testDeteccionReporteDuplicado() {
-        UUID reportanteId = UUID.randomUUID();
+        Long reportanteId = 42L;
         UUID objetivoId = UUID.randomUUID();
         
         ReporteCrearDto dto = ReporteCrearDto.builder()
@@ -120,6 +125,7 @@ class ReporteServiceTest {
         plato.setCocineraId(UUID.randomUUID());
 
         when(platoRepository.findById(objetivoId)).thenReturn(Optional.of(plato));
+        when(perfilCocineraRepository.findByCuentaId(reportanteId)).thenReturn(Optional.empty());
         when(reporteRepository.existsByReportanteIdAndObjetivoIdAndObjetivo(reportanteId, objetivoId, ObjetivoReporte.PLATO))
                 .thenReturn(true);
 
@@ -127,5 +133,28 @@ class ReporteServiceTest {
                 reporteService.crear(dto, reportanteId));
 
         assertEquals("Ya ha reportado este objetivo anteriormente", exception.getMessage());
+    }
+
+    @Test
+    void testReporteDirectoDeCuenta() {
+        Long reportanteId = 42L;
+        Long cuentaObjetivoId = 84L;
+        ReporteCrearDto dto = ReporteCrearDto.builder()
+                .objetivo(ObjetivoReporte.CUENTA)
+                .cuentaObjetivoId(cuentaObjetivoId)
+                .motivo(MotivoReporte.COMPORTAMIENTO_OFENSIVO)
+                .build();
+
+        when(cuentaRepository.existsById(cuentaObjetivoId)).thenReturn(true);
+        when(reporteRepository.existsByReportanteIdAndCuentaObjetivoIdAndObjetivo(
+                reportanteId, cuentaObjetivoId, ObjetivoReporte.CUENTA)).thenReturn(false);
+        when(reporteRepository.save(any(Reporte.class))).thenAnswer(i -> i.getArgument(0));
+        when(moderacionChain.getChain()).thenReturn(chainHandler);
+        when(reporteMapper.toDto(any(Reporte.class))).thenReturn(new ReporteDto());
+
+        reporteService.crear(dto, reportanteId);
+
+        verify(reporteRepository).save(argThat(reporte -> cuentaObjetivoId.equals(reporte.getCuentaObjetivoId())
+                && reporte.getObjetivoId() == null));
     }
 }

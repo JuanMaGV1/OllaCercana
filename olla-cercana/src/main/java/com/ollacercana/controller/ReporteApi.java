@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -23,14 +22,14 @@ import java.util.stream.Collectors;
 public class ReporteApi {
 
     private final ReporteService reporteService;
+    private final UsuarioActual usuarioActual;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('COMPRADOR', 'COCINERA')")
     public ResponseEntity<ReporteDto> crearReporte(
-            @Valid @RequestBody ReporteCrearDto dto,
-            @AuthenticationPrincipal UsuarioActual usuarioActual) {
+            @Valid @RequestBody ReporteCrearDto dto) {
         
-        ReporteDto creado = reporteService.crear(dto, usuarioActual.getId());
+        ReporteDto creado = reporteService.crear(dto, usuarioActual.getCuentaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 

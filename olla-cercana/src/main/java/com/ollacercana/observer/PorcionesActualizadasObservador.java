@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-/**
- * HU-16: escucha el evento interno, lo deja en el log y lo pasa al notificador.
- */
+   
+                                                                                
+   
 @Component
 public class PorcionesActualizadasObservador {
 

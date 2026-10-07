@@ -107,14 +107,16 @@ class ModeracionServiceTest {
     }
 
     @Test
-    void testResolver_YaResuelto() {
+    void testPermiteVariasDecisionesAuditadasSobreUnReporte() {
         reportePlato.setEstado(EstadoReporte.RESUELTO);
         when(reporteRepository.findById(reporteId)).thenReturn(Optional.of(reportePlato));
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
 
         EjecutarDecisionDto dto = new EjecutarDecisionDto(TipoDecision.DESCARTAR, "Nada");
 
-        assertThrows(ReglaDeNegocioException.class, () -> moderacionService.resolver(reporteId, dto, adminId));
-        verify(decisionRepository, never()).save(any());
+        moderacionService.resolver(reporteId, dto, adminId);
+        verify(decisionRepository).save(argThat(decision -> decision.getReporte() == reportePlato));
+        verify(notificacionRepository).save(any(Notificacion.class));
     }
 
     @Test

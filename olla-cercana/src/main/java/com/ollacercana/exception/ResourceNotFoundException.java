@@ -7,7 +7,7 @@ public class ResourceNotFoundException extends OllaCercanaException {
         super(recurso + " no encontrado con id: " + id);
     }
 
-    protected ResourceNotFoundException(String mensaje) {
+    public ResourceNotFoundException(String mensaje) {
         super(mensaje);
     }
 }

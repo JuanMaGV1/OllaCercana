@@ -1,11 +1,13 @@
 package com.ollacercana.validator;
 
 import com.ollacercana.domain.EstadoReserva;
+import com.ollacercana.domain.EstadoPlato;
 import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.exception.AutoReservaException;
 import com.ollacercana.exception.LimiteReservasPendientesException;
 import com.ollacercana.exception.PorcionesInsuficientesException;
+import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.ReservaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,6 +49,8 @@ class ReservaValidatorTest {
                 .cocineraId(COCINERA_ID)
                 .porcionesTotales(5)
                 .porcionesComprometidas(1)
+                .estado(EstadoPlato.ACTIVO)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .build();
     }
 
@@ -73,7 +78,7 @@ class ReservaValidatorTest {
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
 
-        // Disponibles = 5 - 1 = 4. Solicitadas = 5
+                                                   
         assertThrows(PorcionesInsuficientesException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 5));
     }
 
@@ -85,5 +90,12 @@ class ReservaValidatorTest {
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(1L);
 
         assertDoesNotThrow(() -> validator.validarParaCrear(COMPRADOR_ID, plato, 2));
+    }
+
+    @Test
+    @DisplayName("validarParaCrear: un plato oculto no se puede reservar")
+    void validarParaCrear_platoOculto_rechazaReserva() {
+        plato.setEstado(EstadoPlato.OCULTO);
+        assertThrows(ReglaDeNegocioException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1));
     }
 }

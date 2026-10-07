@@ -7,9 +7,9 @@ import com.ollacercana.domain.Plato;
 
 import java.util.UUID;
 
-/**
- * HU-16: evento interno que indica que cambió el stock de un plato.
- */
+   
+                                                                    
+   
 public record PorcionesActualizadasResponseDTO(UUID platoId, int porcionesDisponibles, EstadoPorciones estado) {
 
     public static PorcionesActualizadasResponseDTO de(Plato plato) {
