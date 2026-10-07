@@ -55,9 +55,9 @@ public class UsuarioActual {
                 .orElseThrow(() -> new AccesoDenegadoException("La cuenta autenticada no tiene un perfil de cocinera asociado"));
     }
 
-    /**
-     * Consulta segura del ID de cocinera sin lanzar excepciones si la cuenta no tiene perfil de cocinera.
-     */
+       
+                                                                                                          
+       
     public Optional<UUID> getCocineraIdOpt() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {

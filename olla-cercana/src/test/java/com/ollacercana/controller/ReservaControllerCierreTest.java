@@ -136,6 +136,10 @@ class ReservaControllerCierreTest {
     @DisplayName("Escenario 3: con un reporte ABIERTO el cierre se bloquea con 422")
     void completar_conReporteAbierto_debeRetornar422() throws Exception {
         reporteRepository.save(Reporte.builder()
+                .objetivo(ObjetivoReporte.PLATO)
+                .objetivoId(UUID.randomUUID())
+                .motivo(MotivoReporte.OTRO)
+                .reportanteId(42L)
                 .reservaId(reserva.getId())
                 .estado(EstadoReporte.ABIERTO)
                 .fechaCreacion(LocalDateTime.now())
@@ -154,6 +158,10 @@ class ReservaControllerCierreTest {
     @DisplayName("Un reporte RESUELTO ya no bloquea el cierre")
     void completar_conReporteResuelto_debeRetornar200() throws Exception {
         reporteRepository.save(Reporte.builder()
+                .objetivo(ObjetivoReporte.PLATO)
+                .objetivoId(UUID.randomUUID())
+                .motivo(MotivoReporte.OTRO)
+                .reportanteId(42L)
                 .reservaId(reserva.getId())
                 .estado(EstadoReporte.RESUELTO)
                 .fechaCreacion(LocalDateTime.now())

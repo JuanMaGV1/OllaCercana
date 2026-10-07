@@ -70,14 +70,14 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Crear Perfil - Happy Path")
     void crearPerfil_Exitoso() {
-        // Arrange
+                  
         when(cuentaRepository.findById(1L)).thenReturn(Optional.of(cuenta));
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
 
-        // Act
+              
         PerfilCocinera result = perfilService.crearPerfil(perfil, 1L);
 
-        // Assert
+                 
         assertNotNull(result);
         assertEquals("Torres del Parque", result.getConjuntoResidencial());
         verify(validator).validarParaCrear(perfil, cuenta);
@@ -87,14 +87,14 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Actualizar Perfil - Happy Path")
     void actualizarPerfil_Exitoso() {
-        // Arrange
+                  
         when(perfilRepository.findById(perfilId)).thenReturn(Optional.of(perfil));
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
 
-        // Act
+              
         PerfilCocinera result = perfilService.actualizarPerfil(perfilId, perfil);
 
-        // Assert
+                 
         assertNotNull(result);
         verify(validator).validarParaActualizar(perfilId, perfil);
         verify(perfilRepository).save(perfil);
@@ -103,7 +103,7 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Verificar Teléfono OTP - Exitoso")
     void verificarTelefono_OTPValido_RetornaTrueYVerifica() {
-        // Arrange
+                  
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
@@ -115,10 +115,10 @@ class PerfilCocineraServiceImplTest {
         when(codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId))
                 .thenReturn(Optional.of(otp));
 
-        // Act
+              
         boolean resultado = perfilService.verificarTelefono(perfilId, "123456");
 
-        // Assert
+                 
         assertTrue(resultado);
         assertTrue(perfil.isVerificada());
         assertTrue(perfil.getCuenta().getCredenciales().getCelularVerificado());
@@ -130,7 +130,7 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Verificar Teléfono OTP - Código Erróneo Lanza ConflictoException")
     void verificarTelefono_OTPInvalido_LanzaConflictoException() {
-        // Arrange
+                  
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
@@ -142,7 +142,7 @@ class PerfilCocineraServiceImplTest {
         when(codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId))
                 .thenReturn(Optional.of(otp));
 
-        // Act & Assert
+                       
         assertThrows(ConflictoException.class, () -> perfilService.verificarTelefono(perfilId, "000000"));
         assertFalse(perfil.isVerificada());
         verify(perfilRepository, never()).save(any());

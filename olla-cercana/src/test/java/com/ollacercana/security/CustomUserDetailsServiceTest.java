@@ -38,7 +38,7 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername - Cuenta activa existente carga UserDetails con ROLE_*")
     void loadUserByUsername_usuarioExiste_retornaUserDetailsActivo() {
-        // Arrange
+                  
         UUID cocineraId = UUID.randomUUID();
         Cuenta cuenta = Cuenta.builder()
                 .id(1L)
@@ -51,10 +51,10 @@ class CustomUserDetailsServiceTest {
         when(perfilCocineraRepository.findByCuentaId(1L))
                 .thenReturn(Optional.of(PerfilCocinera.builder().id(cocineraId).build()));
 
-        // Act
+              
         UserDetails userDetails = userDetailsService.loadUserByUsername("maria@ollacercana.com");
 
-        // Assert
+                 
         assertNotNull(userDetails);
         assertEquals("maria@ollacercana.com", userDetails.getUsername());
         assertTrue(userDetails.isEnabled());
@@ -66,10 +66,10 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername - Cuenta no encontrada lanza UsernameNotFoundException")
     void loadUserByUsername_usuarioNoExiste_lanzaExcepcion() {
-        // Arrange
+                  
         when(cuentaRepository.findByIdentificador("desconocido@ollacercana.com")).thenReturn(Optional.empty());
 
-        // Act & Assert
+                       
         assertThrows(UsernameNotFoundException.class, () ->
                 userDetailsService.loadUserByUsername("desconocido@ollacercana.com"));
     }
@@ -77,7 +77,7 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername - Cuenta bloqueada queda deshabilitada")
     void loadUserByUsername_cuentaBloqueada_retornaUserDetailsDeshabilitado() {
-        // Arrange
+                  
         Cuenta cuentaBloqueada = Cuenta.builder()
                 .id(2L)
                 .identidad(Identidad.builder().correo("bloqueado@ollacercana.com").build())
@@ -88,10 +88,10 @@ class CustomUserDetailsServiceTest {
         when(cuentaRepository.findByIdentificador("bloqueado@ollacercana.com")).thenReturn(Optional.of(cuentaBloqueada));
         when(perfilCocineraRepository.findByCuentaId(2L)).thenReturn(Optional.empty());
 
-        // Act
+              
         UserDetails userDetails = userDetailsService.loadUserByUsername("bloqueado@ollacercana.com");
 
-        // Assert
+                 
         assertNotNull(userDetails);
         assertFalse(userDetails.isEnabled());
         assertFalse(userDetails.isAccountNonLocked());

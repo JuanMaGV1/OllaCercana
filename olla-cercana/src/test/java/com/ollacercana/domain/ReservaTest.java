@@ -12,9 +12,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * HU-12: reglas de dominio de Reserva (RN-04 y RN-25).
- */
+   
+                                                       
+   
 class ReservaTest {
 
     private static final LocalDateTime AHORA = LocalDateTime.of(2026, 10, 1, 12, 0);
@@ -181,7 +181,7 @@ class ReservaTest {
         assertFalse(reserva.perteneceACocinera(UUID.randomUUID()));
     }
 
-    // ============ HU-23: cierre de la transacción ============
+                                                                
 
     private com.ollacercana.domain.Reserva reservaConfirmadaA(LocalDateTime confirmadaEn) {
         com.ollacercana.domain.Reserva reserva = reservaCreadaA(confirmadaEn.minusMinutes(2));

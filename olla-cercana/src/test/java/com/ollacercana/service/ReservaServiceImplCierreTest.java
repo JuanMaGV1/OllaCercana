@@ -30,10 +30,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * OC-161: pruebas unitarias del cierre de la transacción — HU-23.
- * Cubre OC-156 (completar), OC-157 (cierre automático), OC-158 (reporte abierto) y OC-159 (chat en solo lectura).
- */
+   
+                                                                  
+                                                                                                                  
+   
 @ExtendWith(MockitoExtension.class)
 class ReservaServiceImplCierreTest {
 
@@ -63,7 +63,7 @@ class ReservaServiceImplCierreTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
-    // ============ Datos de prueba ============
+                                                
 
     private Plato plato() {
         return Plato.builder()
@@ -78,7 +78,7 @@ class ReservaServiceImplCierreTest {
                 .build();
     }
 
-    /** Reserva CONFIRMADA hace las horas indicadas (con chat ACTIVO), registrada en el repositorio simulado. */
+                                                                                                                
     private com.ollacercana.domain.Reserva reservaConfirmada(int horasDesdeConfirmacion) {
         LocalDateTime confirmadaEn = LocalDateTime.now().minusHours(horasDesdeConfirmacion);
         com.ollacercana.domain.Reserva reserva = com.ollacercana.domain.Reserva.crear(plato(), COMPRADOR_ID, 2, MedioPago.EFECTIVO, null, confirmadaEn.minusMinutes(2));
@@ -100,7 +100,7 @@ class ReservaServiceImplCierreTest {
         return captor.getValue();
     }
 
-    // ============ OC-156 / OC-159: happy path ============
+                                                            
 
     @Test
     @DisplayName("Escenario 1: completar pasa a COMPLETADA, chat en SOLO_LECTURA y habilita la calificación")
@@ -117,7 +117,7 @@ class ReservaServiceImplCierreTest {
         assertEquals("Todo bien", completada.getComentarioCierre());
         assertNotNull(completada.getFechaCompletada());
         verify(reservaRepository).saveAndFlush(reserva);
-        // No se devuelven porciones: la comida sí se entregó
+                                                             
         verify(platoRepository, never()).save(any());
 
         EventoReserva evento = eventoPublicado();
@@ -136,7 +136,7 @@ class ReservaServiceImplCierreTest {
         assertNull(completada.getComentarioCierre());
     }
 
-    // ============ 404 ============
+                                    
 
     @Test
     void completar_reservaNoExiste_debeLanzarNoEncontrada() {
@@ -148,7 +148,7 @@ class ReservaServiceImplCierreTest {
         verifyNoInteractions(observador);
     }
 
-    // ============ Escenario 4: reserva no confirmada -> 422 ============
+                                                                          
 
     @Test
     @DisplayName("Escenario 4: PENDIENTE, RECHAZADA o EXPIRADA no se pueden cerrar")
@@ -174,7 +174,7 @@ class ReservaServiceImplCierreTest {
         verify(reservaRepository, never()).saveAndFlush(any());
     }
 
-    // ============ OC-158 / Escenario 3: reporte abierto -> 422 ============
+                                                                             
 
     @Test
     @DisplayName("Escenario 3: con un reporte ABIERTO el cierre se bloquea (422) y la reserva no cambia")
@@ -204,7 +204,7 @@ class ReservaServiceImplCierreTest {
         verifyNoInteractions(observador);
     }
 
-    // ============ OC-157 / Escenario 2: cierre automático a las 24 h ============
+                                                                                   
 
     @Test
     void buscarReservasParaCierreAutomatico_debeConsultarConfirmadasConLimiteDe24Horas() {

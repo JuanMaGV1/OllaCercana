@@ -2,7 +2,7 @@ spring:
   application:
     name: olla-cercana
 
-  # PERSISTENCIA 1: PostgreSQL (JPA)
+  
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ollacercana}
     username: ${DB_USERNAME:postgres}
@@ -19,7 +19,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
 
-  # PERSISTENCIA 2: MongoDB
+  
   data:
     mongodb:
       uri: ${MONGO_URI:mongodb://localhost:27017/ollacercana}
@@ -27,8 +27,8 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
-# SEGURIDAD: Configuración de JWT
-# Se lee desde variables de entorno con valores por defecto para desarrollo local
+
+
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}

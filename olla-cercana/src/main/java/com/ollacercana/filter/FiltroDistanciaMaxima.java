@@ -7,7 +7,7 @@ public record FiltroDistanciaMaxima(Double latUsuario, Double lonUsuario, double
     @Override
     public boolean cumple(Plato plato) {
         if (latUsuario == null || lonUsuario == null || plato.getLatitud() == null || plato.getLongitud() == null) {
-            return true; // No filtra por distancia si no hay coordenadas
+            return true;                                                 
         }
         double distancia = GeoUtils.calcularDistanciaEnMetros(latUsuario, lonUsuario, plato.getLatitud(), plato.getLongitud());
         return distancia <= distanciaMaxMetros;

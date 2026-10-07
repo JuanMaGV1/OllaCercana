@@ -75,8 +75,8 @@ class CuentaControllerTest {
         RegistroRequestDTO requestInvalido = RegistroRequestDTO.builder()
                 .nombre("Laura")
                 .correo("correo-invalido")
-                .celular("12345") // Debe iniciar con 3 y tener 10 dígitos
-                .contrasena("123") // Menor a 8 caracteres
+                .celular("12345")                                         
+                .contrasena("123")                        
                 .build();
 
         mockMvc.perform(post("/api/v1/cuentas")

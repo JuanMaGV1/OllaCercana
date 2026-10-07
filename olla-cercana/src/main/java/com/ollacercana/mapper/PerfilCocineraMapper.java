@@ -15,6 +15,7 @@ public interface PerfilCocineraMapper {
     @Mapping(target = "esDestacada", ignore = true)
     @Mapping(target = "verificada", ignore = true)
     @Mapping(target = "pausada", ignore = true)
+    @Mapping(target = "fechaReactivacion", ignore = true)
     @Mapping(target = "cuenta", ignore = true)
     PerfilCocinera toDomain(PerfilCocineraRequestDTO request);
 

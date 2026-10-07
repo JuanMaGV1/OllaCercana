@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** HU-16: registro en memoria de suscriptores, agrupados por plato. */
+                                                                       
 @Component
 public class RegistroSuscripciones {
 

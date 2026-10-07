@@ -30,7 +30,7 @@ public class EventoReserva {
     private Map<String, Object> payload;
     private String payloadJson;
 
-    // Constructor sobrecargado para soportar las pruebas unitarias que pasan UUID
+                                                                                  
     public EventoReserva(UUID id, TipoEvento tipo, UUID reservaId, UUID platoId,
                          Long compradorId, UUID cocineraId, LocalDateTime timestamp,
                          Map<String, Object> payload) {
@@ -60,7 +60,7 @@ public class EventoReserva {
                 .build();
     }
 
-    // Métodos accesores para mantener compatibilidad con observadores
+                                                                      
     public TipoEvento tipo() { return this.tipo; }
     public UUID reservaId() { return this.reservaId; }
     public UUID platoId() { return this.platoId; }
