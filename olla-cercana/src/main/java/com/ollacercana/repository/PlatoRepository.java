@@ -23,7 +23,7 @@ public interface PlatoRepository extends JpaRepository<PlatoEntity, UUID> {
            "AND (p.porcionesTotales - COALESCE(p.porcionesComprometidas, 0)) > 0")
     List<PlatoEntity> findActivosVigentes(@Param("estado") EstadoPlato estado,
                                           @Param("ahora") LocalDateTime ahora);
-    
+
     @Query("""
         SELECT p,
             (6371000 * acos(

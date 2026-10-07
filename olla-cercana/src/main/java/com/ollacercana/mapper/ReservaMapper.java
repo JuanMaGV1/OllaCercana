@@ -31,6 +31,7 @@ public interface ReservaMapper {
     @Mapping(target = "fechaCompletada", ignore = true)
     @Mapping(target = "comentarioCierre", ignore = true)
     @Mapping(target = "calificacionHabilitada", ignore = true)
+    @Mapping(target = "calificacion", ignore = true)
     @Mapping(target = "version", ignore = true)
     Reserva toDomain(ReservaRequestDTO dto);
 
