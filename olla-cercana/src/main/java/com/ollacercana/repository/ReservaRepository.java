@@ -68,4 +68,15 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
     Page<Reserva> findByCocineraIdAndEstadoOrderByFechaCompletadaDesc(UUID cocineraId,
                                                                       EstadoReserva estado,
                                                                       Pageable pageable);
+
+    // ---- HU-21: racha de Vecino Fiel (reservas completadas del comprador con la misma cocinera en el mes) ----
+
+    @Query("SELECT COUNT(r) FROM Reserva r " +
+            "WHERE r.compradorId = :compradorId AND r.cocineraId = :cocineraId AND r.estado = :estado " +
+            "AND r.fechaCompletada >= :desde AND r.fechaCompletada < :hasta")
+    long contarCompletadasEnPeriodo(@Param("compradorId") Long compradorId,
+                                    @Param("cocineraId") UUID cocineraId,
+                                    @Param("estado") EstadoReserva estado,
+                                    @Param("desde") LocalDateTime desde,
+                                    @Param("hasta") LocalDateTime hasta);
 }
