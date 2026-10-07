@@ -1,9 +1,11 @@
 package com.ollacercana.validator.chain;
 
-import com.ollacercana.exception.PrecioFueraDeRangoException;
-import com.ollacercana.exception.PrecioNoMultiploException;
-import com.ollacercana.exception.PrecioObligatorioException;
-import com.ollacercana.model.domain.Plato;
+import com.ollacercana.controller.handlers.exception.PrecioFueraDeRangoException;
+import com.ollacercana.controller.handlers.exception.PrecioNoMultiploException;
+import com.ollacercana.controller.handlers.exception.PrecioObligatorioException;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.validators.chain.PrecioPlatoHandler;
+import com.ollacercana.core.validators.chain.ValidadorPlatoHandler;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

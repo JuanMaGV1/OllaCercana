@@ -1,7 +1,10 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.model.domain.EventoReserva;
-import com.ollacercana.model.domain.TipoEvento;
+import com.ollacercana.core.models.EventoReserva;
+import com.ollacercana.core.models.enums.TipoEvento;
+import com.ollacercana.core.patterns.observer.ObservadorReserva;
+import com.ollacercana.core.patterns.observer.PublicadorEventosReserva;
+
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

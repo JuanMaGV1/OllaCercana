@@ -1,16 +1,17 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.model.domain.*;
-import com.ollacercana.model.dto.request.CierreTransaccionRequestDTO;
-import com.ollacercana.persistence.entity.PlatoEntity;
-import com.ollacercana.persistence.entity.ReporteEntity;
-import com.ollacercana.persistence.entity.ReservaEntity;
-import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.repository.ReporteRepository;
-import com.ollacercana.repository.ReservaRepository;
-import com.ollacercana.repository.mongo.NotificacionRepository;
-import com.ollacercana.security.UsuarioActual;
+import com.ollacercana.core.models.*;
+import com.ollacercana.core.models.enums.*;
+import com.ollacercana.controller.dtos.request.*;
+import com.ollacercana.persistence.entities.PlatoEntity;
+import com.ollacercana.persistence.entities.ReporteEntity;
+import com.ollacercana.persistence.entities.ReservaEntity;
+import com.ollacercana.persistence.repository.PlatoRepository;
+import com.ollacercana.persistence.repository.ReporteRepository;
+import com.ollacercana.persistence.repository.ReservaRepository;
+import com.ollacercana.persistence.repository.mongo.NotificacionRepository;
+import com.ollacercana.config.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -131,11 +132,15 @@ class ReservaControllerCierreTest {
     @DisplayName("Escenario 3: con un reporte ABIERTO el cierre se bloquea con 422")
     void completar_conReporteAbierto_debeRetornar422() throws Exception {
         reporteRepository.save(ReporteEntity.builder()
-                .id(UUID.randomUUID())
-                .reservaId(reserva.getId())
-                .estado(EstadoReporte.ABIERTO)
-                .fechaCreacion(LocalDateTime.now())
-                .build());
+        .id(UUID.randomUUID())
+        .reservaId(reserva.getId())
+        .objetivo(ObjetivoReporte.PLATO)
+        .objetivoId(plato.getId())
+        .motivo(MotivoReporte.CONTENIDO_INAPROPIADO)
+        .reportanteId(1L)
+        .estado(EstadoReporte.ABIERTO)
+        .fechaCreacion(LocalDateTime.now())
+        .build());
 
         completar(reserva.getId(), cierreValido())
                 .andExpect(status().isUnprocessableEntity())
@@ -150,11 +155,15 @@ class ReservaControllerCierreTest {
     @DisplayName("Un reporte RESUELTO ya no bloquea el cierre")
     void completar_conReporteResuelto_debeRetornar200() throws Exception {
         reporteRepository.save(ReporteEntity.builder()
-                .id(UUID.randomUUID())
-                .reservaId(reserva.getId())
-                .estado(EstadoReporte.RESUELTO)
-                .fechaCreacion(LocalDateTime.now())
-                .build());
+        .id(UUID.randomUUID())
+        .reservaId(reserva.getId())
+        .objetivo(ObjetivoReporte.PLATO)
+        .objetivoId(plato.getId())
+        .motivo(MotivoReporte.CONTENIDO_INAPROPIADO)
+        .reportanteId(1L)
+        .estado(EstadoReporte.RESUELTO)
+        .fechaCreacion(LocalDateTime.now())
+        .build());
 
         completar(reserva.getId(), cierreValido())
                 .andExpect(status().isOk())

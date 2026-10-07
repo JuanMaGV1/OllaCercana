@@ -10,8 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ollacercana.model.dto.request.RegistroRequestDTO;
-import com.ollacercana.model.dto.response.RegistroResponseDTO;
+import com.ollacercana.controller.dtos.request.RegistroRequestDTO;
+import com.ollacercana.controller.dtos.response.RegistroResponseDTO;
 
 @Tag(name = "Gestión de Cuentas", description = "API para el registro y administración de cuentas de usuario")
 public interface CuentaApi {

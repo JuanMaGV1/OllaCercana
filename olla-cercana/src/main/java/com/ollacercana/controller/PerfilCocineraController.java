@@ -1,12 +1,13 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.PerfilCocineraApi;
-import com.ollacercana.mapper.PerfilCocineraMapper;
-import com.ollacercana.model.domain.PerfilCocinera;
-import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
-import com.ollacercana.service.IPerfilCocineraService;
+import com.ollacercana.controller.dtos.request.PerfilCocineraRequestDTO;
+import com.ollacercana.controller.dtos.request.VerificarOtpRequestDTO;
+import com.ollacercana.controller.dtos.response.PerfilCocineraResponseDTO;
+import com.ollacercana.controller.mappers.PerfilCocineraMapper;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.services.IPerfilCocineraService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

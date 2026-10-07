@@ -1,13 +1,15 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.exception.AutoReservaException;
-import com.ollacercana.exception.LimiteReservasPendientesException;
-import com.ollacercana.exception.PorcionesInsuficientesException;
-import com.ollacercana.model.domain.EstadoReserva;
-import com.ollacercana.model.domain.Plato;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.ReservaRepository;
+import com.ollacercana.controller.handlers.exception.AutoReservaException;
+import com.ollacercana.controller.handlers.exception.LimiteReservasPendientesException;
+import com.ollacercana.controller.handlers.exception.PorcionesInsuficientesException;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.validators.ReservaValidator;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.ReservaRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

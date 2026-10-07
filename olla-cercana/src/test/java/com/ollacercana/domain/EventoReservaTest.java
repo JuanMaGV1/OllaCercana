@@ -3,9 +3,9 @@ package com.ollacercana.domain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.ollacercana.model.domain.EventoReserva;
-import com.ollacercana.model.domain.Reserva;
-import com.ollacercana.model.domain.TipoEvento;
+import com.ollacercana.core.models.EventoReserva;
+import com.ollacercana.core.models.Reserva;
+import com.ollacercana.core.models.enums.TipoEvento;
 
 import java.util.Map;
 import java.util.UUID;

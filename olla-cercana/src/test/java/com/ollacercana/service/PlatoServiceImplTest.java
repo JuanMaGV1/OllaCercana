@@ -1,14 +1,15 @@
 package com.ollacercana.service;
 
-import com.ollacercana.exception.*;
-import com.ollacercana.mapper.PlatoEntityMapper;
-import com.ollacercana.model.domain.EstadoPlato;
-import com.ollacercana.model.domain.Plato;
-import com.ollacercana.model.domain.TipoComida;
-import com.ollacercana.persistence.entity.PlatoEntity;
-import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.service.impl.PlatoServiceImpl;
-import com.ollacercana.validator.PlatoValidator;
+import com.ollacercana.controller.handlers.exception.*;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.TipoComida;
+import com.ollacercana.core.services.impl.PlatoServiceImpl;
+import com.ollacercana.core.validators.PlatoValidator;
+import com.ollacercana.persistence.entities.PlatoEntity;
+import com.ollacercana.persistence.mappers.PlatoEntityMapper;
+import com.ollacercana.persistence.repository.PlatoRepository;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

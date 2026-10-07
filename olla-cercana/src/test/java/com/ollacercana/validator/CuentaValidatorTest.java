@@ -1,8 +1,10 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.repository.CuentaRepository;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.core.validators.CuentaValidator;
+import com.ollacercana.persistence.repository.CuentaRepository;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

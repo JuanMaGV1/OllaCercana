@@ -1,15 +1,20 @@
 package com.ollacercana.service;
 
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.mapper.CuentaEntityMapper;
-import com.ollacercana.model.domain.*;
-import com.ollacercana.persistence.entity.CredencialesEmbeddable;
-import com.ollacercana.persistence.entity.CuentaEntity;
-import com.ollacercana.persistence.entity.IdentidadEmbeddable;
-import com.ollacercana.repository.CuentaRepository;
-import com.ollacercana.service.impl.CuentaServiceImpl;
-import com.ollacercana.validator.ICuentaValidator;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.core.models.Credenciales;
+import com.ollacercana.core.models.Cuenta;
+import com.ollacercana.core.models.Identidad;
+import com.ollacercana.core.models.enums.EstadoCuenta;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.services.impl.CuentaServiceImpl;
+import com.ollacercana.core.validators.ICuentaValidator;
+import com.ollacercana.persistence.entities.CredencialesEmbeddable;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.IdentidadEmbeddable;
+import com.ollacercana.persistence.mappers.CuentaEntityMapper;
+import com.ollacercana.persistence.repository.CuentaRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

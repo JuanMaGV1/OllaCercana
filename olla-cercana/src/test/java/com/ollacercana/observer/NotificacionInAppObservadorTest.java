@@ -1,13 +1,15 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.mapper.NotificacionDocumentMapper;
-import com.ollacercana.model.domain.EventoReserva;
-import com.ollacercana.model.domain.Notificacion;
-import com.ollacercana.model.domain.Rol;
-import com.ollacercana.model.domain.TipoEvento;
-import com.ollacercana.model.domain.TipoNotificacion;
+import com.ollacercana.core.models.EventoReserva;
+import com.ollacercana.core.models.Notificacion;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.models.enums.TipoEvento;
+import com.ollacercana.core.models.enums.TipoNotificacion;
+import com.ollacercana.core.patterns.observer.NotificacionInAppObservador;
 import com.ollacercana.persistence.document.NotificacionDocument;
-import com.ollacercana.repository.mongo.NotificacionRepository;
+import com.ollacercana.persistence.mappers.NotificacionDocumentMapper;
+import com.ollacercana.persistence.repository.mongo.NotificacionRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

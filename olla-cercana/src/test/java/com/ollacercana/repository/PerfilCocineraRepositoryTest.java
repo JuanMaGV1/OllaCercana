@@ -1,11 +1,14 @@
 package com.ollacercana.repository;
 
-import com.ollacercana.model.domain.EstadoCuenta;
-import com.ollacercana.model.domain.Rol;
-import com.ollacercana.persistence.entity.CredencialesEmbeddable;
-import com.ollacercana.persistence.entity.CuentaEntity;
-import com.ollacercana.persistence.entity.IdentidadEmbeddable;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
+import com.ollacercana.core.models.enums.EstadoCuenta;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.persistence.entities.CredencialesEmbeddable;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.IdentidadEmbeddable;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.repository.CuentaRepository;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

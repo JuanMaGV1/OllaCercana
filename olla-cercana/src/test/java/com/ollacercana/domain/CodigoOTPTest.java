@@ -1,9 +1,8 @@
 package com.ollacercana.domain;
 
+import com.ollacercana.core.models.CodigoOTP;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import com.ollacercana.model.domain.CodigoOTP;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,18 +22,18 @@ class CodigoOTPTest {
                 .usado(false)
                 .build();
 
-        // Válido
+                 
         assertTrue(otp.esValido("123456"));
 
-        // Código incorrecto
+                            
         assertFalse(otp.esValido("000000"));
 
-        // Ya usado
+                   
         otp.setUsado(true);
         assertFalse(otp.esValido("123456"));
         otp.setUsado(false);
 
-        // Expirado
+                   
         otp.setFechaExpiracion(LocalDateTime.now().minusMinutes(1));
         assertFalse(otp.esValido("123456"));
     }

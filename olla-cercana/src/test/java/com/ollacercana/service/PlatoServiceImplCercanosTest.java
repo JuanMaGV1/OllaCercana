@@ -1,19 +1,20 @@
 package com.ollacercana.service;
 
-import com.ollacercana.mapper.PlatoEntityMapper;
-import com.ollacercana.model.domain.EstadoPlato;
-import com.ollacercana.model.domain.Plato;
-import com.ollacercana.model.domain.RestriccionAlimentaria;
-import com.ollacercana.model.domain.TipoComida;
-import com.ollacercana.model.dto.request.ConsultaPlatosRequest;
-import com.ollacercana.model.dto.response.PaginaResponseDTO;
-import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
-import com.ollacercana.persistence.entity.PlatoEntity;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.service.impl.PlatoServiceImpl;
-import com.ollacercana.validator.PlatoValidator;
+import com.ollacercana.controller.dtos.request.ConsultaPlatosRequest;
+import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
+import com.ollacercana.controller.dtos.response.PlatoCercanoResponseDTO;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.RestriccionAlimentaria;
+import com.ollacercana.core.models.enums.TipoComida;
+import com.ollacercana.core.services.impl.PlatoServiceImpl;
+import com.ollacercana.core.validators.PlatoValidator;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.entities.PlatoEntity;
+import com.ollacercana.persistence.mappers.PlatoEntityMapper;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.PlatoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

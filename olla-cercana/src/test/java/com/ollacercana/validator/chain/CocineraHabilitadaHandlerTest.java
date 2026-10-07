@@ -1,10 +1,13 @@
 package com.ollacercana.validator.chain;
 
-import com.ollacercana.exception.CocineraNoVerificadaException;
-import com.ollacercana.exception.CocineraPausadaException;
-import com.ollacercana.exception.PlatoSinCocineraException;
-import com.ollacercana.model.domain.Plato;
-import com.ollacercana.validator.CocineraQueryPort;
+import com.ollacercana.controller.handlers.exception.CocineraNoVerificadaException;
+import com.ollacercana.controller.handlers.exception.CocineraPausadaException;
+import com.ollacercana.controller.handlers.exception.PlatoSinCocineraException;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.validators.CocineraQueryPort;
+import com.ollacercana.core.validators.chain.CocineraHabilitadaHandler;
+import com.ollacercana.core.validators.chain.ValidadorPlatoHandler;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

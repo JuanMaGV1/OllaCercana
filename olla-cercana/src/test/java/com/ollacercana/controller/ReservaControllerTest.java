@@ -1,17 +1,23 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.model.domain.*;
-import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.model.dto.request.ReservaRequestDTO;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
-import com.ollacercana.persistence.entity.PlatoEntity;
-import com.ollacercana.persistence.entity.ReservaEntity;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.repository.ReservaRepository;
-import com.ollacercana.repository.mongo.NotificacionRepository;
-import com.ollacercana.security.UsuarioActual;
+import com.ollacercana.config.security.UsuarioActual;
+import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
+import com.ollacercana.controller.dtos.request.ReservaRequestDTO;
+import com.ollacercana.core.models.enums.DecisionReserva;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.core.models.enums.MotivoRechazo;
+import com.ollacercana.core.models.enums.TipoComida;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.entities.PlatoEntity;
+import com.ollacercana.persistence.entities.ReservaEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.PlatoRepository;
+import com.ollacercana.persistence.repository.ReservaRepository;
+import com.ollacercana.persistence.repository.mongo.NotificacionRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -10,9 +10,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ollacercana.model.dto.request.LoginRequestDTO;
-import com.ollacercana.model.dto.response.ErrorResponseDTO;
-import com.ollacercana.model.dto.response.LoginResponseDTO;
+import com.ollacercana.controller.dtos.request.LoginRequestDTO;
+import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
+import com.ollacercana.controller.dtos.response.LoginResponseDTO;
 
 @Tag(name = "Sesiones", description = "API para gestión de sesiones y autenticación de usuarios")
 public interface SesionApi {

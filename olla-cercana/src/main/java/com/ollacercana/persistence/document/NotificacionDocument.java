@@ -1,7 +1,8 @@
 package com.ollacercana.persistence.document;
 
-import com.ollacercana.model.domain.Rol;
-import com.ollacercana.model.domain.TipoNotificacion;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.models.enums.TipoNotificacion;
+
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

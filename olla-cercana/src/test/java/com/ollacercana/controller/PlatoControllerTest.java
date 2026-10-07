@@ -1,13 +1,9 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.model.domain.RestriccionAlimentaria;
-import com.ollacercana.model.domain.Rol;
-import com.ollacercana.model.domain.TipoAjustePorciones;
-import com.ollacercana.model.domain.TipoComida;
-import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.model.dto.request.PlatoRequestDTO;
-import com.ollacercana.security.UsuarioActual;
+import com.ollacercana.core.models.enums.*;
+import com.ollacercana.controller.dtos.request.*;
+import com.ollacercana.config.security.UsuarioActual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

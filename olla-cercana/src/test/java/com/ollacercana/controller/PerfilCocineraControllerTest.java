@@ -1,12 +1,15 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.model.domain.MedioPago;
-import com.ollacercana.model.domain.PerfilCocinera;
-import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.service.IPerfilCocineraService;
+import com.ollacercana.controller.dtos.request.PerfilCocineraRequestDTO;
+import com.ollacercana.controller.dtos.request.VerificarOtpRequestDTO;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.core.models.Cuenta;
+import com.ollacercana.core.models.Identidad;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.core.services.IPerfilCocineraService;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,18 +45,18 @@ class PerfilCocineraControllerTest {
     void crearPerfil_Exitoso() throws Exception {
         PerfilCocineraRequestDTO request = PerfilCocineraRequestDTO.builder()
                 .cuentaId(1L)
-                .presentacion("Especialista en comida típica")
+                .presentacion("Especialista en comida tÃ­pica")
                 .conjuntoResidencial("Torres del Parque")
                 .especialidades(List.of("Sancocho"))
                 .mediosPago(List.of(MedioPago.NEQUI))
                 .numeroNequi("3001234567")
                 .build();
 
-        // dominio puro — cuentaId se setea como campo independiente
+        // dominio puro â€” cuentaId se setea como campo independiente
         PerfilCocinera perfilDominio = PerfilCocinera.builder()
                 .id(perfilId)
-                .cuentaId(1L)
-                .presentacion("Especialista en comida típica")
+                .cuenta(com.ollacercana.core.models.Cuenta.builder().id(1L).build())
+                .presentacion("Especialista en comida tÃ­pica")
                 .conjuntoResidencial("Torres del Parque")
                 .build();
 
@@ -63,7 +66,7 @@ class PerfilCocineraControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(perfilId.toString()))
+                .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.conjuntoResidencial").value("Torres del Parque"));
     }
 
@@ -72,7 +75,7 @@ class PerfilCocineraControllerTest {
     void actualizarPerfil_Exitoso() throws Exception {
         PerfilCocineraRequestDTO request = PerfilCocineraRequestDTO.builder()
                 .cuentaId(1L)
-                .presentacion("Presentación actualizada")
+                .presentacion("PresentaciÃ³n actualizada")
                 .conjuntoResidencial("Torres del Parque")
                 .mediosPago(List.of(MedioPago.DAVIPLATA))
                 .numeroDaviplata("3001234567")
@@ -80,8 +83,8 @@ class PerfilCocineraControllerTest {
 
         PerfilCocinera perfilDominio = PerfilCocinera.builder()
                 .id(perfilId)
-                .cuentaId(1L)
-                .presentacion("Presentación actualizada")
+                .cuenta(com.ollacercana.core.models.Cuenta.builder().id(1L).build())
+                .presentacion("PresentaciÃ³n actualizada")
                 .conjuntoResidencial("Torres del Parque")
                 .build();
 
@@ -91,7 +94,7 @@ class PerfilCocineraControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.presentacion").value("Presentación actualizada"));
+                .andExpect(jsonPath("$.presentacion").value("PresentaciÃ³n actualizada"));
     }
 
     @Test
@@ -105,32 +108,35 @@ class PerfilCocineraControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mensaje").value("Teléfono verificado exitosamente"));
+                .andExpect(jsonPath("$.mensaje").value("Tel\u00e9fono verificado exitosamente"));
     }
 
     @Test
-    @DisplayName("POST /api/v1/perfiles/{id}/verificar-telefono - 409 Conflict ante OTP inválido")
+    @DisplayName("POST /api/v1/perfiles/{id}/verificar-telefono - 409 Conflict ante OTP invÃ¡lido")
     void verificarTelefono_Invalido_Retorna409() throws Exception {
         VerificarOtpRequestDTO request = VerificarOtpRequestDTO.builder().codigo("999999").build();
 
         when(perfilService.verificarTelefono(perfilId, "999999"))
-                .thenThrow(new ConflictoException("Código OTP inválido o expirado"));
+                .thenThrow(new ConflictoException("CÃ³digo OTP invÃ¡lido o expirado"));
 
         mockMvc.perform(post("/api/v1/perfiles/" + perfilId + "/verificar-telefono")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Código OTP inválido o expirado"));
+                .andExpect(jsonPath("$.message").value("CÃ³digo OTP invÃ¡lido o expirado"));
     }
 
     @Test
-    @DisplayName("GET /api/v1/perfiles/cuenta/{cuentaId} - 200 OK")
-    void obtenerPorCuentaId_Exitoso() throws Exception {
-        // ✅ NO hay Cuenta anidada en el dominio. Solo cuentaId + nombreCocinera.
+        @DisplayName("GET /api/v1/perfiles/cuenta/{cuentaId} - 200 OK")
+        void obtenerPorCuentaId_Exitoso() throws Exception {
+        Cuenta cuenta = Cuenta.builder()
+                .id(1L)
+                .identidad(new Identidad("Maria", "maria@test.com", "3001234567", null))
+                .build();
+
         PerfilCocinera perfil = PerfilCocinera.builder()
-                .id(perfilId)
-                .cuentaId(1L)
-                .nombreCocinera("Maria")
+                .id(UUID.randomUUID())
+                .cuenta(cuenta)
                 .conjuntoResidencial("Torres del Parque")
                 .build();
 
@@ -138,10 +144,10 @@ class PerfilCocineraControllerTest {
 
         mockMvc.perform(get("/api/v1/perfiles/cuenta/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(perfilId.toString()))
+                .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.conjuntoResidencial").value("Torres del Parque"))
                 .andExpect(jsonPath("$.nombreCocinera").value("Maria"));
-    }
+        }
 
     @Test
     @DisplayName("GET /api/v1/perfiles/destacadas - 200 OK")

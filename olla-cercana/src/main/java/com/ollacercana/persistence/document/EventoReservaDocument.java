@@ -1,10 +1,11 @@
 // persistence/document/EventoReservaDocument.java
 package com.ollacercana.persistence.document;
 
-import com.ollacercana.model.domain.TipoEvento;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.ollacercana.core.models.enums.TipoEvento;
 
 import java.time.LocalDateTime;
 import java.util.Map;

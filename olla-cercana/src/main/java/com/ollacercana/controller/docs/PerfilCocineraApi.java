@@ -11,10 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ollacercana.model.dto.request.PerfilCocineraRequestDTO;
-import com.ollacercana.model.dto.request.VerificarOtpRequestDTO;
-import com.ollacercana.model.dto.response.ErrorResponseDTO;
-import com.ollacercana.model.dto.response.PerfilCocineraResponseDTO;
+import com.ollacercana.controller.dtos.request.PerfilCocineraRequestDTO;
+import com.ollacercana.controller.dtos.request.VerificarOtpRequestDTO;
+import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
+import com.ollacercana.controller.dtos.response.PerfilCocineraResponseDTO;
 
 import java.util.List;
 import java.util.Map;

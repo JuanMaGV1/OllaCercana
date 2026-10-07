@@ -3,6 +3,9 @@ package com.ollacercana.observer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.ollacercana.core.patterns.observer.ObservadorPorciones;
+import com.ollacercana.core.patterns.observer.RegistroSuscripciones;
+
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,9 +1,10 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.model.domain.EstadoPlato;
-import com.ollacercana.model.domain.EstadoPorciones;
-import com.ollacercana.model.domain.Plato;
-import com.ollacercana.model.dto.response.PorcionesActualizadasResponseDTO;
+import com.ollacercana.controller.dtos.response.PorcionesActualizadasResponseDTO;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.EstadoPorciones;
+import com.ollacercana.core.patterns.observer.PublicadorEventosPorciones;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

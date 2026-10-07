@@ -1,14 +1,16 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.exception.CantidadAjusteInvalidaException;
-import com.ollacercana.exception.PlatoExpiradoException;
-import com.ollacercana.exception.ReduccionPorDebajoDeComprometidasException;
-import com.ollacercana.model.domain.EstadoPlato;
-import com.ollacercana.model.domain.Plato;
-import com.ollacercana.model.domain.TipoAjustePorciones;
-import com.ollacercana.validator.chain.CocineraHabilitadaHandler;
-import com.ollacercana.validator.chain.LimitePlatosActivosHandler;
-import com.ollacercana.validator.chain.PrecioPlatoHandler;
+import com.ollacercana.controller.handlers.exception.CantidadAjusteInvalidaException;
+import com.ollacercana.controller.handlers.exception.PlatoExpiradoException;
+import com.ollacercana.controller.handlers.exception.ReduccionPorDebajoDeComprometidasException;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.TipoAjustePorciones;
+import com.ollacercana.core.validators.PlatoValidator;
+import com.ollacercana.core.validators.chain.CocineraHabilitadaHandler;
+import com.ollacercana.core.validators.chain.LimitePlatosActivosHandler;
+import com.ollacercana.core.validators.chain.PrecioPlatoHandler;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,10 +1,11 @@
 // test/.../service/PerfilCocineraQueryServiceImplTest.java
 package com.ollacercana.service;
 
-import com.ollacercana.exception.CocineraNoEncontradaException;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.service.impl.PerfilCocineraQueryServiceImpl;
+import com.ollacercana.controller.handlers.exception.CocineraNoEncontradaException;
+import com.ollacercana.core.services.impl.PerfilCocineraQueryServiceImpl;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

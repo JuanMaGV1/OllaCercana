@@ -1,13 +1,15 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.model.domain.Cuenta;
-import com.ollacercana.model.domain.MedioPago;
-import com.ollacercana.model.domain.PerfilCocinera;
-import com.ollacercana.model.domain.Rol;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
-import com.ollacercana.repository.PerfilCocineraRepository;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.core.models.Cuenta;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.validators.PerfilCocineraValidator;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

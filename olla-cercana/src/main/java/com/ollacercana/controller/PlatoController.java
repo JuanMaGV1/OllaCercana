@@ -1,20 +1,21 @@
 package com.ollacercana.controller;
 
+import com.ollacercana.config.security.UsuarioActual;
 import com.ollacercana.controller.docs.PlatoApi;
-import com.ollacercana.exception.AccesoDenegadoException;
-import com.ollacercana.mapper.PlatoMapper;
-import com.ollacercana.model.domain.PerfilCocinera;
-import com.ollacercana.model.domain.Plato;
-import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.model.dto.request.ConsultaPlatosRequest;
-import com.ollacercana.model.dto.request.PlatoRequestDTO;
-import com.ollacercana.model.dto.response.PaginaResponseDTO;
-import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
-import com.ollacercana.model.dto.response.PlatoResponseDTO;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.security.UsuarioActual;
-import com.ollacercana.service.PlatoService;
-import com.ollacercana.util.GeoUtils;
+import com.ollacercana.controller.dtos.request.AjusteDisponibilidadRequest;
+import com.ollacercana.controller.dtos.request.ConsultaPlatosRequest;
+import com.ollacercana.controller.dtos.request.PlatoRequestDTO;
+import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
+import com.ollacercana.controller.dtos.response.PlatoCercanoResponseDTO;
+import com.ollacercana.controller.dtos.response.PlatoResponseDTO;
+import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
+import com.ollacercana.controller.mappers.PlatoMapper;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.services.PlatoService;
+import com.ollacercana.core.util.GeoUtils;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -75,7 +76,7 @@ public class PlatoController implements PlatoApi {
     @PreAuthorize("hasRole('COCINERA') or hasRole('ADMIN')")
     public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
         Plato existente = platoService.obtenerPorId(id);
-        if (!usuarioActual.tieneRol(com.ollacercana.model.domain.Rol.ADMIN) &&
+        if (!usuarioActual.tieneRol(com.ollacercana.core.models.enums.Rol.ADMIN) &&
                 !existente.getCocineraId().equals(usuarioActual.getCocineraId())) {
             throw new AccesoDenegadoException("No tienes permiso para eliminar este plato");
         }

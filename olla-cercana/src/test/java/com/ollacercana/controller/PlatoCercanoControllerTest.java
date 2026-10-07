@@ -1,12 +1,13 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.model.domain.EstadoPlato;
-import com.ollacercana.model.domain.RestriccionAlimentaria;
-import com.ollacercana.model.domain.TipoComida;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
-import com.ollacercana.persistence.entity.PlatoEntity;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.RestriccionAlimentaria;
+import com.ollacercana.core.models.enums.TipoComida;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.entities.PlatoEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.PlatoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 @Configuration
 @EnableJpaRepositories(
-        basePackages = "com.ollacercana.repository",
+        basePackages = "com.ollacercana.persistence.repository",
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = MongoRepository.class

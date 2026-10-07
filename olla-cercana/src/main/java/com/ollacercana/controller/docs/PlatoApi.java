@@ -1,17 +1,14 @@
 package com.ollacercana.controller.docs;
 
 import com.ollacercana.config.OpenApiConfig;
-import com.ollacercana.model.dto.request.AjusteDisponibilidadRequest;
-import com.ollacercana.model.dto.request.ConsultaPlatosRequest;
-import com.ollacercana.model.dto.request.PlatoRequestDTO;
-import com.ollacercana.model.dto.response.PaginaResponseDTO;
-import com.ollacercana.model.dto.response.PlatoCercanoResponseDTO;
-import com.ollacercana.model.dto.response.PlatoResponseDTO;
+import com.ollacercana.controller.dtos.request.AjusteDisponibilidadRequest;
+import com.ollacercana.controller.dtos.request.ConsultaPlatosRequest;
+import com.ollacercana.controller.dtos.request.PlatoRequestDTO;
+import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
+import com.ollacercana.controller.dtos.response.PlatoCercanoResponseDTO;
+import com.ollacercana.controller.dtos.response.PlatoResponseDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

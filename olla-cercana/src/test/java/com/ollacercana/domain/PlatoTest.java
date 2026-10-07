@@ -3,15 +3,14 @@ package com.ollacercana.domain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.ollacercana.model.domain.EstadoPlato;
-import com.ollacercana.model.domain.Plato;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoPlato;
 class PlatoTest {
 
     private Plato plato;
@@ -107,18 +106,18 @@ class PlatoTest {
 
     @Test
     void cambiarPorcionesTotales_validaciones() {
-        // Fuera de rango [1, 30]
+                                 
         assertThatThrownBy(() -> plato.cambiarPorcionesTotales(0))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> plato.cambiarPorcionesTotales(31))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        // Por debajo de comprometidas
+                                      
         plato.setPorcionesComprometidas(4);
         assertThatThrownBy(() -> plato.cambiarPorcionesTotales(3))
                 .isInstanceOf(IllegalStateException.class);
 
-        // Válido
+                 
         plato.cambiarPorcionesTotales(10);
         assertThat(plato.getPorcionesTotales()).isEqualTo(10);
     }

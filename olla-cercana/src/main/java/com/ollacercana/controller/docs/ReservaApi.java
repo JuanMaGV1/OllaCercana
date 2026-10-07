@@ -1,11 +1,11 @@
 package com.ollacercana.controller.docs;
 
 import com.ollacercana.config.OpenApiConfig;
-import com.ollacercana.model.dto.request.CierreTransaccionRequestDTO;
-import com.ollacercana.model.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.model.dto.request.ReservaRequestDTO;
-import com.ollacercana.model.dto.response.ErrorResponseDTO;
-import com.ollacercana.model.dto.response.ReservaResponseDTO;
+import com.ollacercana.controller.dtos.request.CierreTransaccionRequestDTO;
+import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
+import com.ollacercana.controller.dtos.request.ReservaRequestDTO;
+import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
+import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

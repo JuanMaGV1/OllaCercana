@@ -1,0 +1,54 @@
+package com.ollacercana.controller.mappers;
+
+import com.ollacercana.controller.dtos.request.ReservaRequestDTO;
+import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
+import com.ollacercana.core.models.Reserva;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
+
+import java.util.List;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+public interface ReservaMapper {
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "compradorId", ignore = true)
+    @Mapping(target = "cocineraId", ignore = true)
+    @Mapping(target = "cantidadPorciones", source = "cantidad")
+    @Mapping(target = "montoTotal", ignore = true)
+    @Mapping(target = "estado", ignore = true)
+    @Mapping(target = "fechaCreacion", ignore = true)
+    @Mapping(target = "fechaLimiteConfirmacion", ignore = true)
+    @Mapping(target = "notaComprador", source = "nota")
+    @Mapping(target = "fechaDecision", ignore = true)
+    @Mapping(target = "horaEstimadaEntrega", ignore = true)
+    @Mapping(target = "motivoRechazo", ignore = true)
+    @Mapping(target = "comentarioRechazo", ignore = true)
+    @Mapping(target = "recordatorioEnviado", ignore = true)
+    @Mapping(target = "chatHabilitado", ignore = true)
+    @Mapping(target = "estadoChat", ignore = true)
+    @Mapping(target = "fechaCompletada", ignore = true)
+    @Mapping(target = "comentarioCierre", ignore = true)
+    @Mapping(target = "calificacionHabilitada", ignore = true)
+    @Mapping(target = "calificacion", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    Reserva toDomain(ReservaRequestDTO dto);
+
+    @Mapping(target = "monto", source = "reserva.montoTotal")
+    @Mapping(target = "montoTotal", source = "reserva.montoTotal")
+    @Mapping(target = "horaLimite", source = "reserva.fechaLimiteConfirmacion")
+    @Mapping(target = "fechaLimiteConfirmacion", source = "reserva.fechaLimiteConfirmacion")
+    @Mapping(target = "plato", source = "nombrePlato")
+    @Mapping(target = "conjunto", source = "conjunto")
+    ReservaResponseDTO toResponseDTO(Reserva reserva, String nombrePlato, String conjunto);
+
+    @Mapping(target = "monto", source = "montoTotal")
+    @Mapping(target = "horaLimite", source = "fechaLimiteConfirmacion")
+    @Mapping(target = "plato", ignore = true)
+    @Mapping(target = "conjunto", ignore = true)
+    ReservaResponseDTO toResponse(Reserva reserva);
+
+    List<ReservaResponseDTO> toResponseList(List<Reserva> reservas);
+}

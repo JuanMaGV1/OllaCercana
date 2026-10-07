@@ -1,5 +1,6 @@
-package com.ollacercana.util;
+package com.ollacercana.utils;
 
+import com.ollacercana.core.util.GeoUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

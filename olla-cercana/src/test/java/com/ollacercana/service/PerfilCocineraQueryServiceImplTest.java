@@ -1,19 +1,24 @@
 package com.ollacercana.service;
 
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.ResourceNotFoundException;
-import com.ollacercana.mapper.CuentaEntityMapper;
-import com.ollacercana.mapper.PerfilCocineraDomainMapper;
-import com.ollacercana.mapper.PerfilCocineraPersistenceMapper;
-import com.ollacercana.model.domain.*;
-import com.ollacercana.persistence.entity.CodigoOTPEntity;
-import com.ollacercana.persistence.entity.CuentaEntity;
-import com.ollacercana.persistence.entity.PerfilCocineraEntity;
-import com.ollacercana.repository.CodigoOTPRepository;
-import com.ollacercana.repository.CuentaRepository;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.service.impl.PerfilCocineraServiceImpl;
-import com.ollacercana.validator.IPerfilCocineraValidator;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.ResourceNotFoundException;
+import com.ollacercana.core.models.Credenciales;
+import com.ollacercana.core.models.Cuenta;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.services.impl.PerfilCocineraServiceImpl;
+import com.ollacercana.core.validators.IPerfilCocineraValidator;
+import com.ollacercana.persistence.entities.CodigoOTPEntity;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.mappers.CuentaEntityMapper;
+import com.ollacercana.persistence.mappers.PerfilCocineraDomainMapper;
+import com.ollacercana.persistence.mappers.PerfilCocineraPersistenceMapper;
+import com.ollacercana.persistence.repository.CodigoOTPRepository;
+import com.ollacercana.persistence.repository.CuentaRepository;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +71,7 @@ class PerfilCocineraServiceImplTest {
         // ✅ dominio puro: solo cuentaId (no `cuenta` anidada)
         perfil = PerfilCocinera.builder()
                 .id(perfilId)
-                .cuentaId(1L)
+                .cuenta(cuenta)
                 .presentacion("Comida típica casera")
                 .conjuntoResidencial("Torres del Parque")
                 .especialidades(List.of("Sancocho", "Bandeja Paisa"))
@@ -103,7 +108,9 @@ class PerfilCocineraServiceImplTest {
                     .numeroDaviplata(e.getNumeroDaviplata())
                     .verificada(e.isVerificada())
                     .pausada(e.isPausada())
-                    .cuentaId(e.getCuenta() != null ? e.getCuenta().getId() : null)
+                    .cuenta(e.getCuenta() != null
+        ? Cuenta.builder().id(e.getCuenta().getId()).build()
+        : null)
                     .build();
         });
     }

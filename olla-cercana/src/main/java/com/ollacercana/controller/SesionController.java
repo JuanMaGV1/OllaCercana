@@ -1,12 +1,13 @@
 package com.ollacercana.controller;
 
+import com.ollacercana.config.security.JwtService;
 import com.ollacercana.controller.docs.SesionApi;
-import com.ollacercana.model.domain.Cuenta;
-import com.ollacercana.model.domain.Rol;
-import com.ollacercana.model.dto.request.LoginRequestDTO;
-import com.ollacercana.model.dto.response.LoginResponseDTO;
-import com.ollacercana.security.JwtService;
-import com.ollacercana.service.ICuentaService;
+import com.ollacercana.controller.dtos.request.LoginRequestDTO;
+import com.ollacercana.controller.dtos.response.LoginResponseDTO;
+import com.ollacercana.core.models.Cuenta;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.services.ICuentaService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
