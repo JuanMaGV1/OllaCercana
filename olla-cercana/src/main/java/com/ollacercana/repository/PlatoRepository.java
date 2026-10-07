@@ -45,4 +45,16 @@ public interface PlatoRepository extends JpaRepository<Plato, UUID> {
      * Tarea programada: platos que deben expirar.
      */
     List<Plato> findByEstadoInAndFechaExpiracionLessThanEqual(List<EstadoPlato> estados, LocalDateTime ahora);
+
+    /**
+     * HU-21 / OC-299: por conjunto residencial, porciones publicadas (totales) y vendidas (comprometidas)
+     * de los platos publicados en el periodo [desde, hasta).
+     */
+    @Query("SELECT p.conjuntoResidencial AS conjunto, SUM(pl.porcionesTotales) AS publicadas, " +
+            "SUM(pl.porcionesComprometidas) AS vendidas " +
+            "FROM Plato pl JOIN PerfilCocinera p ON p.id = pl.cocineraId " +
+            "WHERE pl.fechaPublicacion >= :desde AND pl.fechaPublicacion < :hasta " +
+            "GROUP BY p.conjuntoResidencial")
+    List<BalanceConjuntoProjection> balancePorConjunto(@Param("desde") LocalDateTime desde,
+                                                       @Param("hasta") LocalDateTime hasta);
 }
