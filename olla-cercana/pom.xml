@@ -18,6 +18,7 @@
 
   <properties>
     <java.version>21</java.version>
+    <lombok.version>1.18.34</lombok.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
     <jjwt.version>0.12.3</jjwt.version>
@@ -26,7 +27,7 @@
   </properties>
 
   <dependencies>
-    <!-- Spring Boot Starters -->
+                                 
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
@@ -52,21 +53,21 @@
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
 
-    <!-- Driver Base de Datos Relacional PostgreSQL -->
+                                                       
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
     </dependency>
 
-    <!-- Documentación OpenAPI / Swagger UI -->
+                                               
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
       <version>${springdoc.version}</version>
     </dependency>
 
-    <!-- Tokens JWT (JJWT 0.12.3) -->
+                                     
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
@@ -85,21 +86,22 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- Lombok -->
+                   
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
+      <version>1.18.36</version>
       <optional>true</optional>
     </dependency>
 
-    <!-- MapStruct para mapeo entre capas -->
+                                             
     <dependency>
       <groupId>org.mapstruct</groupId>
       <artifactId>mapstruct</artifactId>
       <version>${mapstruct.version}</version>
     </dependency>
 
-    <!-- Dependencias de Prueba -->
+                                   
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -121,7 +123,7 @@
 
   <build>
     <plugins>
-      <!-- Plugin de Compilación con orden: Lombok -> MapStruct Binding -> MapStruct Processor -->
+                                                                                                  
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -132,7 +134,7 @@
             <path>
               <groupId>org.projectlombok</groupId>
               <artifactId>lombok</artifactId>
-              <version>${lombok.version}</version>
+              <version>1.18.36</version>
             </path>
             <path>
               <groupId>org.projectlombok</groupId>
@@ -148,7 +150,7 @@
         </configuration>
       </plugin>
 
-      <!-- Plugin de Spring Boot -->
+                                    
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
@@ -162,7 +164,7 @@
         </configuration>
       </plugin>
 
-      <!-- Plugin JaCoCo para cobertura de código -->
+                                                     
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>

@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/**
- * Tareas programadas de HU-12 y HU-23. Cada reserva se procesa en su propia transacción
- * (llamando al servicio), así que si una falla las demás igual se procesan.
- */
+   
+                                                                                        
+                                                                            
+   
 @Component
 @RequiredArgsConstructor
 public class ReservaScheduler {
@@ -21,10 +21,10 @@ public class ReservaScheduler {
 
     private final ReservaService reservaService;
 
-    /**
-     * OC-148 / RN-04: cada minuto expira las reservas PENDIENTES cuya hora límite ya pasó
-     * y devuelve sus porciones al plato.
-     */
+       
+                                                                                          
+                                         
+       
     @Scheduled(fixedRateString = "${ollacercana.reservas.intervalo-revision-ms:60000}",
             initialDelayString = "${ollacercana.reservas.intervalo-revision-ms:60000}")
     public void expirarReservasVencidas() {
@@ -38,10 +38,10 @@ public class ReservaScheduler {
         }
     }
 
-    /**
-     * OC-157 / HU-23 Escenario 2: completa las reservas CONFIRMADAS que llevan 24 horas sin cierre
-     * y avisa a ambas partes. Se revisa cada 10 minutos (no hace falta mayor precisión para un plazo de 24 h).
-     */
+       
+                                                                                                   
+                                                                                                               
+       
     @Scheduled(fixedRateString = "${ollacercana.reservas.intervalo-cierre-ms:600000}",
             initialDelayString = "${ollacercana.reservas.intervalo-cierre-ms:600000}")
     public void completarReservasSinCierre() {
@@ -55,9 +55,9 @@ public class ReservaScheduler {
         }
     }
 
-    /**
-     * OC-149 / RN-25: cada minuto recuerda a la cocinera las solicitudes con 7 minutos sin respuesta.
-     */
+       
+                                                                                                      
+       
     @Scheduled(fixedRateString = "${ollacercana.reservas.intervalo-revision-ms:60000}",
             initialDelayString = "${ollacercana.reservas.intervalo-revision-ms:60000}")
     public void enviarRecordatorios() {

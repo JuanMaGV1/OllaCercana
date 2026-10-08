@@ -14,7 +14,7 @@ public class CuentaValidator implements ICuentaValidator {
 
     private final CuentaRepository cuentaRepository;
 
-    // Regla: mínimo 8 caracteres, al menos una letra y un número
+                                                                 
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d).{8,}$");
 

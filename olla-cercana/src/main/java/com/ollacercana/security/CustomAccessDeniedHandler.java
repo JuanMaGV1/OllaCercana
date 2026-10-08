@@ -29,12 +29,17 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
+        String path = request.getRequestURI();
+        String message = path.startsWith("/api/v1/admin") ? 
+                "No tiene permisos para ver esta sección" : 
+                "No tienes permisos suficientes para realizar esta acción";
+
         ErrorResponseDTO error = ErrorResponseDTO.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("Forbidden")
-                .message("No tienes permisos suficientes para realizar esta acción")
-                .path(request.getRequestURI())
+                .message(message)
+                .path(path)
                 .build();
 
         response.getWriter().write(objectMapper.writeValueAsString(error));

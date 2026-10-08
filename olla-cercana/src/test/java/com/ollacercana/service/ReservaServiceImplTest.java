@@ -83,6 +83,13 @@ class ReservaServiceImplTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(platoRepository.save(any(Plato.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+
+        PerfilCocinera perfilDefault = PerfilCocinera.builder()
+                .id(COCINERA_ID)
+                .conjuntoResidencial("Torres del Parque")
+                .mediosPago(List.of(MedioPago.NEQUI, MedioPago.DAVIPLATA, MedioPago.EFECTIVO))
+                .build();
+        lenient().when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.of(perfilDefault));
     }
 
     private Plato platoMock(int totales, int comprometidas) {
@@ -94,6 +101,7 @@ class ReservaServiceImplTest {
                 .porcionesTotales(totales)
                 .porcionesComprometidas(comprometidas)
                 .estado(EstadoPlato.ACTIVO)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .build();
     }
 
@@ -106,6 +114,7 @@ class ReservaServiceImplTest {
                 .porcionesComprometidas(comprometidas)
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(estado)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .version(0)
                 .build();
     }
@@ -123,14 +132,14 @@ class ReservaServiceImplTest {
         return captor.getValue();
     }
 
-    // ==========================================
-    // PRUEBAS DE CREACIÓN DE RESERVAS (RN-03, RN-14, RN-15)
-    // ==========================================
+                                                 
+                                                            
+                                                 
 
     @Test
     @DisplayName("1. Happy path: Crear reserva exitosa retorna dominio Reserva")
     void crearReserva_Exitoso() {
-        // Arrange
+                  
         Plato plato = platoMock(5, 0);
         PerfilCocinera perfil = PerfilCocinera.builder().id(COCINERA_ID).conjuntoResidencial("Torres del Parque").build();
 
@@ -144,10 +153,10 @@ class ReservaServiceImplTest {
                 .medioPago(MedioPago.NEQUI)
                 .build();
 
-        // Act
+              
         Reserva respuesta = reservaService.crear(COMPRADOR_ID, reserva);
 
-        // Assert
+                 
         assertNotNull(respuesta);
         assertEquals(EstadoReserva.PENDIENTE, respuesta.getEstado());
         assertEquals(new BigDecimal("30000"), respuesta.getMontoTotal());
@@ -155,6 +164,59 @@ class ReservaServiceImplTest {
         assertEquals(3, plato.getPorcionesDisponibles());
         verify(reservaRepository).save(any(Reserva.class));
         verify(eventoReservaRepository).save(any(EventoReserva.class));
+    }
+
+    @Test
+    @DisplayName("OC-255: Happy path: Crear reserva sin método de pago (opcional) es exitoso")
+    void crearReserva_sinMedioPago_Exitoso() {
+        // Arrange
+        Plato plato = platoMock(5, 0);
+
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
+        when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
+
+        Reserva reserva = Reserva.builder()
+                .platoId(platoId)
+                .cantidadPorciones(1)
+                .medioPago(null)
+                .build();
+
+        // Act
+        Reserva respuesta = reservaService.crear(COMPRADOR_ID, reserva);
+
+        // Assert
+        assertNotNull(respuesta);
+        assertNull(respuesta.getMedioPago());
+        assertEquals(EstadoReserva.PENDIENTE, respuesta.getEstado());
+        verify(reservaRepository).save(any(Reserva.class));
+    }
+
+    @Test
+    @DisplayName("OC-255: Crear reserva con método de pago no aceptado lanza MedioPagoNoAceptadoException")
+    void crearReserva_conMedioPagoNoAceptado_LanzaExcepcion() {
+        // Arrange
+        Plato plato = platoMock(5, 0);
+        PerfilCocinera perfilSoloEfectivo = PerfilCocinera.builder()
+                .id(COCINERA_ID)
+                .conjuntoResidencial("Torres del Parque")
+                .mediosPago(List.of(MedioPago.EFECTIVO))
+                .build();
+
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(plato));
+        when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
+        when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
+        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.of(perfilSoloEfectivo));
+
+        Reserva reserva = Reserva.builder()
+                .platoId(platoId)
+                .cantidadPorciones(1)
+                .medioPago(MedioPago.NEQUI)
+                .build();
+
+        // Act & Assert
+        assertThrows(com.ollacercana.exception.MedioPagoNoAceptadoException.class,
+                () -> reservaService.crear(COMPRADOR_ID, reserva));
     }
 
     @Test
@@ -222,9 +284,9 @@ class ReservaServiceImplTest {
         assertThrows(ConflictoException.class, () -> reservaService.crear(COMPRADOR_ID, reserva));
     }
 
-    // ==========================================
-    // PRUEBAS DE CONFIRMACIÓN, RECHAZO, RECORDATORIO (HU-12)
-    // ==========================================
+                                                 
+                                                             
+                                                 
 
     @Test
     void confirmar_debeCambiarAConfirmadaConservarPorcionesYHabilitarChat() {
@@ -371,7 +433,7 @@ class ReservaServiceImplTest {
     @DisplayName("Expirar - Si no está vencida no altera la reserva")
     void expirar_noVencida_noHaceNada() {
         Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
-        Reserva reserva = reservaPendiente(plato, 2, 1); // 1 minuto, vencen a los 10
+        Reserva reserva = reservaPendiente(plato, 2, 1);                             
 
         Reserva resultado = reservaService.expirar(reserva.getId());
 
@@ -383,7 +445,7 @@ class ReservaServiceImplTest {
     @DisplayName("Enviar recordatorio - Si no lo requiere aún, no lo envía")
     void enviarRecordatorio_noRequerido_noHaceNada() {
         Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
-        Reserva reserva = reservaPendiente(plato, 2, 1); // Creada hace 1 min (requiere a los 7)
+        Reserva reserva = reservaPendiente(plato, 2, 1);                                        
 
         reservaService.enviarRecordatorio(reserva.getId());
 

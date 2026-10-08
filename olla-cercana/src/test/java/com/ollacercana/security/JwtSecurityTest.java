@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 class JwtSecurityTest {
 
     private static final String SECRET_TEST = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
-    private static final long EXPIRATION_MS = 3600000; // 1 hora
+    private static final long EXPIRATION_MS = 3600000;          
 
     @Mock
     private PerfilCocineraRepository perfilCocineraRepository;
@@ -58,7 +58,7 @@ class JwtSecurityTest {
     @Test
     @DisplayName("JwtService genera y valida tokens reales")
     void jwtService_pruebasGeneracionYValidacion() {
-        // Arrange
+                  
         Cuenta cuenta = Cuenta.builder()
                 .id(10L)
                 .identidad(Identidad.builder().correo("test@ollacercana.com").build())
@@ -66,10 +66,10 @@ class JwtSecurityTest {
                 .build();
         when(perfilCocineraRepository.findByCuentaId(10L)).thenReturn(Optional.empty());
 
-        // Act
+              
         String token = jwtService.generarToken(cuenta);
 
-        // Assert
+                 
         assertNotNull(token);
         assertTrue(jwtService.validarToken(token));
         assertEquals("10", jwtService.extraerSubject(token));
@@ -81,16 +81,16 @@ class JwtSecurityTest {
     @Test
     @DisplayName("JwtAuthenticationFilter continúa la cadena si no hay header Authorization")
     void jwtAuthenticationFilter_sinHeader_continuaCadena() throws ServletException, IOException {
-        // Arrange
+                  
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
         FilterChain filterChain = mock(FilterChain.class);
         when(request.getHeader("Authorization")).thenReturn(null);
 
-        // Act
+              
         filter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+                 
         verify(filterChain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
@@ -98,7 +98,7 @@ class JwtSecurityTest {
     @Test
     @DisplayName("JwtAuthenticationFilter autentica y continúa cuando el token Bearer es válido")
     void jwtAuthenticationFilter_conTokenValido_autenticaUsuario() throws ServletException, IOException {
-        // Arrange
+                  
         Cuenta cuenta = Cuenta.builder()
                 .id(5L)
                 .identidad(Identidad.builder().correo("cocinera@ollacercana.com").build())
@@ -120,10 +120,10 @@ class JwtSecurityTest {
                 .build();
         when(userDetailsService.loadUserByUsername("cocinera@ollacercana.com")).thenReturn(userDetails);
 
-        // Act
+              
         filter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+                 
         verify(filterChain).doFilter(request, response);
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         assertEquals("cocinera@ollacercana.com", SecurityContextHolder.getContext().getAuthentication().getName());

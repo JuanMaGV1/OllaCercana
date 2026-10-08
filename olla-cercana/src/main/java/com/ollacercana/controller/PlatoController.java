@@ -47,7 +47,9 @@ public class PlatoController implements PlatoApi {
     @GetMapping("/{id}")
     public ResponseEntity<PlatoResponseDTO> obtenerPorId(@PathVariable UUID id) {
         Plato plato = platoService.obtenerPorId(id);
-        return ResponseEntity.ok(platoMapper.toResponse(plato));
+        List<com.ollacercana.domain.MedioPago> mediosPago = platoService.obtenerMediosPago(id);
+        PlatoResponseDTO response = platoMapper.toResponse(plato).withMediosPago(mediosPago);
+        return ResponseEntity.ok(response);
     }
 
     @Override

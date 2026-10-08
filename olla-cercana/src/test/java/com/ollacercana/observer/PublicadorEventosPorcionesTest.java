@@ -43,9 +43,9 @@ class PublicadorEventosPorcionesTest {
     @Test
     @DisplayName("Publica el evento con el stock y el estado correctos cuando el stock cambia")
     void stockCambia_PublicaEvento() {
-        Plato plato = plato(3, 1, EstadoPlato.ACTIVO); // quedan 2
+        Plato plato = plato(3, 1, EstadoPlato.ACTIVO);            
 
-        publicador.publicarSiCambio(3, plato);         // antes había 3
+        publicador.publicarSiCambio(3, plato);                         
 
         ArgumentCaptor<PorcionesActualizadasResponseDTO> captor =
                 ArgumentCaptor.forClass(PorcionesActualizadasResponseDTO.class);

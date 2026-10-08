@@ -70,14 +70,14 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Crear Perfil - Happy Path")
     void crearPerfil_Exitoso() {
-        // Arrange
+                  
         when(cuentaRepository.findById(1L)).thenReturn(Optional.of(cuenta));
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
 
-        // Act
+              
         PerfilCocinera result = perfilService.crearPerfil(perfil, 1L);
 
-        // Assert
+                 
         assertNotNull(result);
         assertEquals("Torres del Parque", result.getConjuntoResidencial());
         verify(validator).validarParaCrear(perfil, cuenta);
@@ -87,14 +87,14 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Actualizar Perfil - Happy Path")
     void actualizarPerfil_Exitoso() {
-        // Arrange
+                  
         when(perfilRepository.findById(perfilId)).thenReturn(Optional.of(perfil));
         when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfil);
 
-        // Act
+              
         PerfilCocinera result = perfilService.actualizarPerfil(perfilId, perfil);
 
-        // Assert
+                 
         assertNotNull(result);
         verify(validator).validarParaActualizar(perfilId, perfil);
         verify(perfilRepository).save(perfil);
@@ -103,7 +103,7 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Verificar Teléfono OTP - Exitoso")
     void verificarTelefono_OTPValido_RetornaTrueYVerifica() {
-        // Arrange
+                  
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
@@ -115,10 +115,10 @@ class PerfilCocineraServiceImplTest {
         when(codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId))
                 .thenReturn(Optional.of(otp));
 
-        // Act
+              
         boolean resultado = perfilService.verificarTelefono(perfilId, "123456");
 
-        // Assert
+                 
         assertTrue(resultado);
         assertTrue(perfil.isVerificada());
         assertTrue(perfil.getCuenta().getCredenciales().getCelularVerificado());
@@ -130,7 +130,7 @@ class PerfilCocineraServiceImplTest {
     @Test
     @DisplayName("Verificar Teléfono OTP - Código Erróneo Lanza ConflictoException")
     void verificarTelefono_OTPInvalido_LanzaConflictoException() {
-        // Arrange
+                  
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
@@ -142,7 +142,7 @@ class PerfilCocineraServiceImplTest {
         when(codigoOTPRepository.findTopByPerfilIdAndUsadoFalseOrderByFechaExpiracionDesc(perfilId))
                 .thenReturn(Optional.of(otp));
 
-        // Act & Assert
+                       
         assertThrows(ConflictoException.class, () -> perfilService.verificarTelefono(perfilId, "000000"));
         assertFalse(perfil.isVerificada());
         verify(perfilRepository, never()).save(any());
@@ -201,5 +201,34 @@ class PerfilCocineraServiceImplTest {
         when(perfilRepository.findByEsDestacadaTrue()).thenReturn(List.of(perfil));
         List<PerfilCocinera> resultado = perfilService.listarDestacadas();
         assertEquals(1, resultado.size());
+    }
+
+    @Test
+    @DisplayName("OC-253 / OC-256: Guardar y retornar métodos de pago configurados en el perfil")
+    void perfil_guardaYRetornaMediosDePago() {
+        PerfilCocinera perfilConMedios = PerfilCocinera.builder()
+                .id(perfilId)
+                .conjuntoResidencial("Torres del Parque")
+                .mediosPago(List.of(MedioPago.NEQUI, MedioPago.DAVIPLATA, MedioPago.EFECTIVO))
+                .numeroNequi("3001234567")
+                .numeroDaviplata("3107654321")
+                .cuenta(cuenta)
+                .build();
+
+        when(cuentaRepository.findById(1L)).thenReturn(Optional.of(cuenta));
+        when(perfilRepository.save(any(PerfilCocinera.class))).thenReturn(perfilConMedios);
+
+        perfilService.crearPerfil(perfilConMedios, 1L);
+
+        org.mockito.ArgumentCaptor<PerfilCocinera> captor = org.mockito.ArgumentCaptor.forClass(PerfilCocinera.class);
+        verify(perfilRepository).save(captor.capture());
+
+        PerfilCocinera persistido = captor.getValue();
+        assertNotNull(persistido);
+        assertNotNull(persistido.getMediosPago());
+        assertEquals(3, persistido.getMediosPago().size());
+        assertTrue(persistido.getMediosPago().contains(MedioPago.NEQUI));
+        assertTrue(persistido.getMediosPago().contains(MedioPago.DAVIPLATA));
+        assertTrue(persistido.getMediosPago().contains(MedioPago.EFECTIVO));
     }
 }

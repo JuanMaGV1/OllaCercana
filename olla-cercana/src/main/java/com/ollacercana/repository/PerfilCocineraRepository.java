@@ -15,6 +15,8 @@ public interface PerfilCocineraRepository extends JpaRepository<PerfilCocinera, 
 
     List<PerfilCocinera> findByEsDestacadaTrue();
 
+    List<PerfilCocinera> findByConjuntoResidencial(String conjuntoResidencial);
+
     boolean existsByNumeroNequi(String numeroNequi);
 
     boolean existsByNumeroDaviplata(String numeroDaviplata);
@@ -22,4 +24,6 @@ public interface PerfilCocineraRepository extends JpaRepository<PerfilCocinera, 
     boolean existsByNumeroNequiAndIdNot(String numeroNequi, UUID id);
 
     boolean existsByNumeroDaviplataAndIdNot(String numeroDaviplata, UUID id);
+
+    List<PerfilCocinera> findByPausadaTrue();
 }

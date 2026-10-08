@@ -37,6 +37,9 @@ class PlatoServiceImplTest {
     @Mock
     private PlatoValidator validator;
 
+    @Mock
+    private com.ollacercana.repository.PerfilCocineraRepository perfilCocineraRepository;
+
     @InjectMocks
     private PlatoServiceImpl platoService;
 
@@ -155,5 +158,35 @@ class PlatoServiceImplTest {
 
         List<Plato> resultado = platoService.buscarCercanos(null, null);
         assertEquals(1, resultado.size());
+    }
+
+    @Test
+    @DisplayName("OC-254: obtenerMediosPago retorna medios de pago si el perfil de la cocinera existe")
+    void obtenerMediosPago_perfilExiste_retornaMediosPagoConfigurados() {
+        Plato plato = platoEjemplo();
+        when(platoRepository.findById(plato.getId())).thenReturn(Optional.of(plato));
+
+        com.ollacercana.domain.PerfilCocinera perfil = com.ollacercana.domain.PerfilCocinera.builder()
+                .id(COCINERA_ID)
+                .mediosPago(List.of(com.ollacercana.domain.MedioPago.NEQUI, com.ollacercana.domain.MedioPago.EFECTIVO))
+                .build();
+        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.of(perfil));
+
+        List<com.ollacercana.domain.MedioPago> medios = platoService.obtenerMediosPago(plato.getId());
+        assertEquals(2, medios.size());
+        assertTrue(medios.contains(com.ollacercana.domain.MedioPago.NEQUI));
+        assertTrue(medios.contains(com.ollacercana.domain.MedioPago.EFECTIVO));
+    }
+
+    @Test
+    @DisplayName("OC-254: obtenerMediosPago no falla y retorna lista vacía si el perfil de la cocinera no existe")
+    void obtenerMediosPago_perfilNoExiste_retornaListaVacia() {
+        Plato plato = platoEjemplo();
+        when(platoRepository.findById(plato.getId())).thenReturn(Optional.of(plato));
+        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.empty());
+
+        List<com.ollacercana.domain.MedioPago> medios = platoService.obtenerMediosPago(plato.getId());
+        assertNotNull(medios);
+        assertTrue(medios.isEmpty());
     }
 }

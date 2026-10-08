@@ -28,6 +28,7 @@ public class PlatoServiceImpl implements PlatoService {
 
     private final PlatoRepository repository;
     private final PlatoValidator validator;
+    private final com.ollacercana.repository.PerfilCocineraRepository perfilCocineraRepository;
     private PublicadorEventosPorciones publicadorEventosPorciones;
 
     @Autowired(required = false)
@@ -57,6 +58,18 @@ public class PlatoServiceImpl implements PlatoService {
                     log.warn("Consulta fallida: plato con id={} no encontrado", id);
                     return new PlatoNoEncontradoException(id);
                 });
+    }
+
+    @Override
+    public List<com.ollacercana.domain.MedioPago> obtenerMediosPago(UUID platoId) {
+        Plato plato = obtenerPorId(platoId);
+        if (plato.getCocineraId() == null || perfilCocineraRepository == null) {
+            return List.of();
+        }
+        return perfilCocineraRepository.findById(plato.getCocineraId())
+                .map(com.ollacercana.domain.PerfilCocinera::getMediosPago)
+                .filter(medios -> medios != null)
+                .orElse(List.of());
     }
 
     @Override

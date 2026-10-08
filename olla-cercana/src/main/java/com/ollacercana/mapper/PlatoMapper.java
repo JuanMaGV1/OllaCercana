@@ -6,9 +6,9 @@ import com.ollacercana.dto.response.PlatoResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-/**
- * OC-89: Sin logica manual.
- */
+   
+                            
+   
 @Mapper(componentModel = "spring")
 public interface PlatoMapper {
 

@@ -1,11 +1,15 @@
 package com.ollacercana.validator;
 
 import com.ollacercana.domain.EstadoReserva;
+import com.ollacercana.domain.EstadoPlato;
+import com.ollacercana.domain.MedioPago;
 import com.ollacercana.domain.PerfilCocinera;
 import com.ollacercana.domain.Plato;
 import com.ollacercana.exception.AutoReservaException;
 import com.ollacercana.exception.LimiteReservasPendientesException;
+import com.ollacercana.exception.MedioPagoNoAceptadoException;
 import com.ollacercana.exception.PorcionesInsuficientesException;
+import com.ollacercana.exception.ReglaDeNegocioException;
 import com.ollacercana.repository.PerfilCocineraRepository;
 import com.ollacercana.repository.ReservaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,6 +51,8 @@ class ReservaValidatorTest {
                 .cocineraId(COCINERA_ID)
                 .porcionesTotales(5)
                 .porcionesComprometidas(1)
+                .estado(EstadoPlato.ACTIVO)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .build();
     }
 
@@ -73,7 +80,7 @@ class ReservaValidatorTest {
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
 
-        // Disponibles = 5 - 1 = 4. Solicitadas = 5
+                                                   
         assertThrows(PorcionesInsuficientesException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 5));
     }
 
@@ -85,5 +92,52 @@ class ReservaValidatorTest {
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(1L);
 
         assertDoesNotThrow(() -> validator.validarParaCrear(COMPRADOR_ID, plato, 2));
+    }
+
+    @Test
+    @DisplayName("OC-255 / OC-256: Reserva sin método de pago (null) es válida y se crea normalmente")
+    void validarParaCrear_sinMedioPago_esValida() {
+        when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
+        when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
+
+        assertDoesNotThrow(() -> validator.validarParaCrear(COMPRADOR_ID, plato, 1, null));
+    }
+
+    @Test
+    @DisplayName("OC-255 / OC-256: Reserva con método de pago aceptado por la cocinera es válida")
+    void validarParaCrear_conMedioPagoAceptado_esValida() {
+        when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
+        when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
+
+        PerfilCocinera perfilCocinera = PerfilCocinera.builder()
+                .id(COCINERA_ID)
+                .mediosPago(java.util.List.of(MedioPago.NEQUI, MedioPago.EFECTIVO))
+                .build();
+        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.of(perfilCocinera));
+
+        assertDoesNotThrow(() -> validator.validarParaCrear(COMPRADOR_ID, plato, 1, MedioPago.NEQUI));
+    }
+
+    @Test
+    @DisplayName("OC-255 / OC-256: Reserva con método de pago NO aceptado por la cocinera lanza MedioPagoNoAceptadoException")
+    void validarParaCrear_conMedioPagoNoAceptado_lanzaExcepcion() {
+        when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
+        when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
+
+        PerfilCocinera perfilCocinera = PerfilCocinera.builder()
+                .id(COCINERA_ID)
+                .mediosPago(java.util.List.of(MedioPago.EFECTIVO))
+                .build();
+        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.of(perfilCocinera));
+
+        assertThrows(MedioPagoNoAceptadoException.class,
+                () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1, MedioPago.DAVIPLATA));
+    }
+
+    @Test
+    @DisplayName("validarParaCrear: un plato oculto no se puede reservar")
+    void validarParaCrear_platoOculto_rechazaReserva() {
+        plato.setEstado(EstadoPlato.OCULTO);
+        assertThrows(ReglaDeNegocioException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1));
     }
 }

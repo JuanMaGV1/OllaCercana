@@ -74,7 +74,7 @@ public class ReservaServiceImpl implements ReservaService {
                 .orElseThrow(() -> new PlatoNoEncontradoException(reserva.getPlatoId()));
 
         if (validator != null) {
-            validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
+            validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones(), reserva.getMedioPago());
         }
 
         int disponiblesAntes = plato.getPorcionesDisponibles();

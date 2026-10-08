@@ -25,9 +25,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Manejo centralizado de errores. Todas las respuestas usan ErrorResponseDTO.
- */
+   
+                                                                              
+   
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     private static final String MENSAJE_VALIDACION = "Existen errores en los campos del formulario";
     private static final String MENSAJE_ERROR_INESPERADO = "Error inesperado del servidor";
 
-    // --------- 404 ---------
+                              
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
     }
 
-    // --------- 422 ---------
+                              
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ErrorResponseDTO> handleBusinessRule(BusinessRuleException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request.getRequestURI());
@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request.getRequestURI());
     }
 
-    // --------- 409 ---------
+                              
     @ExceptionHandler(ConflictoException.class)
     public ResponseEntity<ErrorResponseDTO> handleConflicto(ConflictoException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
@@ -70,19 +70,23 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
     }
 
-    // --------- 403 (Seguridad) ---------
+                                          
     @ExceptionHandler({AccesoDenegadoException.class, AccessDeniedException.class})
     public ResponseEntity<ErrorResponseDTO> handleAccesoDenegado(Exception ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request.getRequestURI());
+        String path = request.getRequestURI();
+        String mensaje = path.startsWith("/api/v1/admin")
+                ? "No tiene permisos para ver esta sección"
+                : ex.getMessage();
+        return buildResponse(HttpStatus.FORBIDDEN, mensaje, path);
     }
 
-    // --------- 401 (Seguridad) ---------
+                                          
     @ExceptionHandler({BadCredentialsException.class, AuthenticationException.class})
     public ResponseEntity<ErrorResponseDTO> handleAutenticacion(Exception ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.UNAUTHORIZED, "Credenciales inválidas", request.getRequestURI());
     }
 
-    // --------- 400 ---------
+                              
     @ExceptionHandler(MissingRequestHeaderException.class)
     public ResponseEntity<ErrorResponseDTO> handleHeaderFaltante(MissingRequestHeaderException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Falta el encabezado obligatorio " + ex.getHeaderName(), request.getRequestURI());
@@ -100,7 +104,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponseDTO> handleCuerpoIlegible(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, "El cuerpo de la solicitud no es válido: revisa el formato JSON y los valores permitidos", request.getRequestURI());
+        String mensaje = "El cuerpo de la solicitud no es válido: revisa el formato JSON y los valores permitidos";
+        if (ex.getCause() instanceof com.fasterxml.jackson.databind.exc.InvalidFormatException ifx) {
+            if (ifx.getTargetType() != null && ifx.getTargetType().isEnum()) {
+                String campo = ifx.getPath().isEmpty() ? "campo" : ifx.getPath().get(ifx.getPath().size() - 1).getFieldName();
+                Object[] constantes = ifx.getTargetType().getEnumConstants();
+                mensaje = String.format("Valor inválido '%s' para el campo '%s'. Valores permitidos: %s",
+                        ifx.getValue(), campo, java.util.Arrays.toString(constantes));
+            }
+        }
+        return buildResponse(HttpStatus.BAD_REQUEST, mensaje, request.getRequestURI());
+    }
+
+    @ExceptionHandler(MedioPagoNoAceptadoException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMedioPagoNoAceptado(MedioPagoNoAceptadoException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -130,10 +148,10 @@ public class GlobalExceptionHandler {
         return buildValidationResponse(errores, request.getRequestURI());
     }
 
-    // --------- 500 ---------
+                              
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGeneral(Exception ex, HttpServletRequest request) {
-        // Preserva el código de estado propio de excepciones Spring MVC (ej. 405 Method Not Allowed)
+                                                                                                     
         if (ex instanceof ErrorResponse errorResponse) {
             HttpStatus status = HttpStatus.resolve(errorResponse.getStatusCode().value());
             return buildResponse(status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI());
@@ -142,7 +160,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, MENSAJE_ERROR_INESPERADO, request.getRequestURI());
     }
 
-    // ---------- util ----------
+                                 
 
     private ResponseEntity<ErrorResponseDTO> buildValidationResponse(Map<String, String> errores, String path) {
         ErrorResponseDTO body = ErrorResponseDTO.builder()

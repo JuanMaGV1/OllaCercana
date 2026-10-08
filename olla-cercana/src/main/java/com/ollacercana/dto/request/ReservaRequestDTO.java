@@ -20,8 +20,9 @@ public record ReservaRequestDTO(
         @Schema(description = "Cantidad de porciones", example = "2")
         Integer cantidad,
 
-        @NotNull(message = "El medio de pago es obligatorio")
-        @Schema(description = "Medio de pago acordado", example = "NEQUI")
+        @Schema(description = "Medio de pago acordado (opcional). Valores permitidos: NEQUI, DAVIPLATA, EFECTIVO, TRANSFERENCIA_BANCARIA",
+                allowableValues = {"NEQUI", "DAVIPLATA", "EFECTIVO", "TRANSFERENCIA_BANCARIA"},
+                example = "NEQUI")
         MedioPago medioPago,
 
         @Size(max = 500, message = "La nota no puede exceder 500 caracteres")

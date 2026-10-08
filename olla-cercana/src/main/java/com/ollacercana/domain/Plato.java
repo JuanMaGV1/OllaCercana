@@ -51,19 +51,19 @@ public class Plato {
     @Version
     private Integer version;
 
-    // ============ Reglas de negocio (RN) ============
+                                                       
 
-    /**
-     * RN-03: porciones disponibles = totales - comprometidas.
-     */
+       
+                                                              
+       
     public int getPorcionesDisponibles() {
         int comprometidas = porcionesComprometidas == null ? 0 : porcionesComprometidas;
         return porcionesTotales - comprometidas;
     }
 
-    /**
-     * RN-02: un plato expira a las 4 horas de publicación.
-     */
+       
+                                                           
+       
     public void publicar() {
         if (this.cocineraId == null) {
             throw new IllegalStateException("Un plato no puede publicarse sin una cocinera asociada");
@@ -75,25 +75,25 @@ public class Plato {
         this.fechaExpiracion = this.fechaPublicacion.plusHours(4);
     }
 
-    /**
-     * RN-03: cuando las disponibles llegan a 0, el plato pasa a AGOTADO.
-     */
+       
+                                                                         
+       
     public void marcarAgotado() {
         this.estado = EstadoPlato.AGOTADO;
     }
 
-    /**
-     * RN-02: expiración automática.
-     */
+       
+                                    
+       
     public void expirar() {
         this.estado = EstadoPlato.EXPIRADO;
     }
 
-    /**
-     * RN-03: recalcula el estado según las porciones disponibles.
-     */
+       
+                                                                  
+       
     public void recalcularEstado() {
-        if (this.estado == EstadoPlato.EXPIRADO) return;
+        if (this.estado == EstadoPlato.EXPIRADO || this.estado == EstadoPlato.OCULTO) return;
         if (getPorcionesDisponibles() <= 0) {
             this.estado = EstadoPlato.AGOTADO;
         } else if (this.estado == EstadoPlato.AGOTADO) {
@@ -101,9 +101,9 @@ public class Plato {
         }
     }
 
-    /**
-     * RN-03: descuenta porciones comprometidas (al reservar).
-     */
+       
+                                                              
+       
     public void comprometerPorciones(int cantidad) {
         if (cantidad <= 0) {
             throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
@@ -117,17 +117,17 @@ public class Plato {
         recalcularEstado();
     }
 
-    /**
-     * RN-03: libera porciones comprometidas (al cancelar/rechazar reserva).
-     */
+       
+                                                                            
+       
     public void liberarPorciones(int cantidad) {
         this.porcionesComprometidas = Math.max(0, this.porcionesComprometidas - cantidad);
         recalcularEstado();
     }
 
-    /**
-     * OC-005: cambia el total de porciones con validación.
-     */
+       
+                                                           
+       
     public void cambiarPorcionesTotales(int nuevaCantidad) {
         if (nuevaCantidad < 1 || nuevaCantidad > 30) {
             throw new IllegalArgumentException("Las porciones deben estar entre 1 y 30");
@@ -141,9 +141,9 @@ public class Plato {
         recalcularEstado();
     }
 
-    /**
-     * HU-24: ajusta manualmente la disponibilidad (aumentar, disminuir, marcar agotado).
-     */
+       
+                                                                                         
+       
     public void ajustarDisponibilidad(TipoAjustePorciones tipo, Integer cantidad) {
 
         int comprometidasSeguras = this.porcionesComprometidas == null ? 0 : this.porcionesComprometidas;

@@ -44,22 +44,23 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas públicas de autenticación y registro
+                                                                     
                         .requestMatchers(HttpMethod.POST, "/api/v1/sesiones", "/api/v1/cuentas").permitAll()
 
-                        // Rutas públicas de documentación Swagger OpenAPI
+                                                                          
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Rutas públicas del catálogo y consulta de cercanía
+                                                                             
                         .requestMatchers(HttpMethod.GET, "/api/v1/platos/cercanos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/platos/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/perfiles/destacadas").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/cocineras/mapa").permitAll()
 
-                        // Todo lo demás exige autenticación
+                                                            
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

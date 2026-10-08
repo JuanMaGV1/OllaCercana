@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Sujeto del patrón Observer
- */
+   
+                             
+   
 
 @Component
 public class PublicadorEventosReserva {

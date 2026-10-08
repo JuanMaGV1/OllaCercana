@@ -22,9 +22,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/**
- * HU-12 Escenario 3 (aviso al comprador) y OC-149 (recordatorio a la cocinera).
- */
+   
+                                                                                
+   
 @ExtendWith(MockitoExtension.class)
 class NotificacionInAppObservadorTest {
 
