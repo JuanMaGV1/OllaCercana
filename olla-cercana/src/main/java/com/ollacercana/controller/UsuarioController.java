@@ -1,8 +1,9 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.controller.docs.UsuarioApi;
-import com.ollacercana.dto.response.MedallaUsuarioResponseDTO;
-import com.ollacercana.service.MedallaService;
+import com.ollacercana.core.services.MedallaService;
+import com.ollacercana.controller.dtos.response.MedallaUsuarioResponseDTO;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

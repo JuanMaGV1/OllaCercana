@@ -1,11 +1,12 @@
 package com.ollacercana.config;
 
-import com.ollacercana.dto.response.ErrorResponseDTO;
-import com.ollacercana.exception.AccesoDenegadoException;
-import com.ollacercana.exception.AutoReservaException;
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.PlatoNoEncontradoException;
-import com.ollacercana.exception.ReglaDeNegocioException;
+import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
+import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
+import com.ollacercana.controller.handlers.exception.AutoReservaException;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.PlatoNoEncontradoException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.controller.handlers.GlobalExceptionHandler;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;

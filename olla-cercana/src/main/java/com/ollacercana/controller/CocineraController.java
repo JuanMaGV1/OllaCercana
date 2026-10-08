@@ -1,10 +1,11 @@
 package com.ollacercana.controller;
 
+import com.ollacercana.config.security.UsuarioActual;
 import com.ollacercana.controller.docs.CocineraApi;
-import com.ollacercana.dto.response.HistorialPaginadoResponseDTO;
-import com.ollacercana.dto.response.MetricasCocineraResponseDTO;
-import com.ollacercana.security.UsuarioActual;
-import com.ollacercana.service.MetricasCocineraService;
+import com.ollacercana.controller.dtos.response.HistorialPaginadoResponseDTO;
+import com.ollacercana.controller.dtos.response.MetricasCocineraResponseDTO;
+import com.ollacercana.core.services.MetricasCocineraService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;

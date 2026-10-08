@@ -1,9 +1,10 @@
 package com.ollacercana.controller.docs;
 
 import com.ollacercana.config.OpenApiConfig;
-import com.ollacercana.dto.response.ErrorResponseDTO;
-import com.ollacercana.dto.response.HistorialPaginadoResponseDTO;
-import com.ollacercana.dto.response.MetricasCocineraResponseDTO;
+import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
+import com.ollacercana.controller.dtos.response.HistorialPaginadoResponseDTO;
+import com.ollacercana.controller.dtos.response.MetricasCocineraResponseDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

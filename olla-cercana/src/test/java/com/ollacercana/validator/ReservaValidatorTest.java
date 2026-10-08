@@ -1,15 +1,17 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.domain.EstadoReserva;
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.exception.AutoReservaException;
-import com.ollacercana.exception.LimiteReservasPendientesException;
-import com.ollacercana.exception.PorcionesInsuficientesException;
-import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.ReservaRepository;
+import com.ollacercana.controller.handlers.exception.AutoReservaException;
+import com.ollacercana.controller.handlers.exception.LimiteReservasPendientesException;
+import com.ollacercana.controller.handlers.exception.PorcionesInsuficientesException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.validators.ReservaValidator;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.ReservaRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,14 +31,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ReservaValidatorTest {
 
-    @Mock
-    private ReservaRepository reservaRepository;
-
-    @Mock
-    private PerfilCocineraRepository perfilCocineraRepository;
-
-    @InjectMocks
-    private ReservaValidator validator;
+    @Mock private ReservaRepository reservaRepository;
+    @Mock private PerfilCocineraRepository perfilCocineraRepository;
+    @InjectMocks private ReservaValidator validator;
 
     private static final Long COMPRADOR_ID = 1L;
     private static final UUID COCINERA_ID = UUID.randomUUID();
@@ -57,10 +54,13 @@ class ReservaValidatorTest {
     @Test
     @DisplayName("validarParaCrear: Cocinera intenta reservar su propio plato lanza AutoReservaException (RN-14)")
     void validarParaCrear_autoReserva_lanzaExcepcion() {
-        PerfilCocinera perfilMismaCocinera = PerfilCocinera.builder().id(COCINERA_ID).build();
-        when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.of(perfilMismaCocinera));
+        PerfilCocineraEntity perfilMismaCocinera = PerfilCocineraEntity.builder()
+                .id(COCINERA_ID).build();
+        when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID))
+                .thenReturn(Optional.of(perfilMismaCocinera));
 
-        assertThrows(AutoReservaException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1));
+        assertThrows(AutoReservaException.class,
+                () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1));
     }
 
     @Test
@@ -69,7 +69,8 @@ class ReservaValidatorTest {
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(2L);
 
-        assertThrows(LimiteReservasPendientesException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1));
+        assertThrows(LimiteReservasPendientesException.class,
+                () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1));
     }
 
     @Test
@@ -78,14 +79,16 @@ class ReservaValidatorTest {
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
 
-                                                   
-        assertThrows(PorcionesInsuficientesException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 5));
+        // Disponibles = 5 - 1 = 4. Solicitadas = 5
+        assertThrows(PorcionesInsuficientesException.class,
+                () -> validator.validarParaCrear(COMPRADOR_ID, plato, 5));
     }
 
     @Test
     @DisplayName("validarParaCrear: Comprador con perfil de cocinera diferente y porciones disponibles es exitoso")
     void validarParaCrear_compradorOtraCocineraValido_pasaExitoso() {
-        PerfilCocinera perfilOtraCocinera = PerfilCocinera.builder().id(UUID.randomUUID()).build();
+        PerfilCocineraEntity perfilOtraCocinera = PerfilCocineraEntity.builder()
+                .id(UUID.randomUUID()).build();
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.of(perfilOtraCocinera));
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(1L);
 

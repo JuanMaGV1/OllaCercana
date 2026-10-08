@@ -1,10 +1,15 @@
 package com.ollacercana.filter;
 
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.RestriccionAlimentaria;
-import com.ollacercana.domain.TipoComida;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.RestriccionAlimentaria;
+import com.ollacercana.core.models.enums.TipoComida;
+import com.ollacercana.core.patterns.filter.FiltroCompuestoPlato;
+import com.ollacercana.core.patterns.filter.FiltroDistanciaMaxima;
+import com.ollacercana.core.patterns.filter.FiltroRestricciones;
+import com.ollacercana.core.patterns.filter.FiltroTipoComida;
 
 import java.util.List;
 

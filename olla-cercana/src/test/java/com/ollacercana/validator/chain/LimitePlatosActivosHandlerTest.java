@@ -1,9 +1,12 @@
 package com.ollacercana.validator.chain;
 
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.exception.LimitePlatosActivosExcedidoException;
-import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.controller.handlers.exception.LimitePlatosActivosExcedidoException;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.validators.chain.LimitePlatosActivosHandler;
+import com.ollacercana.core.validators.chain.ValidadorPlatoHandler;
+import com.ollacercana.persistence.repository.PlatoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

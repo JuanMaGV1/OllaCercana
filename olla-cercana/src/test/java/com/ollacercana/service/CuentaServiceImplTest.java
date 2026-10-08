@@ -1,11 +1,20 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.*;
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.repository.CuentaRepository;
-import com.ollacercana.service.impl.CuentaServiceImpl;
-import com.ollacercana.validator.ICuentaValidator;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.core.models.Credenciales;
+import com.ollacercana.core.models.Cuenta;
+import com.ollacercana.core.models.Identidad;
+import com.ollacercana.core.models.enums.EstadoCuenta;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.services.impl.CuentaServiceImpl;
+import com.ollacercana.core.validators.ICuentaValidator;
+import com.ollacercana.persistence.entities.CredencialesEmbeddable;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.IdentidadEmbeddable;
+import com.ollacercana.persistence.mappers.CuentaEntityMapper;
+import com.ollacercana.persistence.repository.CuentaRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,17 +40,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class CuentaServiceImplTest {
 
-    @Mock
-    private CuentaRepository cuentaRepository;
-
-    @Mock
-    private ICuentaValidator cuentaValidator;
-
-    @Spy
-    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-    @InjectMocks
-    private CuentaServiceImpl cuentaService;
+    @Mock private CuentaRepository cuentaRepository;
+    @Mock private ICuentaValidator cuentaValidator;
+    @Mock private CuentaEntityMapper entityMapper;
+    @Spy  private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @InjectMocks private CuentaServiceImpl cuentaService;
 
     private Cuenta cuentaBase;
     private final String rawPassword = "Password123";
@@ -66,6 +69,45 @@ class CuentaServiceImplTest {
                 .roles(Set.of(Rol.COMPRADOR))
                 .estado(EstadoCuenta.ACTIVO)
                 .build();
+
+        // ✅ Mapper bidireccional (dominio <-> entity)
+        lenient().when(entityMapper.toEntity(any(Cuenta.class))).thenAnswer(i -> {
+            Cuenta c = i.getArgument(0);
+            return CuentaEntity.builder()
+                    .id(c.getId())
+                    .identidad(c.getIdentidad() != null ? IdentidadEmbeddable.builder()
+                            .nombre(c.getIdentidad().getNombre())
+                            .correo(c.getIdentidad().getCorreo())
+                            .celular(c.getIdentidad().getCelular())
+                            .build() : null)
+                    .credenciales(c.getCredenciales() != null ? CredencialesEmbeddable.builder()
+                            .contrasenaHash(c.getCredenciales().getContrasenaHash())
+                            .celularVerificado(c.getCredenciales().getCelularVerificado())
+                            .build() : null)
+                    .roles(c.getRoles())
+                    .estado(c.getEstado())
+                    .fechaRegistro(c.getFechaRegistro())
+                    .build();
+        });
+
+        lenient().when(entityMapper.toDomain(any(CuentaEntity.class))).thenAnswer(i -> {
+            CuentaEntity e = i.getArgument(0);
+            return Cuenta.builder()
+                    .id(e.getId())
+                    .identidad(e.getIdentidad() != null ? Identidad.builder()
+                            .nombre(e.getIdentidad().getNombre())
+                            .correo(e.getIdentidad().getCorreo())
+                            .celular(e.getIdentidad().getCelular())
+                            .build() : null)
+                    .credenciales(e.getCredenciales() != null ? Credenciales.builder()
+                            .contrasenaHash(e.getCredenciales().getContrasenaHash())
+                            .celularVerificado(e.getCredenciales().getCelularVerificado())
+                            .build() : null)
+                    .roles(e.getRoles())
+                    .estado(e.getEstado())
+                    .fechaRegistro(e.getFechaRegistro())
+                    .build();
+        });
     }
 
     @Nested
@@ -75,16 +117,17 @@ class CuentaServiceImplTest {
         @Test
         @DisplayName("1. Registro exitoso (Happy Path)")
         void registrar_HappyPath_DebeRegistrarCuentaExitosamente() {
-            when(cuentaRepository.save(any(Cuenta.class))).thenReturn(cuentaBase);
+            CuentaEntity entidadGuardada = CuentaEntity.builder().id(1L).build();
+            when(cuentaRepository.save(any(CuentaEntity.class))).thenReturn(entidadGuardada);
 
             Cuenta resultado = cuentaService.registrar(cuentaBase);
 
             assertNotNull(resultado);
-            assertEquals("juan@gmail.com", resultado.getIdentidad().getCorreo());
+            assertEquals(1L, resultado.getId());
             verify(cuentaValidator).validarCorreoUnico("juan@gmail.com");
             verify(cuentaValidator).validarCelularUnico("3001234567");
             verify(cuentaValidator).validarPasswordSegura(anyString());
-            verify(cuentaRepository).save(any(Cuenta.class));
+            verify(cuentaRepository).save(any(CuentaEntity.class));
         }
 
         @Test
@@ -126,8 +169,18 @@ class CuentaServiceImplTest {
         @DisplayName("1. Autenticación exitosa con correo o celular (Happy Path)")
         void autenticar_CredencialesValidas_RetornaCuenta() {
             cuentaBase.getCredenciales().setContrasenaHash(bCryptHash);
+            CuentaEntity entidad = CuentaEntity.builder()
+                    .id(1L)
+                    .identidad(IdentidadEmbeddable.builder()
+                            .correo("juan@gmail.com").celular("3001234567").build())
+                    .credenciales(CredencialesEmbeddable.builder()
+                            .contrasenaHash(bCryptHash).build())
+                    .roles(Set.of(Rol.COMPRADOR))
+                    .estado(EstadoCuenta.ACTIVO)
+                    .build();
+
             when(cuentaRepository.findByIdentificador("juan@gmail.com"))
-                    .thenReturn(Optional.of(cuentaBase));
+                    .thenReturn(Optional.of(entidad));
 
             Cuenta resultado = cuentaService.autenticar("juan@gmail.com", rawPassword);
 
@@ -139,45 +192,48 @@ class CuentaServiceImplTest {
         @Test
         @DisplayName("2. Contraseña incorrecta (401 BadCredentialsException)")
         void autenticar_PasswordIncorrecta_LanzaBadCredentialsException() {
-            cuentaBase.getCredenciales().setContrasenaHash(bCryptHash);
-            when(cuentaRepository.findByIdentificador("juan@gmail.com"))
-                    .thenReturn(Optional.of(cuentaBase));
+            CuentaEntity entidad = CuentaEntity.builder()
+                    .id(1L)
+                    .identidad(IdentidadEmbeddable.builder().correo("juan@gmail.com").build())
+                    .credenciales(CredencialesEmbeddable.builder().contrasenaHash(bCryptHash).build())
+                    .roles(Set.of(Rol.COMPRADOR))
+                    .estado(EstadoCuenta.ACTIVO)
+                    .build();
+            when(cuentaRepository.findByIdentificador("juan@gmail.com")).thenReturn(Optional.of(entidad));
 
-            BadCredentialsException exception = assertThrows(
-                    BadCredentialsException.class,
-                    () -> cuentaService.autenticar("juan@gmail.com", "PasswordErronea123")
-            );
+            BadCredentialsException ex = assertThrows(BadCredentialsException.class,
+                    () -> cuentaService.autenticar("juan@gmail.com", "PasswordErronea123"));
 
-            assertEquals("Credenciales inválidas", exception.getMessage());
+            assertEquals("Credenciales inválidas", ex.getMessage());
         }
 
         @Test
         @DisplayName("3. Identificador inexistente (401 BadCredentialsException)")
         void autenticar_IdentificadorNoExiste_LanzaBadCredentialsException() {
-            when(cuentaRepository.findByIdentificador("noexiste@gmail.com"))
-                    .thenReturn(Optional.empty());
+            when(cuentaRepository.findByIdentificador("noexiste@gmail.com")).thenReturn(Optional.empty());
 
-            BadCredentialsException exception = assertThrows(
-                    BadCredentialsException.class,
-                    () -> cuentaService.autenticar("noexiste@gmail.com", rawPassword)
-            );
+            BadCredentialsException ex = assertThrows(BadCredentialsException.class,
+                    () -> cuentaService.autenticar("noexiste@gmail.com", rawPassword));
 
-            assertEquals("Credenciales inválidas", exception.getMessage());
+            assertEquals("Credenciales inválidas", ex.getMessage());
         }
 
         @Test
         @DisplayName("4. Cuenta bloqueada (LockedException)")
         void autenticar_CuentaBloqueada_LanzaLockedException() {
-            cuentaBase.setEstado(EstadoCuenta.BLOQUEADO);
-            when(cuentaRepository.findByIdentificador("juan@gmail.com"))
-                    .thenReturn(Optional.of(cuentaBase));
+            CuentaEntity entidad = CuentaEntity.builder()
+                    .id(1L)
+                    .identidad(IdentidadEmbeddable.builder().correo("juan@gmail.com").build())
+                    .credenciales(CredencialesEmbeddable.builder().contrasenaHash(bCryptHash).build())
+                    .roles(Set.of(Rol.COMPRADOR))
+                    .estado(EstadoCuenta.BLOQUEADO)
+                    .build();
+            when(cuentaRepository.findByIdentificador("juan@gmail.com")).thenReturn(Optional.of(entidad));
 
-            LockedException exception = assertThrows(
-                    LockedException.class,
-                    () -> cuentaService.autenticar("juan@gmail.com", rawPassword)
-            );
+            LockedException ex = assertThrows(LockedException.class,
+                    () -> cuentaService.autenticar("juan@gmail.com", rawPassword));
 
-            assertEquals("La cuenta se encuentra bloqueada", exception.getMessage());
+            assertEquals("La cuenta se encuentra bloqueada", ex.getMessage());
         }
     }
 }

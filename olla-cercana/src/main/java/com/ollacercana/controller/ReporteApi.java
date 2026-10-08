@@ -1,10 +1,11 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.domain.MotivoReporte;
-import com.ollacercana.dto.ReporteCrearDto;
-import com.ollacercana.dto.ReporteDto;
-import com.ollacercana.security.UsuarioActual;
-import com.ollacercana.service.ReporteService;
+import com.ollacercana.config.security.UsuarioActual;
+import com.ollacercana.controller.dtos.request.ReporteCrearDTO;
+import com.ollacercana.controller.dtos.response.ReporteDTO;
+import com.ollacercana.core.models.enums.MotivoReporte;
+import com.ollacercana.core.services.ReporteService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,10 +27,10 @@ public class ReporteApi {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('COMPRADOR', 'COCINERA')")
-    public ResponseEntity<ReporteDto> crearReporte(
-            @Valid @RequestBody ReporteCrearDto dto) {
+    public ResponseEntity<ReporteDTO> crearReporte(
+            @Valid @RequestBody ReporteCrearDTO dto) {
         
-        ReporteDto creado = reporteService.crear(dto, usuarioActual.getCuentaId());
+        ReporteDTO creado = reporteService.crear(dto, usuarioActual.getCuentaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 

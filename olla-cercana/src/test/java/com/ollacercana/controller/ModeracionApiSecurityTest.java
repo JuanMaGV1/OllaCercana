@@ -1,11 +1,11 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.service.ModeracionService;
-import com.ollacercana.security.UsuarioActual;
-import com.ollacercana.security.JwtService;
-import com.ollacercana.security.CustomUserDetailsService;
-import com.ollacercana.security.CustomAccessDeniedHandler;
-import com.ollacercana.security.CustomAuthenticationEntryPoint;
+import com.ollacercana.core.services.ModeracionService;
+import com.ollacercana.config.security.UsuarioActual;
+import com.ollacercana.config.security.JwtService;
+import com.ollacercana.config.security.CustomUserDetailsService;
+import com.ollacercana.config.security.CustomAccessDeniedHandler;
+import com.ollacercana.config.security.CustomAuthenticationEntryPoint;
 import com.ollacercana.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

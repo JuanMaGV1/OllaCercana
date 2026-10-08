@@ -1,7 +1,10 @@
 package com.ollacercana.observer;
 
-import com.ollacercana.domain.EventoReserva;
-import com.ollacercana.domain.TipoEvento;
+import com.ollacercana.core.models.EventoReserva;
+import com.ollacercana.core.models.enums.TipoEvento;
+import com.ollacercana.core.patterns.observer.ObservadorReserva;
+import com.ollacercana.core.patterns.observer.PublicadorEventosReserva;
+
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -14,15 +17,23 @@ import static org.mockito.Mockito.*;
 class PublicadorEventosReservaTest {
 
     private EventoReserva evento() {
-        return new EventoReserva(UUID.randomUUID(), TipoEvento.RESERVA_CONFIRMADA, UUID.randomUUID(),
-                UUID.randomUUID(), 1L, UUID.randomUUID(), LocalDateTime.now(), Map.of());
+        // ✅ el id de EventoReserva es String, no UUID
+        return new EventoReserva(
+                UUID.randomUUID().toString(),
+                TipoEvento.RESERVA_CONFIRMADA,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                1L,
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                Map.of());
     }
 
     @Test
     void publicar_debeNotificarATodosLosObservadores() {
-        com.ollacercana.observer.ObservadorReserva primero = mock(com.ollacercana.observer.ObservadorReserva.class);
-        com.ollacercana.observer.ObservadorReserva segundo = mock(com.ollacercana.observer.ObservadorReserva.class);
-        com.ollacercana.observer.PublicadorEventosReserva publicador = new com.ollacercana.observer.PublicadorEventosReserva(List.of(primero, segundo));
+        ObservadorReserva primero = mock(ObservadorReserva.class);
+        ObservadorReserva segundo = mock(ObservadorReserva.class);
+        PublicadorEventosReserva publicador = new PublicadorEventosReserva(List.of(primero, segundo));
         EventoReserva evento = evento();
 
         publicador.publicar(evento);
@@ -33,11 +44,11 @@ class PublicadorEventosReservaTest {
 
     @Test
     void publicar_siUnObservadorFalla_losDemasIgualReciben() {
-        com.ollacercana.observer.ObservadorReserva conFallo = mock(com.ollacercana.observer.ObservadorReserva.class);
-        com.ollacercana.observer.ObservadorReserva sano = mock(com.ollacercana.observer.ObservadorReserva.class);
+        ObservadorReserva conFallo = mock(ObservadorReserva.class);
+        ObservadorReserva sano = mock(ObservadorReserva.class);
         EventoReserva evento = evento();
         doThrow(new RuntimeException("push caído")).when(conFallo).notificar(evento);
-        com.ollacercana.observer.PublicadorEventosReserva publicador = new com.ollacercana.observer.PublicadorEventosReserva(List.of(conFallo, sano));
+        PublicadorEventosReserva publicador = new PublicadorEventosReserva(List.of(conFallo, sano));
 
         publicador.publicar(evento);
 

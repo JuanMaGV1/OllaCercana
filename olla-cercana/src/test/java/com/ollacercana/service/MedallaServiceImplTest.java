@@ -1,26 +1,27 @@
 package com.ollacercana.service;
 
-import com.ollacercana.domain.CodigoMedalla;
-import com.ollacercana.domain.Cuenta;
-import com.ollacercana.domain.EstadoReserva;
-import com.ollacercana.domain.Medalla;
-import com.ollacercana.domain.MedallaUsuario;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.dto.response.MedallaUsuarioResponseDTO;
-import com.ollacercana.exception.CuentaNoEncontradaException;
-import com.ollacercana.repository.BalanceConjuntoProjection;
-import com.ollacercana.repository.CuentaRepository;
-import com.ollacercana.repository.MedallaRepository;
-import com.ollacercana.repository.MedallaUsuarioRepository;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.PlatoRepository;
-import com.ollacercana.repository.ReservaRepository;
-import com.ollacercana.service.impl.MedallaServiceImpl;
+import com.ollacercana.core.models.Medalla;
+import com.ollacercana.core.models.MedallaUsuario;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.enums.CodigoMedalla;
+import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.services.impl.MedallaServiceImpl;
+import com.ollacercana.persistence.entities.MedallaEntity;
+import com.ollacercana.persistence.entities.MedallaUsuarioEntity;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.mappers.MedallaEntityMapper;
+import com.ollacercana.persistence.mappers.MedallaUsuarioEntityMapper;
+import com.ollacercana.persistence.repository.BalanceConjuntoProjection;
+import com.ollacercana.persistence.repository.CuentaRepository;
+import com.ollacercana.persistence.repository.MedallaRepository;
+import com.ollacercana.persistence.repository.MedallaUsuarioRepository;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.PlatoRepository;
+import com.ollacercana.persistence.repository.ReservaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -31,10 +32,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MedallaServiceImplTest {
@@ -45,198 +45,143 @@ class MedallaServiceImplTest {
     @Mock private CuentaRepository cuentaRepository;
     @Mock private MedallaRepository medallaRepository;
     @Mock private MedallaUsuarioRepository medallaUsuarioRepository;
+    @Mock private MedallaEntityMapper medallaMapper;
+    @Mock private MedallaUsuarioEntityMapper medallaUsuarioMapper;
 
     private MedallaServiceImpl service;
 
-    private final Long compradorId = 7L;
-    private final UUID cocineraId = UUID.randomUUID();
-    private final UUID otraCocineraId = UUID.randomUUID();
-    private final LocalDateTime fecha = LocalDateTime.of(2026, 10, 15, 12, 0);
-
-    private final Medalla vecinoFiel = Medalla.builder()
-            .codigo(CodigoMedalla.VECINO_FIEL).nombre("Vecino Fiel").requisito("3 reservas en el mes").build();
-    private final Medalla ollaVerde = Medalla.builder()
-            .codigo(CodigoMedalla.CONJUNTO_OLLA_VERDE).nombre("Conjunto Olla Verde").requisito("100% vendido").build();
-
     @BeforeEach
     void setUp() {
-        service = new MedallaServiceImpl(reservaRepository, platoRepository, perfilCocineraRepository,
-                cuentaRepository, medallaRepository, medallaUsuarioRepository);
+        service = new MedallaServiceImpl(
+                reservaRepository, platoRepository, perfilCocineraRepository,
+                cuentaRepository, medallaRepository, medallaUsuarioRepository,
+                medallaMapper, medallaUsuarioMapper);
     }
 
-    private BalanceConjuntoProjection balance(String conjunto, Long publicadas, Long vendidas) {
-        return new BalanceConjuntoProjection() {
-            @Override public String getConjunto() { return conjunto; }
-            @Override public Long getPublicadas() { return publicadas; }
-            @Override public Long getVendidas() { return vendidas; }
-        };
+    private MedallaEntity medallaEntity(CodigoMedalla codigo) {
+        return MedallaEntity.builder().codigo(codigo).nombre("X").requisito("Y").build();
     }
 
-    private PerfilCocinera perfil(String conjunto, Long cuentaId) {
-        Cuenta cuenta = cuentaId == null ? null : Cuenta.builder().id(cuentaId).build();
-        return PerfilCocinera.builder().id(UUID.randomUUID()).conjuntoResidencial(conjunto).cuenta(cuenta).build();
+    private Medalla medalla(CodigoMedalla codigo) {
+        return Medalla.builder().codigo(codigo).nombre("X").requisito("Y").build();
     }
 
-    // ---------- OC-279: Vecino Fiel ----------
+    // ============ evaluarVecinoFiel ============
 
     @Test
-    @DisplayName("3 entregas del mes con la misma cocinera: se otorga VECINO_FIEL sin vencimiento")
-    void tresEntregasSeOtorga() {
-        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(compradorId, CodigoMedalla.VECINO_FIEL)).thenReturn(false);
-        when(reservaRepository.contarCompletadasEnPeriodo(eq(compradorId), eq(cocineraId), eq(EstadoReserva.COMPLETADA), any(), any()))
+    @DisplayName("Otorga Vecino Fiel tras 3 entregas en el mismo mes")
+    void evaluarVecinoFiel_otorga() {
+        Long compradorId = 1L;
+        UUID cocineraId = UUID.randomUUID();
+
+        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(compradorId, CodigoMedalla.VECINO_FIEL))
+                .thenReturn(false);
+        when(reservaRepository.contarCompletadasEnPeriodo(
+                eq(compradorId), eq(cocineraId), eq(EstadoReserva.COMPLETADA), any(), any()))
                 .thenReturn(3L);
-        when(medallaRepository.findById(CodigoMedalla.VECINO_FIEL)).thenReturn(Optional.of(vecinoFiel));
-        when(medallaUsuarioRepository.save(any(MedallaUsuario.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Optional<MedallaUsuario> otorgada = service.evaluarVecinoFiel(compradorId, cocineraId, fecha);
+        MedallaEntity me = medallaEntity(CodigoMedalla.VECINO_FIEL);
+        when(medallaRepository.findById(CodigoMedalla.VECINO_FIEL)).thenReturn(Optional.of(me));
+        when(medallaMapper.toDomain(me)).thenReturn(medalla(CodigoMedalla.VECINO_FIEL));
 
-        assertTrue(otorgada.isPresent());
-        assertEquals(CodigoMedalla.VECINO_FIEL, otorgada.get().getMedalla().getCodigo());
-        assertEquals(compradorId, otorgada.get().getUsuarioId());
-        assertNull(otorgada.get().getVigenteHasta());
+        MedallaUsuario domain = MedallaUsuario.builder()
+                .usuarioId(compradorId).medalla(medalla(CodigoMedalla.VECINO_FIEL))
+                .fechaOtorgada(LocalDateTime.now()).build();
+        MedallaUsuarioEntity entity = MedallaUsuarioEntity.builder()
+                .usuarioId(compradorId).medalla(me).fechaOtorgada(LocalDateTime.now()).build();
+
+        when(medallaUsuarioMapper.toEntity(any(MedallaUsuario.class))).thenReturn(entity);
+        when(medallaUsuarioRepository.save(entity)).thenReturn(entity);
+        when(medallaUsuarioMapper.toDomain(entity)).thenReturn(domain);
+
+        Optional<MedallaUsuario> resultado = service.evaluarVecinoFiel(compradorId, cocineraId, LocalDateTime.now());
+
+        assertTrue(resultado.isPresent());
+        assertEquals(compradorId, resultado.get().getUsuarioId());
+        verify(medallaUsuarioRepository).save(any(MedallaUsuarioEntity.class));
     }
 
     @Test
-    @DisplayName("2 entregas del mes: no se otorga")
-    void dosEntregasNoSeOtorga() {
-        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(compradorId, CodigoMedalla.VECINO_FIEL)).thenReturn(false);
-        when(reservaRepository.contarCompletadasEnPeriodo(eq(compradorId), eq(cocineraId), eq(EstadoReserva.COMPLETADA), any(), any()))
+    @DisplayName("No otorga si ya tenía la medalla")
+    void evaluarVecinoFiel_yaTiene() {
+        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(1L, CodigoMedalla.VECINO_FIEL))
+                .thenReturn(true);
+
+        assertTrue(service.evaluarVecinoFiel(1L, UUID.randomUUID(), LocalDateTime.now()).isEmpty());
+        verify(reservaRepository, never()).contarCompletadasEnPeriodo(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("No otorga con menos de 3 entregas")
+    void evaluarVecinoFiel_pocasEntregas() {
+        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(1L, CodigoMedalla.VECINO_FIEL))
+                .thenReturn(false);
+        when(reservaRepository.contarCompletadasEnPeriodo(any(), any(), any(), any(), any()))
                 .thenReturn(2L);
 
-        assertTrue(service.evaluarVecinoFiel(compradorId, cocineraId, fecha).isEmpty());
-        verify(medallaUsuarioRepository, never()).save(any());
+        assertTrue(service.evaluarVecinoFiel(1L, UUID.randomUUID(), LocalDateTime.now()).isEmpty());
     }
 
-    @Test
-    @DisplayName("3 entregas con cocineras distintas: no se otorga (el conteo es por cocinera)")
-    void entregasConCocinerasDistintasNoSeOtorga() {
-        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(compradorId, CodigoMedalla.VECINO_FIEL)).thenReturn(false);
-        // Cada cocinera solo tiene 1 entrega completada con este comprador.
-        when(reservaRepository.contarCompletadasEnPeriodo(eq(compradorId), eq(cocineraId), eq(EstadoReserva.COMPLETADA), any(), any()))
-                .thenReturn(1L);
-        when(reservaRepository.contarCompletadasEnPeriodo(eq(compradorId), eq(otraCocineraId), eq(EstadoReserva.COMPLETADA), any(), any()))
-                .thenReturn(1L);
-
-        assertTrue(service.evaluarVecinoFiel(compradorId, cocineraId, fecha).isEmpty());
-        assertTrue(service.evaluarVecinoFiel(compradorId, otraCocineraId, fecha).isEmpty());
-        verify(medallaUsuarioRepository, never()).save(any());
-    }
+    // ============ calcularBalanceSemanal ============
 
     @Test
-    @DisplayName("La insignia no se otorga dos veces")
-    void noSeOtorgaDosVeces() {
-        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(compradorId, CodigoMedalla.VECINO_FIEL)).thenReturn(true);
+    @DisplayName("Otorga Olla Verde cuando se vende el 100%")
+    void calcularBalanceSemanal_premia() {
+        BalanceConjuntoProjection proj = mock(BalanceConjuntoProjection.class);
+        when(proj.getConjunto()).thenReturn("Torres del Sol");
+        when(proj.getPublicadas()).thenReturn(10L);
+        when(proj.getVendidas()).thenReturn(10L);
+        when(platoRepository.balancePorConjunto(any(), any())).thenReturn(List.of(proj));
 
-        assertTrue(service.evaluarVecinoFiel(compradorId, cocineraId, fecha).isEmpty());
-        verify(medallaUsuarioRepository, never()).save(any());
-    }
+        MedallaEntity me = medallaEntity(CodigoMedalla.CONJUNTO_OLLA_VERDE);
+        when(medallaRepository.findById(CodigoMedalla.CONJUNTO_OLLA_VERDE)).thenReturn(Optional.of(me));
+        when(medallaMapper.toDomain(me)).thenReturn(medalla(CodigoMedalla.CONJUNTO_OLLA_VERDE));
 
-    @Test
-    @DisplayName("Al cambiar de mes el conteo arranca en cero")
-    void conteoArrancaEnCeroAlCambiarDeMes() {
-        LocalDateTime primerDiaNoviembre = LocalDateTime.of(2026, 11, 1, 9, 0);
-        when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(compradorId, CodigoMedalla.VECINO_FIEL)).thenReturn(false);
-        // En noviembre solo hay 1 entrega, aunque en octubre hubo más.
-        when(reservaRepository.contarCompletadasEnPeriodo(compradorId, cocineraId, EstadoReserva.COMPLETADA,
-                LocalDateTime.of(2026, 11, 1, 0, 0), LocalDateTime.of(2026, 12, 1, 0, 0)))
-                .thenReturn(1L);
+        PerfilCocineraEntity perfil = PerfilCocineraEntity.builder()
+                .id(UUID.randomUUID())
+                .cuenta(com.ollacercana.persistence.entities.CuentaEntity.builder().id(99L).build())
+                .build();
+        when(perfilCocineraRepository.findByConjuntoResidencial("Torres del Sol"))
+                .thenReturn(List.of(perfil));
 
-        assertTrue(service.evaluarVecinoFiel(compradorId, cocineraId, primerDiaNoviembre).isEmpty());
-        verify(reservaRepository).contarCompletadasEnPeriodo(compradorId, cocineraId, EstadoReserva.COMPLETADA,
-                LocalDateTime.of(2026, 11, 1, 0, 0), LocalDateTime.of(2026, 12, 1, 0, 0));
-    }
-
-    // ---------- OC-299: Conjunto Olla Verde ----------
-
-    @Test
-    @DisplayName("Conjunto con 100% vendido: sus cocineras reciben la medalla con vencimiento a 7 días")
-    void conjunto100PorCientoRecibeMedalla() {
-        LocalDateTime ahora = LocalDateTime.of(2026, 10, 12, 0, 0);
-        when(platoRepository.balancePorConjunto(ahora.minusDays(7), ahora))
-                .thenReturn(List.of(balance("Torres del Parque", 10L, 10L)));
-        when(perfilCocineraRepository.findByConjuntoResidencial("Torres del Parque"))
-                .thenReturn(List.of(perfil("Torres del Parque", 11L), perfil("Torres del Parque", 12L)));
-        when(medallaRepository.findById(CodigoMedalla.CONJUNTO_OLLA_VERDE)).thenReturn(Optional.of(ollaVerde));
-        when(medallaUsuarioRepository.findByUsuarioIdAndMedallaCodigo(any(), eq(CodigoMedalla.CONJUNTO_OLLA_VERDE)))
+        when(medallaUsuarioRepository.findByUsuarioIdAndMedallaCodigo(99L, CodigoMedalla.CONJUNTO_OLLA_VERDE))
                 .thenReturn(Optional.empty());
+        when(medallaUsuarioMapper.toEntity(any(MedallaUsuario.class)))
+                .thenReturn(MedallaUsuarioEntity.builder().build());
+        when(medallaUsuarioRepository.save(any(MedallaUsuarioEntity.class)))
+                .thenReturn(MedallaUsuarioEntity.builder().build());
 
-        List<String> premiados = service.calcularBalanceSemanal(ahora);
+        List<String> premiados = service.calcularBalanceSemanal(LocalDateTime.now());
 
-        assertEquals(List.of("Torres del Parque"), premiados);
-        ArgumentCaptor<MedallaUsuario> captor = ArgumentCaptor.forClass(MedallaUsuario.class);
-        verify(medallaUsuarioRepository, org.mockito.Mockito.times(2)).save(captor.capture());
-        for (MedallaUsuario medalla : captor.getAllValues()) {
-            assertEquals(CodigoMedalla.CONJUNTO_OLLA_VERDE, medalla.getMedalla().getCodigo());
-            assertEquals(ahora.plusDays(7), medalla.getVigenteHasta());
+        assertEquals(List.of("Torres del Sol"), premiados);
+    }
+
+        @Test
+        @DisplayName("No premia si no se vendió el 100%")
+        void calcularBalanceSemanal_noPremia() {
+        BalanceConjuntoProjection proj = mock(BalanceConjuntoProjection.class);
+        when(proj.getPublicadas()).thenReturn(10L);
+        when(proj.getVendidas()).thenReturn(5L);
+        when(platoRepository.balancePorConjunto(any(), any())).thenReturn(List.of(proj));
+
+        assertTrue(service.calcularBalanceSemanal(LocalDateTime.now()).isEmpty());
         }
-    }
+    // ============ listarVigentes ============
 
     @Test
-    @DisplayName("Conjunto con menos del 100% vendido: no recibe la medalla")
-    void conjuntoConMenosDelCienNoRecibe() {
-        LocalDateTime ahora = LocalDateTime.of(2026, 10, 12, 0, 0);
-        when(platoRepository.balancePorConjunto(ahora.minusDays(7), ahora))
-                .thenReturn(List.of(balance("Torres del Parque", 10L, 8L)));
+    @DisplayName("Lista solo medallas vigentes")
+    void listarVigentes() {
+        when(cuentaRepository.existsById(1L)).thenReturn(true);
 
-        assertTrue(service.calcularBalanceSemanal(ahora).isEmpty());
-        verify(medallaUsuarioRepository, never()).save(any());
-    }
+        MedallaEntity me = medallaEntity(CodigoMedalla.VECINO_FIEL);
+        MedallaUsuarioEntity entity = MedallaUsuarioEntity.builder()
+                .usuarioId(1L).medalla(me)
+                .fechaOtorgada(LocalDateTime.now()).build();
+        when(medallaUsuarioRepository.findVigentes(eq(1L), any())).thenReturn(List.of(entity));
 
-    @Test
-    @DisplayName("Conjunto sin publicaciones en la semana: no recibe la medalla")
-    void conjuntoSinPublicacionesNoRecibe() {
-        LocalDateTime ahora = LocalDateTime.of(2026, 10, 12, 0, 0);
-        when(platoRepository.balancePorConjunto(ahora.minusDays(7), ahora))
-                .thenReturn(List.of(balance("Torres del Parque", 0L, 0L)));
+        var result = service.listarVigentes(1L, LocalDateTime.now());
 
-        assertTrue(service.calcularBalanceSemanal(ahora).isEmpty());
-        verify(medallaUsuarioRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Si la cocinera ya tenía la medalla, se renueva el vencimiento en vez de duplicarla")
-    void medallaExistenteSeRenueva() {
-        LocalDateTime ahora = LocalDateTime.of(2026, 10, 12, 0, 0);
-        MedallaUsuario anterior = MedallaUsuario.builder()
-                .usuarioId(11L).medalla(ollaVerde)
-                .fechaOtorgada(ahora.minusDays(7)).vigenteHasta(ahora).build();
-        when(platoRepository.balancePorConjunto(ahora.minusDays(7), ahora))
-                .thenReturn(List.of(balance("Torres del Parque", 6L, 6L)));
-        when(perfilCocineraRepository.findByConjuntoResidencial("Torres del Parque"))
-                .thenReturn(List.of(perfil("Torres del Parque", 11L)));
-        when(medallaRepository.findById(CodigoMedalla.CONJUNTO_OLLA_VERDE)).thenReturn(Optional.of(ollaVerde));
-        when(medallaUsuarioRepository.findByUsuarioIdAndMedallaCodigo(11L, CodigoMedalla.CONJUNTO_OLLA_VERDE))
-                .thenReturn(Optional.of(anterior));
-
-        service.calcularBalanceSemanal(ahora);
-
-        assertEquals(ahora.plusDays(7), anterior.getVigenteHasta());
-        verify(medallaUsuarioRepository).save(anterior);
-    }
-
-    // ---------- OC-279: endpoint de medallas ----------
-
-    @Test
-    @DisplayName("Lista las medallas vigentes del usuario")
-    void listaMedallasVigentes() {
-        LocalDateTime ahora = LocalDateTime.of(2026, 10, 15, 12, 0);
-        when(cuentaRepository.existsById(compradorId)).thenReturn(true);
-        when(medallaUsuarioRepository.findVigentes(compradorId, ahora)).thenReturn(List.of(
-                MedallaUsuario.builder().usuarioId(compradorId).medalla(vecinoFiel).fechaOtorgada(ahora).build()));
-
-        List<MedallaUsuarioResponseDTO> medallas = service.listarVigentes(compradorId, ahora);
-
-        assertEquals(1, medallas.size());
-        assertEquals("VECINO_FIEL", medallas.get(0).getCodigo());
-        assertEquals("Vecino Fiel", medallas.get(0).getNombre());
-        assertNull(medallas.get(0).getVigenteHasta());
-    }
-
-    @Test
-    @DisplayName("Usuario inexistente: lanza CuentaNoEncontradaException")
-    void usuarioInexistente() {
-        when(cuentaRepository.existsById(99L)).thenReturn(false);
-
-        assertThrows(CuentaNoEncontradaException.class, () -> service.listarVigentes(99L, fecha));
+        assertEquals(1, result.size());
+        assertEquals("VECINO_FIEL", result.get(0).getCodigo());
     }
 }

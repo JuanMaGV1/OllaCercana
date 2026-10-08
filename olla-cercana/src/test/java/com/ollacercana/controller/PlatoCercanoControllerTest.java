@@ -1,8 +1,13 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.domain.*;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.repository.PlatoRepository;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.RestriccionAlimentaria;
+import com.ollacercana.core.models.enums.TipoComida;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.entities.PlatoEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.PlatoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,31 +31,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class PlatoCercanoControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private PlatoRepository platoRepository;
-
-    @Autowired
-    private PerfilCocineraRepository perfilRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private PlatoRepository platoRepository;
+    @Autowired private PerfilCocineraRepository perfilRepository;
 
     @BeforeEach
     void setUp() {
         platoRepository.deleteAll();
         perfilRepository.deleteAll();
 
-                                                       
-        PerfilCocinera perfil = PerfilCocinera.builder()
+        // ✅ Entity JPA (no dominio)
+        PerfilCocineraEntity perfil = PerfilCocineraEntity.builder()
                 .conjuntoResidencial("Torres del Sol")
                 .numeroNequi("3001234567")
                 .numeroDaviplata("3007654321")
                 .verificada(true)
+                .pausada(false)
+                .esDestacada(false)
+                .promedioCalificacion(0.0)
+                .resenasPositivas(0)
                 .build();
-        PerfilCocinera guardado = perfilRepository.save(perfil);
+        PerfilCocineraEntity guardado = perfilRepository.save(perfil);
 
-                                                 
-        Plato plato = Plato.builder()
+        PlatoEntity plato = PlatoEntity.builder()
                 .id(UUID.randomUUID())
                 .cocineraId(guardado.getId())
                 .nombre("Sancocho de Pollo")
@@ -64,7 +67,7 @@ class PlatoCercanoControllerTest {
                 .estado(EstadoPlato.ACTIVO)
                 .fechaPublicacion(LocalDateTime.now())
                 .fechaExpiracion(LocalDateTime.now().plusHours(3))
-                .puntoEntrega("Torre 3 Apto 502, Calle 123 #45-67")                                         
+                .puntoEntrega("Torre 3 Apto 502, Calle 123 #45-67")
                 .latitud(4.6789)
                 .longitud(-74.0567)
                 .build();
@@ -75,19 +78,19 @@ class PlatoCercanoControllerTest {
     @DisplayName("Platos Cercanos - Verifica DTO y no exposición de datos sensibles (RN-05)")
     void listarCercanos_NoDebeExponerDireccionCelularNiApto() throws Exception {
         MvcResult result = mockMvc.perform(get("/api/v1/platos/cercanos")
-                        .param("latitud", "4.6790")
-                        .param("longitud", "-74.0560")
+                        .param("lat", "4.6790")           // ← lat, no latitud
+                        .param("lng", "-74.0560")         // ← lng, no longitud
+                        .param("radioMetros", "1000")     // ← opcional pero recomendado
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nombre").value("Sancocho de Pollo"))
-                .andExpect(jsonPath("$[0].conjunto").value("Torres del Sol"))
-                .andExpect(jsonPath("$[0].distanciaAproximada").exists())
-                .andExpect(jsonPath("$[0].porcionesDisponibles").value(4))
+                .andExpect(jsonPath("$.contenido[0].nombre").value("Sancocho de Pollo"))   // ← .contenido[0]
+                .andExpect(jsonPath("$.contenido[0].conjunto").value("Torres del Sol"))    // ← .contenido[0]
+                .andExpect(jsonPath("$.contenido[0].distanciaAproximada").exists())
+                .andExpect(jsonPath("$.contenido[0].porcionesDisponibles").value(4))
                 .andReturn();
 
         String jsonResponse = result.getResponse().getContentAsString().toLowerCase();
 
-                                                                                     
         assertFalse(jsonResponse.contains("puntoentrega"), "No debe contener 'puntoEntrega'");
         assertFalse(jsonResponse.contains("torre 3"), "No debe exponer la torre");
         assertFalse(jsonResponse.contains("apto"), "No debe exponer el número de apartamento");

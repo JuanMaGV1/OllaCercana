@@ -1,20 +1,21 @@
 package com.ollacercana.controller;
 
+import com.ollacercana.config.security.UsuarioActual;
 import com.ollacercana.controller.docs.ReservaApi;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Plato;
-import com.ollacercana.domain.Reserva;
-import com.ollacercana.domain.Rol;
-import com.ollacercana.dto.request.CierreTransaccionRequestDTO;
-import com.ollacercana.dto.request.DecisionReservaRequestDTO;
-import com.ollacercana.dto.request.ReservaRequestDTO;
-import com.ollacercana.dto.response.ReservaResponseDTO;
-import com.ollacercana.exception.AccesoDenegadoException;
-import com.ollacercana.mapper.ReservaMapper;
-import com.ollacercana.repository.PerfilCocineraRepository;
-import com.ollacercana.security.UsuarioActual;
-import com.ollacercana.service.PlatoService;
-import com.ollacercana.service.ReservaService;
+import com.ollacercana.controller.dtos.request.CierreTransaccionRequestDTO;
+import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
+import com.ollacercana.controller.dtos.request.ReservaRequestDTO;
+import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
+import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
+import com.ollacercana.controller.mappers.ReservaMapper;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.Reserva;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.services.PlatoService;
+import com.ollacercana.core.services.ReservaService;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -45,8 +46,9 @@ public class ReservaController implements ReservaApi {
         Reserva guardada = reservaService.crear(compradorId, reserva);
 
         Plato plato = platoService.obtenerPorId(guardada.getPlatoId());
+
         String conjunto = perfilCocineraRepository.findById(guardada.getCocineraId())
-                .map(PerfilCocinera::getConjuntoResidencial)
+                .map(perfil -> perfil.getConjuntoResidencial())
                 .orElse("Conjunto Residencial");
 
         ReservaResponseDTO response = reservaMapper.toResponseDTO(guardada, plato.getNombre(), conjunto);

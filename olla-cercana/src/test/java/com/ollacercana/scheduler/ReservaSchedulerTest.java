@@ -1,11 +1,12 @@
 package com.ollacercana.scheduler;
 
-import com.ollacercana.service.ReservaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ollacercana.core.services.ReservaService;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +23,7 @@ class ReservaSchedulerTest {
     private ReservaService reservaService;
 
     @InjectMocks
-    private com.ollacercana.scheduler.ReservaScheduler scheduler;
+    private com.ollacercana.config.scheduler.ReservaScheduler scheduler;
 
     @Test
     void expirarReservasVencidas_debeExpirarCadaUnaAunqueUnaFalle() {

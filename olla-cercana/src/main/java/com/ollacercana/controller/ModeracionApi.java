@@ -1,11 +1,12 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.domain.EstadoReporte;
-import com.ollacercana.domain.PerfilCocinera;
-import com.ollacercana.domain.Reporte;
-import com.ollacercana.dto.EjecutarDecisionDto;
-import com.ollacercana.security.UsuarioActual;
-import com.ollacercana.service.ModeracionService;
+import com.ollacercana.config.security.UsuarioActual;
+import com.ollacercana.controller.dtos.request.EjecutarDecisionDTO;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.Reporte;
+import com.ollacercana.core.models.enums.EstadoReporte;
+import com.ollacercana.core.services.ModeracionService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,7 +42,7 @@ public class ModeracionApi {
     @PostMapping("/reportes/{reporteId}/decision")
     public ResponseEntity<Void> ejecutarDecision(
             @PathVariable UUID reporteId,
-            @Valid @RequestBody EjecutarDecisionDto dto) {
+            @Valid @RequestBody EjecutarDecisionDTO dto) {
         moderacionService.resolver(reporteId, dto, usuarioActual.getCuentaId());
         return ResponseEntity.ok().build();
     }

@@ -1,8 +1,5 @@
 package com.ollacercana.config;
 
-import com.ollacercana.security.CustomAccessDeniedHandler;
-import com.ollacercana.security.CustomAuthenticationEntryPoint;
-import com.ollacercana.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +17,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.ollacercana.config.security.CustomAccessDeniedHandler;
+import com.ollacercana.config.security.CustomAuthenticationEntryPoint;
+import com.ollacercana.config.security.JwtAuthenticationFilter;
 
 import java.util.List;
 

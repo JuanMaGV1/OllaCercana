@@ -1,11 +1,12 @@
 package com.ollacercana.dto.response;
 
-import com.ollacercana.domain.EstadoPorciones;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.domain.EstadoPlato;
-import com.ollacercana.domain.Plato;
+import com.ollacercana.controller.dtos.response.PorcionesActualizadasResponseDTO;
+import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.EstadoPorciones;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

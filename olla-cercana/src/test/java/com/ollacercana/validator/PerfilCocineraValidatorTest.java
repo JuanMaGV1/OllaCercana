@@ -1,9 +1,15 @@
 package com.ollacercana.validator;
 
-import com.ollacercana.domain.*;
-import com.ollacercana.exception.ConflictoException;
-import com.ollacercana.exception.ReglaDeNegocioException;
-import com.ollacercana.repository.PerfilCocineraRepository;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.core.models.Cuenta;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.validators.PerfilCocineraValidator;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,11 +26,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PerfilCocineraValidatorTest {
 
-    @Mock
-    private PerfilCocineraRepository perfilCocineraRepository;
-
-    @InjectMocks
-    private PerfilCocineraValidator validator;
+    @Mock private PerfilCocineraRepository perfilCocineraRepository;
+    @InjectMocks private PerfilCocineraValidator validator;
 
     private Cuenta cuenta;
     private PerfilCocinera perfil;
@@ -67,8 +70,9 @@ class PerfilCocineraValidatorTest {
     @Test
     @DisplayName("validarParaCrear: Cuenta ya tiene perfil asociado lanza ConflictoException")
     void validarParaCrear_perfilYaExistente_lanzaConflicto() {
+        // ✅ el repo devuelve PerfilCocineraEntity
         when(perfilCocineraRepository.findByCuentaId(cuenta.getId()))
-                .thenReturn(Optional.of(new PerfilCocinera()));
+                .thenReturn(Optional.of(PerfilCocineraEntity.builder().build()));
 
         assertThrows(ConflictoException.class, () -> validator.validarParaCrear(perfil, cuenta));
     }

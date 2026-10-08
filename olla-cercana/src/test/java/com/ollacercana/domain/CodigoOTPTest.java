@@ -1,5 +1,6 @@
 package com.ollacercana.domain;
 
+import com.ollacercana.core.models.CodigoOTP;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
