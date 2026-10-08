@@ -68,4 +68,17 @@ public interface PlatoRepository extends JpaRepository<PlatoEntity, UUID> {
         nativeQuery = true)
 List<BalanceConjuntoProjection> balancePorConjunto(@Param("desde") LocalDateTime desde,
                                                    @Param("hasta") LocalDateTime hasta);
+
+    @Query("""
+        SELECT p FROM PlatoEntity p
+        WHERE p.estado = :estado
+        AND p.fechaExpiracion > :ahora
+        AND (p.porcionesTotales - COALESCE(p.porcionesComprometidas, 0)) > 0
+        AND p.latitud IS NOT NULL
+        AND p.longitud IS NOT NULL
+        """)
+    List<PlatoEntity> findOfertasActivasConUbicacion(
+            @Param("estado") EstadoPlato estado,
+            @Param("ahora") LocalDateTime ahora
+    );
 }
