@@ -1,6 +1,6 @@
 package com.ollacercana.controller.handlers.exception;
 
-// Se lanza al intentar modificar un plato cuyo estado ya es EXPIRADO (RN-29).
+                                                                              
 public class PlatoExpiradoException extends BusinessRuleException {
 
     public PlatoExpiradoException() {

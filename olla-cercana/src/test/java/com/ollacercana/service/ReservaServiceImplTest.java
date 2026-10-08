@@ -183,6 +183,7 @@ class ReservaServiceImplTest {
                 .porcionesComprometidas(comprometidas)
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(estado)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .version(0)
                 .build();
     }

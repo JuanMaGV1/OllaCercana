@@ -39,7 +39,7 @@ class FiltrosPlatoTest {
     @Test
     @DisplayName("FiltroDistanciaMaxima: Distancia dentro del rango retorna true, fuera retorna false")
     void filtroDistanciaMaxima_distancias() {
-        // Coordenadas cercanas (~500m) y lejanas (>10km) en Bogotá
+                                                                   
         Plato platoCercano = Plato.builder().latitud(4.6800).longitud(-74.0550).build();
 
         FiltroDistanciaMaxima filtro = new FiltroDistanciaMaxima(4.6789, -74.0567, 1000.0);
@@ -69,7 +69,7 @@ class FiltrosPlatoTest {
     @DisplayName("FiltroCompuestoPlato: allMatch AND y agregar null seguro")
     void filtroCompuestoPlato_evaluacion() {
         FiltroCompuestoPlato compuesto = new FiltroCompuestoPlato();
-        compuesto.agregar(null); // No debe fallar
+        compuesto.agregar(null);                  
 
         Plato plato = Plato.builder()
                 .tipoComida(TipoComida.ALMUERZO)

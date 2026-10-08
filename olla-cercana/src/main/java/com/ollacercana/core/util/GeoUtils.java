@@ -9,9 +9,9 @@ public final class GeoUtils {
 
     private GeoUtils() {}
 
-    /**
-     * Calcula la distancia en metros entre dos coordenadas geográficas usando la fórmula de Haversine.
-     */
+       
+                                                                                                       
+       
     public static double calcularDistanciaEnMetros(double lat1, double lon1, double lat2, double lon2) {
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
@@ -24,17 +24,17 @@ public final class GeoUtils {
         return RADIO_TIERRA_METROS * c;
     }
 
-    /**
-     * RN-05: Redondea la distancia a múltiplos de 100 metros para no revelar la ubicación exacta.
-     * Ejemplo: 850m -> 900m, 840m -> 800m.
-     */
+       
+                                                                                                  
+                                           
+       
     public static int redondearDistanciaMultiplo100(double distanciaMetros) {
         return (int) (Math.round(distanciaMetros / 100.0) * 100);
     }
 
-    /**
-     * Formatea el tiempo restante hasta la expiración en formato legible (ej: "3h 20m").
-     */
+       
+                                                                                         
+       
     public static String formatearTiempoRestante(LocalDateTime fechaExpiracion) {
         if (fechaExpiracion == null) return "0m";
         LocalDateTime ahora = LocalDateTime.now();

@@ -3,8 +3,10 @@ package com.ollacercana.validator;
 import com.ollacercana.controller.handlers.exception.AutoReservaException;
 import com.ollacercana.controller.handlers.exception.LimiteReservasPendientesException;
 import com.ollacercana.controller.handlers.exception.PorcionesInsuficientesException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.validators.ReservaValidator;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
@@ -20,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,6 +46,8 @@ class ReservaValidatorTest {
                 .cocineraId(COCINERA_ID)
                 .porcionesTotales(5)
                 .porcionesComprometidas(1)
+                .estado(EstadoPlato.ACTIVO)
+                .fechaExpiracion(LocalDateTime.now().plusHours(1))
                 .build();
     }
 
@@ -88,5 +93,12 @@ class ReservaValidatorTest {
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(1L);
 
         assertDoesNotThrow(() -> validator.validarParaCrear(COMPRADOR_ID, plato, 2));
+    }
+
+    @Test
+    @DisplayName("validarParaCrear: un plato oculto no se puede reservar")
+    void validarParaCrear_platoOculto_rechazaReserva() {
+        plato.setEstado(EstadoPlato.OCULTO);
+        assertThrows(ReglaDeNegocioException.class, () -> validator.validarParaCrear(COMPRADOR_ID, plato, 1));
     }
 }

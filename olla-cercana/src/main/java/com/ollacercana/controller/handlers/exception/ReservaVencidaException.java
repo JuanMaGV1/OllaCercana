@@ -1,6 +1,6 @@
 package com.ollacercana.controller.handlers.exception;
 
-// RN-04: la cocinera tiene 10 minutos para responder. Pasado ese tiempo la reserva expira sola.
+                                                                                                
 public class ReservaVencidaException extends ConflictoException {
     public ReservaVencidaException() {
         super("El tiempo para responder esta solicitud ya venció (RN-04); "

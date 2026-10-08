@@ -5,9 +5,9 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/**
- * HU-23 / OC-155: confirmación de entrega y pago para cerrar la transacción.
- */
+   
+                                                                             
+   
 @Schema(description = "Confirmación de entrega y pago contra entrega para cerrar la transacción (HU-23)")
 public record CierreTransaccionRequestDTO(
 

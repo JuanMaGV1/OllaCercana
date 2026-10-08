@@ -8,9 +8,9 @@ import com.ollacercana.core.models.EventoReserva;
 
 import java.util.List;
 
-/**
- * Sujeto del patrón Observer
- */
+   
+                             
+   
 
 @Component
 public class PublicadorEventosReserva {

@@ -18,7 +18,7 @@ public class FiltroCompuestoPlato implements FiltroPlato {
 
     @Override
     public boolean cumple(Plato plato) {
-        // Debe cumplir con todos los filtros añadidos (Operación lógica AND)
+                                                                             
         return filtros.stream().allMatch(f -> f.cumple(plato));
     }
 }
