@@ -8,6 +8,8 @@ import com.ollacercana.core.models.PerfilCocinera;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.ReservaRepository;
@@ -26,6 +28,10 @@ public class ReservaValidator {
     private final PerfilCocineraRepository perfilCocineraRepository;
 
     public void validarParaCrear(Long compradorId, Plato plato, int cantidadPorciones) {
+        validarParaCrear(compradorId, plato, cantidadPorciones, null);
+    }
+
+    public void validarParaCrear(Long compradorId, Plato plato, int cantidadPorciones, MedioPago medioPago) {
 
         // ✅ RN: el plato debe estar ACTIVO (rechaza OCULTO, AGOTADO, EXPIRADO)
         if (plato.getEstado() != EstadoPlato.ACTIVO) {
@@ -55,6 +61,17 @@ public class ReservaValidator {
         // RN-03: porciones suficientes
         if (plato.getPorcionesDisponibles() < cantidadPorciones) {
             throw new PorcionesInsuficientesException(plato.getPorcionesDisponibles());
+        }
+
+        // OC-255: el medio de pago es opcional; si se indica, debe ser aceptado por la cocinera
+        if (medioPago != null) {
+            boolean aceptado = perfilCocineraRepository.findById(plato.getCocineraId())
+                    .map(PerfilCocineraEntity::getMediosPago)
+                    .map(medios -> medios.contains(medioPago))
+                    .orElse(false);
+            if (!aceptado) {
+                throw new MedioPagoNoAceptadoException(medioPago);
+            }
         }
     }
 }

@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/platos/cercanos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/platos/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/perfiles/destacadas").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/cocineras/mapa").permitAll()
 
                                                             
                         .anyRequest().authenticated()

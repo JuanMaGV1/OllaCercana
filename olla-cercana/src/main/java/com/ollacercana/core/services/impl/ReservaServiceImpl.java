@@ -90,7 +90,7 @@ public class ReservaServiceImpl implements ReservaService {
                 .orElseThrow(() -> new PlatoNoEncontradoException(reserva.getPlatoId()));
         Plato plato = platoEntityMapper.toDomain(platoEntity);
 
-        if (validator != null) validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones());
+        if (validator != null) validator.validarParaCrear(compradorId, plato, reserva.getCantidadPorciones(), reserva.getMedioPago());
 
         int disponiblesAntes = plato.getPorcionesDisponibles();
         plato.comprometerPorciones(reserva.getCantidadPorciones());
