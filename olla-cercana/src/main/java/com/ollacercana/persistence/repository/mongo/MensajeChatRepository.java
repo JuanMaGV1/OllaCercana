@@ -19,4 +19,6 @@ public interface MensajeChatRepository extends MongoRepository<MensajeChatDocume
     List<MensajeChatDocument> findByReservaIdAndLeidoFalse(UUID reservaId);
 
     long countByReservaIdAndLeidoFalseAndAutorRolNot(UUID reservaId, Rol rol);
+
+    long deleteByReservaId(UUID reservaId);
 }
