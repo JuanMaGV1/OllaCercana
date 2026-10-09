@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Tag(name = "Cocineras", description = "Resumen de historial e ingresos referenciales de la cocinera (HU-20)")
 @RequestMapping("/api/v1/cocineras")
@@ -73,20 +72,5 @@ public interface CocineraApi {
     ResponseEntity<HistorialPaginadoResponseDTO> obtenerHistorial(
             @Parameter(description = "Número de página, desde 0") @RequestParam(defaultValue = "0") int pagina,
             @Parameter(description = "Tamaño de página (1 a 50)") @RequestParam(defaultValue = "10") int tamanio
-    );
-
-    @Operation(
-            summary = "Buscar cocineras con oferta activa en mapa por zona (OC-233)",
-            description = "Retorna lista de cocineras en el área con coordenadas ofuscadas (OC-235), foto, precio y distancia."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista de cocineras en la zona"),
-            @ApiResponse(responseCode = "400", description = "Parámetros inválidos")
-    })
-    @GetMapping("/mapa")
-    ResponseEntity<List<com.ollacercana.controller.dtos.response.CocineraMapaResponseDTO>> buscarEnMapa(
-            @Parameter(description = "Latitud del centro de búsqueda") @RequestParam Double latitud,
-            @Parameter(description = "Longitud del centro de búsqueda") @RequestParam Double longitud,
-            @Parameter(description = "Radio en metros (opcional, default 2000)") @RequestParam(required = false, defaultValue = "2000") Double radio
     );
 }
