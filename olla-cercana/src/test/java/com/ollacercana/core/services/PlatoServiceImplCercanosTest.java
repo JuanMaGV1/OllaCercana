@@ -1,4 +1,4 @@
-package com.ollacercana.service;
+package com.ollacercana.core.services;
 
 import com.ollacercana.controller.dtos.request.ConsultaPlatosRequest;
 import com.ollacercana.controller.dtos.response.PaginaResponseDTO;

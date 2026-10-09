@@ -1,5 +1,5 @@
 // test/.../service/PerfilCocineraQueryServiceImplTest.java
-package com.ollacercana.service;
+package com.ollacercana.core.services;
 
 import com.ollacercana.controller.handlers.exception.CocineraNoEncontradaException;
 import com.ollacercana.core.services.impl.PerfilCocineraQueryServiceImpl;

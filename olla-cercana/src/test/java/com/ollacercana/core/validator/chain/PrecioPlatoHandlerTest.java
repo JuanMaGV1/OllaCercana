@@ -1,4 +1,4 @@
-package com.ollacercana.validator.chain;
+package com.ollacercana.core.validator.chain;
 
 import com.ollacercana.controller.handlers.exception.PrecioFueraDeRangoException;
 import com.ollacercana.controller.handlers.exception.PrecioNoMultiploException;

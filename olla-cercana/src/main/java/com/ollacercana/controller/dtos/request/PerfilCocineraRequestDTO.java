@@ -1,5 +1,6 @@
 package com.ollacercana.controller.dtos.request;
 
+import com.ollacercana.core.models.enums.MedioPago;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -11,8 +12,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-
-import com.ollacercana.core.models.enums.MedioPago;
 
 @Data
 @NoArgsConstructor
@@ -35,7 +34,10 @@ public class PerfilCocineraRequestDTO {
     private List<String> especialidades;
 
     @NotEmpty(message = "Debe registrar al menos un medio de pago")
-    private List<MedioPago> mediosPago;
+    @Schema(description = "Métodos de pago aceptados por la cocinera. Valores permitidos: NEQUI, DAVIPLATA, EFECTIVO, TRANSFERENCIA_BANCARIA",
+            allowableValues = {"NEQUI", "DAVIPLATA", "EFECTIVO", "TRANSFERENCIA_BANCARIA"},
+            example = "[\"NEQUI\", \"EFECTIVO\"]")
+    private List<MedioPago> mediosPago;   // ← este campo es el que faltaba
 
     private String numeroNequi;
     private String numeroDaviplata;

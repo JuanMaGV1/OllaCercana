@@ -17,6 +17,8 @@ public interface PlatoService {
 
     Plato obtenerPorId(UUID id);
 
+    List<com.ollacercana.core.models.enums.MedioPago> obtenerMediosPago(UUID platoId);
+    
     Plato ajustarDisponibilidad(UUID platoId, TipoAjustePorciones tipo, Integer cantidad, Integer version);
 
     void eliminar(UUID id);

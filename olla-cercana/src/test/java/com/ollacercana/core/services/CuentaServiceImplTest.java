@@ -1,4 +1,4 @@
-package com.ollacercana.service;
+package com.ollacercana.core.services;
 
 import com.ollacercana.controller.handlers.exception.ConflictoException;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;

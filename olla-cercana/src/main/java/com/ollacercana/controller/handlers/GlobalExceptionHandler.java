@@ -105,9 +105,23 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponseDTO> handleCuerpoIlegible(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, "El cuerpo de la solicitud no es válido: revisa el formato JSON y los valores permitidos", request.getRequestURI());
+        String mensaje = "El cuerpo de la solicitud no es válido: revisa el formato JSON y los valores permitidos";
+        if (ex.getCause() instanceof com.fasterxml.jackson.databind.exc.InvalidFormatException ifx) {
+            if (ifx.getTargetType() != null && ifx.getTargetType().isEnum()) {
+                String campo = ifx.getPath().isEmpty() ? "campo" : ifx.getPath().get(ifx.getPath().size() - 1).getFieldName();
+                Object[] constantes = ifx.getTargetType().getEnumConstants();
+                mensaje = String.format("Valor inválido '%s' para el campo '%s'. Valores permitidos: %s",
+                        ifx.getValue(), campo, java.util.Arrays.toString(constantes));
+            }
+        }
+        return buildResponse(HttpStatus.BAD_REQUEST, mensaje, request.getRequestURI());
     }
 
+    @ExceptionHandler(MedioPagoNoAceptadoException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMedioPagoNoAceptado(MedioPagoNoAceptadoException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    }
+    
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponseDTO> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());

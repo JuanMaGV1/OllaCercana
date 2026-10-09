@@ -1,4 +1,4 @@
-package com.ollacercana.validator;
+package com.ollacercana.core.validator;
 
 import com.ollacercana.controller.handlers.exception.ConflictoException;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;

@@ -74,6 +74,18 @@ public class PlatoServiceImpl implements PlatoService {
     }
 
     @Override
+    public List<com.ollacercana.core.models.enums.MedioPago> obtenerMediosPago(UUID platoId) {
+        Plato plato = obtenerPorId(platoId);
+        if (plato.getCocineraId() == null || perfilCocineraRepository == null) {
+            return List.of();
+        }
+        return perfilCocineraRepository.findById(plato.getCocineraId())
+                .map(com.ollacercana.persistence.entities.PerfilCocineraEntity::getMediosPago)
+                .filter(medios -> medios != null)
+                .orElse(List.of());
+    }
+
+    @Override
     @Transactional
     public Plato ajustarDisponibilidad(UUID platoId, TipoAjustePorciones tipo, Integer cantidad, Integer version) {
         Plato plato = obtenerPorId(platoId);

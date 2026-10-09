@@ -50,6 +50,12 @@ class PlatoControllerTest {
                     "INSERT INTO perfiles_cocinera (id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     COCINERA_ID, "Torres del Parque", true, false, false, 0.0, 0);
         }
+        Integer countMedios = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM perfil_medios_pago WHERE perfil_id = ?", Integer.class, COCINERA_ID);
+        if (countMedios == null || countMedios == 0) {
+            jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'NEQUI')", COCINERA_ID);
+            jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'EFECTIVO')", COCINERA_ID);
+        }
     }
     @BeforeEach
 void setUp() {
@@ -135,7 +141,10 @@ void setUp() {
 
         mockMvc.perform(get("/api/v1/platos/{id}", id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Ajiaco"));
+                .andExpect(jsonPath("$.nombre").value("Ajiaco"))
+                .andExpect(jsonPath("$.mediosPago").isArray())
+                .andExpect(jsonPath("$.mediosPago[0]").value("NEQUI"))
+                .andExpect(jsonPath("$.notaPago").value("OllaCercana no procesa dinero. El pago se realiza contra entrega"));
     }
 
     @Test

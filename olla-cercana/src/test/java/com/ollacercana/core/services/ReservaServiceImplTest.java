@@ -1,4 +1,4 @@
-package com.ollacercana.service;
+package com.ollacercana.core.services;
 
 import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
 import com.ollacercana.controller.handlers.exception.*;
@@ -43,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -280,7 +281,8 @@ class ReservaServiceImplTest {
         registrarPlato(plato);
 
         doThrow(new PorcionesInsuficientesException(0))
-                .when(validator).validarParaCrear(eq(COMPRADOR_ID), any(Plato.class), eq(1));
+                .when(validator).validarParaCrear(
+                        eq(COMPRADOR_ID), any(Plato.class), eq(1), nullable(MedioPago.class));
 
         Reserva reserva = Reserva.builder().platoId(plato.getId()).cantidadPorciones(1).build();
 
@@ -295,7 +297,8 @@ class ReservaServiceImplTest {
         registrarPlato(plato);
 
         doThrow(new AutoReservaException())
-                .when(validator).validarParaCrear(eq(COMPRADOR_ID), any(Plato.class), anyInt());
+                .when(validator).validarParaCrear(
+                        eq(COMPRADOR_ID), any(Plato.class), anyInt(), nullable(MedioPago.class));
 
         Reserva reserva = Reserva.builder().platoId(plato.getId()).cantidadPorciones(1).build();
 
@@ -310,7 +313,8 @@ class ReservaServiceImplTest {
         registrarPlato(plato);
 
         doThrow(new LimiteReservasPendientesException())
-                .when(validator).validarParaCrear(eq(COMPRADOR_ID), any(Plato.class), anyInt());
+                .when(validator).validarParaCrear(
+                        eq(COMPRADOR_ID), any(Plato.class), anyInt(), nullable(MedioPago.class));
 
         Reserva reserva = Reserva.builder().platoId(plato.getId()).cantidadPorciones(1).build();
 

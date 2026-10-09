@@ -5,6 +5,8 @@ import com.ollacercana.controller.dtos.response.PerfilCocineraResponseDTO;
 import com.ollacercana.core.models.PerfilCocinera;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class PerfilCocineraMapper {
 
@@ -18,8 +20,6 @@ public class PerfilCocineraMapper {
         perfil.setMediosPago(request.getMediosPago());
         perfil.setNumeroNequi(request.getNumeroNequi());
         perfil.setNumeroDaviplata(request.getNumeroDaviplata());
-        // id, promedioCalificacion, resenasPositivas, esDestacada, verificada, pausada,
-        // fechaReactivacion y cuenta se asignan en el service o en el validator.
         return perfil;
     }
 
@@ -46,8 +46,8 @@ public class PerfilCocineraMapper {
                 .build();
     }
 
-    public java.util.List<PerfilCocineraResponseDTO> toResponseList(java.util.List<PerfilCocinera> perfiles) {
-    if (perfiles == null) return java.util.List.of();
-    return perfiles.stream().map(this::toResponseDTO).toList();
-}
+    public List<PerfilCocineraResponseDTO> toResponseList(List<PerfilCocinera> perfiles) {
+        if (perfiles == null) return List.of();
+        return perfiles.stream().map(this::toResponseDTO).toList();
+    }
 }

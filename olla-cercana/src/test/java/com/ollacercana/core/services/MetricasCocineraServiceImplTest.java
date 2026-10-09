@@ -1,4 +1,4 @@
-package com.ollacercana.service;
+package com.ollacercana.core.services;
 
 import com.ollacercana.controller.dtos.response.HistorialPaginadoResponseDTO;
 import com.ollacercana.controller.dtos.response.MetricasCocineraResponseDTO;

@@ -1,4 +1,4 @@
-package com.ollacercana.service;
+package com.ollacercana.core.services;
 
 import com.ollacercana.core.models.Medalla;
 import com.ollacercana.core.models.MedallaUsuario;

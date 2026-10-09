@@ -201,6 +201,41 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("OC-252: Deserializacion de enum invalido responde 400 y lista los valores permitidos")
+    void cuerpoIlegible_conEnumInvalido_Retorna400YListaValoresPermitidos(){
+        // Arrange
+        com.fasterxml.jackson.databind.JsonMappingException.Reference ref =
+                new com.fasterxml.jackson.databind.JsonMappingException.Reference(null, "medioPago");
+        var ifx = com.fasterxml.jackson.databind.exc.InvalidFormatException.from(
+                null, "Cannot deserialize value", "BITCOIN", com.ollacercana.core.models.enums.MedioPago.class);
+        ifx.prependPath(ref);
+        var ex = new HttpMessageNotReadableException("JSON parse error", ifx, new MockHttpInputMessage(new byte[0]));
+
+        // Act
+        ResponseEntity<ErrorResponseDTO> resp = handler.handleCuerpoIlegible(ex, request);
+
+        // Assert
+        assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        assertNotNull(resp.getBody());
+        assertEquals(400, resp.getBody().getStatus());
+        String msg = resp.getBody().getMessage();
+        assertTrue(msg.contains("Valor inválido 'BITCOIN' para el campo 'medioPago'"));
+        assertTrue(msg.contains("Valores permitidos: [NEQUI, DAVIPLATA, EFECTIVO, TRANSFERENCIA_BANCARIA]"));
+    }
+
+    @Test
+    @DisplayName("OC-255: MedioPagoNoAceptadoException responde 400 Bad Request")
+    void medioPagoNoAceptado_Retorna400() {
+        var ex = new com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException(com.ollacercana.core.models.enums.MedioPago.DAVIPLATA);
+        ResponseEntity<ErrorResponseDTO> resp = handler.handleMedioPagoNoAceptado(ex, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        assertNotNull(resp.getBody());
+        assertEquals(400, resp.getBody().getStatus());
+        assertTrue(resp.getBody().getMessage().contains("DAVIPLATA"));
+    }
+
+    @Test
     @DisplayName("Error de Spring MVC (405) conserva su código en lugar de volverse 500")
     void errorDeSpringMvc_ConservaSuCodigo() {
                   

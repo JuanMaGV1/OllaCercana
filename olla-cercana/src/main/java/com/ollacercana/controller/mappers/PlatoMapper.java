@@ -22,6 +22,8 @@ public interface PlatoMapper {
     @Mapping(target = "version", ignore = true)
     Plato toDomain(PlatoRequestDTO dto);
 
+    @Mapping(target = "mediosPago", ignore = true)
+    @Mapping(target = "notaPago",ignore = true)
     PlatoResponseDTO toResponse(Plato plato);
 
     List<PlatoResponseDTO> toResponseList(List<Plato> platos);
