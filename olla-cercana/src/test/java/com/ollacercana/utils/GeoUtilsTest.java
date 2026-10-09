@@ -15,7 +15,6 @@ class GeoUtilsTest {
     @Test
     @DisplayName("RN-05: Redondeo de distancia a múltiplos de 100m")
     void redondearDistanciaMultiplo100_VerificaCasosEjemplo() {
-
         assertEquals(900, GeoUtils.redondearDistanciaMultiplo100(850.0));
         assertEquals(800, GeoUtils.redondearDistanciaMultiplo100(840.0));
         assertEquals(100, GeoUtils.redondearDistanciaMultiplo100(120.0));
@@ -27,15 +26,9 @@ class GeoUtilsTest {
     @DisplayName("formatearTiempoRestante: evalúa null, expirado, horas+minutos y solo minutos")
     void formatearTiempoRestante_ramas() {
         assertEquals("0m", GeoUtils.formatearTiempoRestante(null));
-
-                                   
         assertEquals("Expirado", GeoUtils.formatearTiempoRestante(java.time.LocalDateTime.now().minusMinutes(5)));
-
-                                       
         String resultadoHoras = GeoUtils.formatearTiempoRestante(java.time.LocalDateTime.now().plusHours(2).plusMinutes(15));
         assertTrue(resultadoHoras.contains("2h"));
-
-                                                        
         String resultadoMinutos = GeoUtils.formatearTiempoRestante(java.time.LocalDateTime.now().plusMinutes(30));
         assertFalse(resultadoMinutos.contains("h"));
         assertTrue(resultadoMinutos.contains("m"));
@@ -96,11 +89,9 @@ class GeoUtilsTest {
             UUID cocineraId = UUID.randomUUID();
             GeoUtils.CoordenadasOfuscadas ofuscada = GeoUtils.ofuscarCoordenadas(cocineraId, latReal, lonReal);
 
-            // Nunca iguales a las reales
             assertFalse(Double.compare(latReal, ofuscada.latitud()) == 0, "La latitud ofuscada no debe ser idéntica a la real");
             assertFalse(Double.compare(lonReal, ofuscada.longitud()) == 0, "La longitud ofuscada no debe ser idéntica a la real");
 
-            // Distancia calculada con Haversine dentro del margen acotado (100m a 300m)
             double distancia = GeoUtils.calcularDistanciaEnMetros(latReal, lonReal, ofuscada.latitud(), ofuscada.longitud());
             assertTrue(distancia >= GeoUtils.MARGEN_MIN_OFUSCACION_METROS * 0.99,
                     "Distancia " + distancia + " debe ser >= " + GeoUtils.MARGEN_MIN_OFUSCACION_METROS);
@@ -115,7 +106,7 @@ class GeoUtilsTest {
         double latReal = 4.6789;
         double lonReal = -74.0567;
         double distanciaDeseada = 200.0;
-        double angulo = Math.PI / 4; // 45 grados
+        double angulo = Math.PI / 4;
 
         GeoUtils.CoordenadasOfuscadas ofuscada = GeoUtils.ofuscarCoordenadas(latReal, lonReal, distanciaDeseada, angulo);
         double distCalculada = GeoUtils.calcularDistanciaEnMetros(latReal, lonReal, ofuscada.latitud(), ofuscada.longitud());

@@ -2,8 +2,10 @@ package com.ollacercana.controller;
 
 import com.ollacercana.config.security.UsuarioActual;
 import com.ollacercana.controller.docs.CocineraApi;
+import com.ollacercana.controller.dtos.response.CocineraMapaResponseDTO;
 import com.ollacercana.controller.dtos.response.HistorialPaginadoResponseDTO;
 import com.ollacercana.controller.dtos.response.MetricasCocineraResponseDTO;
+import com.ollacercana.core.services.CocineraMapaService;
 import com.ollacercana.core.services.MetricasCocineraService;
 
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/cocineras")
@@ -23,6 +26,7 @@ import java.time.LocalDate;
 public class CocineraController implements CocineraApi {
 
     private final MetricasCocineraService metricasService;
+    private final CocineraMapaService cocineraMapaService;
     private final UsuarioActual usuarioActual;
 
     @Override
@@ -41,5 +45,15 @@ public class CocineraController implements CocineraApi {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "10") int tamanio) {
         return ResponseEntity.ok(metricasService.obtenerHistorial(usuarioActual.getCocineraId(), pagina, tamanio));
+    }
+
+    @Override
+    @GetMapping("/mapa")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<List<CocineraMapaResponseDTO>> buscarEnMapa(
+            @RequestParam Double latitud,
+            @RequestParam Double longitud,
+            @RequestParam(required = false, defaultValue = "2000") Double radio) {
+        return ResponseEntity.ok(cocineraMapaService.buscarCocinerasEnMapa(latitud, longitud, radio));
     }
 }

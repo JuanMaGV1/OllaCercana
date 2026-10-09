@@ -15,9 +15,6 @@ public final class GeoUtils {
 
     private GeoUtils() {}
 
-       
-                                                                                                       
-       
     public static double calcularDistanciaEnMetros(double lat1, double lon1, double lat2, double lon2) {
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
@@ -30,17 +27,10 @@ public final class GeoUtils {
         return RADIO_TIERRA_METROS * c;
     }
 
-       
-                                                                                                  
-                                           
-       
     public static int redondearDistanciaMultiplo100(double distanciaMetros) {
         return (int) (Math.round(distanciaMetros / 100.0) * 100);
     }
 
-       
-                                                                                         
-       
     public static String formatearTiempoRestante(LocalDateTime fechaExpiracion) {
         if (fechaExpiracion == null) return "0m";
         LocalDateTime ahora = LocalDateTime.now();

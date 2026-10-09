@@ -127,11 +127,11 @@ class CocineraMapaServiceTest {
         assertEquals(item.getLatitudOfuscada(), resultado2.get(0).getLatitudOfuscada());
         assertEquals(item.getLongitudOfuscada(), resultado2.get(0).getLongitudOfuscada());
 
-        // OC-235: Sal distinta produce resultado distinto para el mismo id
+        // OC-235: Sal distinta produce resultado distinto
         cocineraMapaService.setOfuscacionSalt("sal-completamente-distinta");
         List<CocineraMapaResponseDTO> resultadoSalDistinta = cocineraMapaService.buscarCocinerasEnMapa(request);
         assertFalse(item.getLatitudOfuscada() == resultadoSalDistinta.get(0).getLatitudOfuscada()
-                && item.getLongitudOfuscada() == resultadoSalDistinta.get(0).getLongitudOfuscada(),
+                        && item.getLongitudOfuscada() == resultadoSalDistinta.get(0).getLongitudOfuscada(),
                 "Una sal distinta debe generar coordenadas ofuscadas diferentes");
 
         // Margen de ofuscación entre 100m y 300m
@@ -191,7 +191,6 @@ class CocineraMapaServiceTest {
 
         assertEquals(1, resultado.size());
         assertEquals(cocineraCercanaId, resultado.get(0).getCocineraId());
-        // Sin nombre en la cuenta, se muestra el conjunto residencial de la cocinera
         assertEquals("Conjunto Norte", resultado.get(0).getNombreCocinera());
     }
 }
