@@ -73,4 +73,13 @@ public interface ReservaRepository extends JpaRepository<ReservaEntity, UUID> {
 
     // ---- RN-18 / OC-266: Purga de mensajes de reservas cerradas ----
     List<ReservaEntity> findByEstadoAndFechaCompletadaLessThanEqual(EstadoReserva estado, LocalDateTime fecha);
+
+    @Query("SELECT r FROM ReservaEntity r " +
+       "WHERE r.estado = com.ollacercana.core.models.enums.EstadoReserva.CONFIRMADA " +
+       "AND r.recordatorioRecogidaEnviado = false " +
+       "AND r.horaEstimadaEntrega IS NOT NULL " +
+       "AND r.horaEstimadaEntrega BETWEEN :desde AND :hasta")
+        List<ReservaEntity> findParaRecordatorioRecogida(
+                @Param("desde") LocalDateTime desde,
+                @Param("hasta") LocalDateTime hasta);
 }

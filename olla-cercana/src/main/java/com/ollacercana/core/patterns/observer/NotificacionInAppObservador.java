@@ -42,10 +42,20 @@ public class NotificacionInAppObservador implements ObservadorReserva {
                     "Tu reserva expiró",
                     "La cocinera no respondió a tiempo y la solicitud se canceló. "
                             + "Puedes buscar otro plato cerca de ti."));
-            case RECORDATORIO_RESERVA -> List.of(paraCocinera(evento, TipoNotificacion.RECORDATORIO,
-                    "Tienes una solicitud sin responder",
-                    "Te quedan " + evento.payload().getOrDefault("minutosRestantes", "pocos")
-                            + " minutos para confirmar o rechazar la reserva. Si no respondes, expirará automáticamente."));
+            case RECORDATORIO_RESERVA -> {
+                boolean esRecogida = Boolean.TRUE.equals(evento.payload().get("recordatorioRecogida"));
+                if (esRecogida) {
+                    yield List.of(paraComprador(evento, TipoNotificacion.RECORDATORIO,
+                            "Tu pedido está por recogerse",
+                            "Tu pedido está por recogerse en 15 minutos. Acércate al punto de entrega."));
+                } else {
+                    // Recordatorio a la cocinera por solicitud sin responder (RN-25)
+                    yield List.of(paraCocinera(evento, TipoNotificacion.RECORDATORIO,
+                            "Tienes una solicitud sin responder",
+                            "Te quedan " + evento.payload().getOrDefault("minutosRestantes", "pocos")
+                                    + " minutos para confirmar o rechazar la reserva. Si no respondes, expirará automáticamente."));
+                }
+            }
             case RESERVA_COMPLETADA -> {
                 String mensaje = mensajeCierre(evento);
                 yield List.of(

@@ -321,4 +321,21 @@ public class ReservaServiceImpl implements ReservaService {
                 .map(reservaEntityMapper::toDomain)
                 .orElseThrow(() -> new ReservaNoEncontradaException(reservaId));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> buscarReservasParaRecordatorioRecogida(LocalDateTime ahora) {
+        return reservaRepository.findParaRecordatorioRecogida(ahora, ahora.plusMinutes(15))
+                .stream()
+                .map(ReservaEntity::getId)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void marcarRecordatorioRecogidaEnviado(UUID reservaId) {
+        Reserva reserva = buscar(reservaId);
+        reserva.marcarRecordatorioRecogidaEnviado();
+        reservaRepository.save(reservaEntityMapper.toEntity(reserva));
+    }
 }

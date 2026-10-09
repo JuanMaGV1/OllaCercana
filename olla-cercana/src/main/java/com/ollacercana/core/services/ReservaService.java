@@ -33,4 +33,8 @@ public interface ReservaService extends IReservaService {
     List<UUID> buscarReservasParaCierreAutomatico();
 
     Reserva completarAutomaticamente(UUID reservaId);
+    
+    List<UUID> buscarReservasParaRecordatorioRecogida(LocalDateTime ahora);
+
+    void marcarRecordatorioRecogidaEnviado(UUID reservaId);
 }

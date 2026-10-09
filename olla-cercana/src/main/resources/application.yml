@@ -38,3 +38,6 @@ ollacercana:
   calificaciones:
     tareas-programadas: ${CALIFICACIONES_SCHEDULER:true}
     intervalo-ms: 600000
+  notificaciones:
+    tareas-programadas: ${NOTIFICACIONES_SCHEDULER:true}
+    intervalo-recordatorio-ms: 60000

@@ -5,13 +5,17 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.ollacercana.config.OpenApiConfig;
 import com.ollacercana.controller.dtos.request.RegistroRequestDTO;
 import com.ollacercana.controller.dtos.response.RegistroResponseDTO;
+
+import java.util.Map;
 
 @Tag(name = "Gestión de Cuentas", description = "API para el registro y administración de cuentas de usuario")
 public interface CuentaApi {
@@ -27,4 +31,15 @@ public interface CuentaApi {
             @ApiResponse(responseCode = "409", description = "Conflicto: El correo o número celular ya se encuentra registrado", content = @Content)
     })
     ResponseEntity<RegistroResponseDTO> registrar(@Valid @RequestBody RegistroRequestDTO request);
+
+    @Operation(
+        summary = "Activar o desactivar avisos in-app",
+        security = @SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_NAME)
+        )
+        @ApiResponses({
+                @ApiResponse(responseCode = "200", description = "Preferencia actualizada"),
+                @ApiResponse(responseCode = "401", description = "No autenticado"),
+                @ApiResponse(responseCode = "403", description = "No puedes modificar otra cuenta")
+        })
+        ResponseEntity<Map<String, Boolean>> cambiarAvisos(Long id, boolean activos);
 }

@@ -34,6 +34,7 @@ public interface ReservaMapper {
     @Mapping(target = "calificacionHabilitada", ignore = true)
     @Mapping(target = "calificacion", ignore = true)
     @Mapping(target = "version", ignore = true)
+    @Mapping(target = "recordatorioRecogidaEnviado", ignore = true)
     Reserva toDomain(ReservaRequestDTO dto);
 
     @Mapping(target = "monto", source = "reserva.montoTotal")

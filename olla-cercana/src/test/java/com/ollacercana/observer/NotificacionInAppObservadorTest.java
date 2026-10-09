@@ -113,7 +113,8 @@ class NotificacionInAppObservadorTest {
 
     @Test
     void recordatorio_debeAvisarALaCocinera() {
-        observador.notificar(evento(TipoEvento.RECORDATORIO_RESERVA, Map.of("minutosRestantes", 3L)));
+        observador.notificar(evento(TipoEvento.RECORDATORIO_RESERVA,
+                Map.of("minutosRestantes", 3L)));
 
         NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(Rol.COCINERA, notificacion.getRolDestinatario());

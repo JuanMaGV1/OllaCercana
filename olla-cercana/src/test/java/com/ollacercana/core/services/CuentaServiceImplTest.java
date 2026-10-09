@@ -1,5 +1,6 @@
 package com.ollacercana.core.services;
 
+import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.controller.handlers.exception.ConflictoException;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.core.models.Credenciales;
@@ -236,4 +237,24 @@ class CuentaServiceImplTest {
             assertEquals("La cuenta se encuentra bloqueada", ex.getMessage());
         }
     }
+
+    @Test
+        @DisplayName("HU-17: cambiarAvisos persiste la preferencia")
+        void cambiarAvisos_exitoso() {
+        CuentaEntity entity = CuentaEntity.builder().id(1L).avisosActivos(true).build();
+        when(cuentaRepository.findById(1L)).thenReturn(Optional.of(entity));
+        when(cuentaRepository.save(any(CuentaEntity.class))).thenReturn(entity);
+
+        cuentaService.cambiarAvisos(1L, false, 1L);
+
+        assertFalse(entity.getAvisosActivos());
+        verify(cuentaRepository).save(entity);
+        }
+
+        @Test
+        @DisplayName("HU-17: cambiarAvisos de otra cuenta lanza 403")
+        void cambiarAvisos_ajena_lanza403() {
+        assertThrows(AccesoDenegadoException.class,
+                () -> cuentaService.cambiarAvisos(1L, false, 99L));
+        }
 }

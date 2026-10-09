@@ -41,6 +41,10 @@ public class CuentaEntity {
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
+    @Column(name = "avisos_activos", nullable = false)
+    @Builder.Default
+    private Boolean avisosActivos = true;
+
     @PrePersist
     protected void onCreate() {
         if (this.fechaRegistro == null) this.fechaRegistro = LocalDateTime.now();
