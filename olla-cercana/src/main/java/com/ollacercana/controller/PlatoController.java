@@ -12,6 +12,7 @@ import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.controller.mappers.PlatoMapper;
 import com.ollacercana.core.models.PerfilCocinera;
 import com.ollacercana.core.models.Plato;
+import com.ollacercana.core.models.enums.MedioPago;
 import com.ollacercana.core.services.PlatoService;
 import com.ollacercana.core.util.GeoUtils;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
@@ -54,7 +55,8 @@ public class PlatoController implements PlatoApi {
     @GetMapping("/{id}")
     public ResponseEntity<PlatoResponseDTO> obtenerPorId(@PathVariable UUID id) {
         Plato plato = platoService.obtenerPorId(id);
-        return ResponseEntity.ok(platoMapper.toResponse(plato));
+        List<MedioPago> mediosPago = platoService.obtenerMediosPago(id);
+        return ResponseEntity.ok(platoMapper.toResponse(plato).withMediosPago(mediosPago));
     }
 
     @Override

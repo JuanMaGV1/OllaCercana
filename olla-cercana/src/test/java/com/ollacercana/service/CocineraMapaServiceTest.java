@@ -52,6 +52,7 @@ class CocineraMapaServiceTest {
         cocineraCercanaId = UUID.randomUUID();
         cocineraLejanaId = UUID.randomUUID();
 
+        // Punto de referencia: (4.6789, -74.0567)
         // Plato cercano: ~500m
         platoCercano = PlatoEntity.builder()
                 .id(UUID.randomUUID())
@@ -67,7 +68,7 @@ class CocineraMapaServiceTest {
                 .fechaExpiracion(LocalDateTime.now().plusHours(2))
                 .build();
 
-        // Plato lejano: ~15km
+        // Plato lejano: ~15km de distancia
         platoLejano = PlatoEntity.builder()
                 .id(UUID.randomUUID())
                 .cocineraId(cocineraLejanaId)
@@ -121,7 +122,7 @@ class CocineraMapaServiceTest {
         // Distancia redondeada a múltiplos de 100m
         assertEquals(0, item.getDistanciaMetros() % 100);
 
-        // OC-235: Verificación de determinismo
+        // OC-235: Verificación de determinismo (segunda llamada produce el mismo resultado)
         List<CocineraMapaResponseDTO> resultado2 = cocineraMapaService.buscarCocinerasEnMapa(request);
         assertEquals(item.getLatitudOfuscada(), resultado2.get(0).getLatitudOfuscada());
         assertEquals(item.getLongitudOfuscada(), resultado2.get(0).getLongitudOfuscada());

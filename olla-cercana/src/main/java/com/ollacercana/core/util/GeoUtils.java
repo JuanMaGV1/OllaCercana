@@ -81,7 +81,7 @@ public final class GeoUtils {
      * Variante determinística para pruebas o cálculos con distancia y ángulo fijos.
      */
     public static CoordenadasOfuscadas ofuscarCoordenadas(double latitud, double longitud,
-                                                          double distanciaMetros, double anguloRadianes) {
+                                                           double distanciaMetros, double anguloRadianes) {
         double dLat = (distanciaMetros * Math.cos(anguloRadianes)) / RADIO_TIERRA_METROS;
         double latRad = Math.toRadians(latitud);
         double divisorLon = RADIO_TIERRA_METROS * Math.cos(latRad);
