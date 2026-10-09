@@ -13,30 +13,30 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Schema(description = "Respuesta de cocinera con oferta activa para el mapa (OC-233)")
+@Schema(description = "Datos de una cocinera con oferta activa para el mapa interactivo")
 public class CocineraMapaResponseDTO {
 
-    @Schema(description = "ID del perfil de la cocinera")
+    @Schema(description = "ID del perfil de la cocinera", example = "11111111-1111-1111-1111-111111111111")
     private UUID cocineraId;
 
-    @Schema(description = "Nombre de la cocinera o conjunto residencial")
+    @Schema(description = "Nombre de la cocinera o cocina", example = "Doña Rosalba")
     private String nombreCocinera;
 
-    @Schema(description = "Nombre del plato activo")
-    private String platoNombre;
+    @Schema(description = "Latitud ofuscada para proteger privacidad", example = "4.6795")
+    private Double latitudOfuscada;
 
-    @Schema(description = "Fotografía del plato")
+    @Schema(description = "Longitud ofuscada para proteger privacidad", example = "-74.0572")
+    private Double longitudOfuscada;
+
+    @Schema(description = "URL de la foto del plato representativo", example = "https://fotos.ollacercana.com/ajiaco.jpg")
     private String fotoPlato;
 
-    @Schema(description = "Precio del plato")
+    @Schema(description = "Nombre del plato activo", example = "Ajiaco santafereño")
+    private String nombrePlato;
+
+    @Schema(description = "Precio por porción del plato", example = "16000.00")
     private BigDecimal precio;
 
-    @Schema(description = "Latitud ofuscada con margen de seguridad (OC-235)")
-    private Double latitud;
-
-    @Schema(description = "Longitud ofuscada con margen de seguridad (OC-235)")
-    private Double longitud;
-
-    @Schema(description = "Distancia estimada en metros redondeada a múltiplos de 100m")
+    @Schema(description = "Distancia estimada calculada antes de ofuscar y redondeada a múltiplos de 100m", example = "400")
     private Integer distanciaMetros;
 }

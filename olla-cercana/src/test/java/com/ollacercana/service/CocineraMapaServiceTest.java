@@ -1,13 +1,17 @@
 package com.ollacercana.service;
 
+import com.ollacercana.controller.dtos.request.MapaCocinerasRequestDTO;
 import com.ollacercana.controller.dtos.response.CocineraMapaResponseDTO;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.services.impl.CocineraMapaServiceImpl;
 import com.ollacercana.core.util.GeoUtils;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.IdentidadEmbeddable;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.entities.PlatoEntity;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.PlatoRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,108 +33,163 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CocineraMapaServiceTest {
 
-    @Mock private PlatoRepository platoRepository;
-    @Mock private PerfilCocineraRepository perfilCocineraRepository;
+    @Mock
+    private PlatoRepository platoRepository;
 
-    @InjectMocks private CocineraMapaServiceImpl service;
+    @Mock
+    private PerfilCocineraRepository perfilCocineraRepository;
 
-    private static final double LAT_USUARIO = 4.6789;
-    private static final double LNG_USUARIO = -74.0567;
+    @InjectMocks
+    private CocineraMapaServiceImpl cocineraMapaService;
 
-    @Test
-    @DisplayName("OC-236: Cocinera dentro del radio aparece con coordenadas ofuscadas y distancia redondeada")
-    void buscarEnMapa_CocineraDentroDelRadio_RetornaCorrectamente() {
-        UUID cocineraId = UUID.randomUUID();
-        double latPlato = 4.6800; // ~140 metros de distancia
-        double lngPlato = -74.0560;
+    private UUID cocineraCercanaId;
+    private UUID cocineraLejanaId;
+    private PlatoEntity platoCercano;
+    private PlatoEntity platoLejano;
 
-        PlatoEntity plato = PlatoEntity.builder()
+    @BeforeEach
+    void setUp() {
+        cocineraCercanaId = UUID.randomUUID();
+        cocineraLejanaId = UUID.randomUUID();
+
+        // Plato cercano: ~500m
+        platoCercano = PlatoEntity.builder()
                 .id(UUID.randomUUID())
-                .cocineraId(cocineraId)
-                .nombre("Sancocho")
-                .fotoUrl("https://fotos.com/sancocho.jpg")
-                .precioPorcion(new BigDecimal("15000"))
-                .latitud(latPlato)
-                .longitud(lngPlato)
-                .porcionesTotales(5)
-                .porcionesComprometidas(1)
-                .estado(EstadoPlato.ACTIVO)
-                .fechaExpiracion(LocalDateTime.now().plusHours(2))
-                .build();
-
-        PerfilCocineraEntity perfil = PerfilCocineraEntity.builder()
-                .id(cocineraId)
-                .conjuntoResidencial("Torres del Parque")
-                .pausada(false)
-                .build();
-
-        when(platoRepository.findOfertasActivasConUbicacion(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
-                .thenReturn(List.of(plato));
-        when(perfilCocineraRepository.findById(cocineraId)).thenReturn(Optional.of(perfil));
-
-        List<CocineraMapaResponseDTO> resultado = service.buscarCocinerasEnMapa(LAT_USUARIO, LNG_USUARIO, 1000.0);
-
-        assertEquals(1, resultado.size());
-        CocineraMapaResponseDTO dto = resultado.get(0);
-
-        assertEquals(cocineraId, dto.getCocineraId());
-        assertEquals("Torres del Parque", dto.getNombreCocinera());
-        assertEquals("Sancocho", dto.getPlatoNombre());
-        assertEquals(new BigDecimal("15000"), dto.getPrecio());
-
-        // Verificaciones clave de OC-236:
-        // 1. Las coordenadas ofuscadas NO son iguales a las reales
-        assertNotEquals(latPlato, dto.getLatitud());
-        assertNotEquals(lngPlato, dto.getLongitud());
-
-        // 2. Quedan dentro del margen de seguridad definido (~100m)
-        double distOfuscacion = GeoUtils.calcularDistanciaEnMetros(latPlato, lngPlato, dto.getLatitud(), dto.getLongitud());
-        assertTrue(distOfuscacion <= 150.0, "La ofuscación debe respetar el margen");
-
-        // 3. La distancia estimada está redondeada a múltiplos de 100m
-        assertEquals(0, dto.getDistanciaMetros() % 100);
-    }
-
-    @Test
-    @DisplayName("OC-236: Cocinera fuera del radio es filtrada y no aparece")
-    void buscarEnMapa_CocineraFueraDelRadio_NoAparece() {
-        UUID cocineraId = UUID.randomUUID();
-        // A varios kilómetros de distancia
-        PlatoEntity platoLejano = PlatoEntity.builder()
-                .id(UUID.randomUUID())
-                .cocineraId(cocineraId)
-                .latitud(4.7500)
-                .longitud(-74.0200)
+                .cocineraId(cocineraCercanaId)
+                .nombre("Ajiaco Santafereño")
+                .precioPorcion(new BigDecimal("18000"))
+                .fotoUrl("https://fotos.com/ajiaco.jpg")
+                .latitud(4.6810)
+                .longitud(-74.0540)
                 .porcionesTotales(5)
                 .porcionesComprometidas(0)
                 .estado(EstadoPlato.ACTIVO)
                 .fechaExpiracion(LocalDateTime.now().plusHours(2))
                 .build();
 
-        when(platoRepository.findOfertasActivasConUbicacion(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
-                .thenReturn(List.of(platoLejano));
-
-        List<CocineraMapaResponseDTO> resultado = service.buscarCocinerasEnMapa(LAT_USUARIO, LNG_USUARIO, 500.0);
-
-        assertTrue(resultado.isEmpty(), "No debe incluir cocineras fuera del radio");
+        // Plato lejano: ~15km
+        platoLejano = PlatoEntity.builder()
+                .id(UUID.randomUUID())
+                .cocineraId(cocineraLejanaId)
+                .nombre("Bandeja Paisa")
+                .precioPorcion(new BigDecimal("22000"))
+                .fotoUrl("https://fotos.com/bandeja.jpg")
+                .latitud(4.8000)
+                .longitud(-74.1500)
+                .porcionesTotales(8)
+                .porcionesComprometidas(1)
+                .estado(EstadoPlato.ACTIVO)
+                .fechaExpiracion(LocalDateTime.now().plusHours(3))
+                .build();
     }
 
     @Test
-    @DisplayName("OC-236: Si no hay ofertas activas retorna lista vacía")
-    void buscarEnMapa_SinOfertas_RetornaListaVacia() {
-        when(platoRepository.findOfertasActivasConUbicacion(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
-                .thenReturn(List.of());
+    @DisplayName("OC-232 / OC-236: Filtra cocineras dentro del radio y excluye las que están fuera")
+    void buscarCocinerasEnMapa_filtraPorRadio() {
+        when(platoRepository.findActivosVigentes(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
+                .thenReturn(List.of(platoCercano, platoLejano));
 
-        List<CocineraMapaResponseDTO> resultado = service.buscarCocinerasEnMapa(LAT_USUARIO, LNG_USUARIO, 2000.0);
+        PerfilCocineraEntity perfilCercano = PerfilCocineraEntity.builder()
+                .id(cocineraCercanaId)
+                .conjuntoResidencial("Torre 1")
+                .cuenta(CuentaEntity.builder()
+                        .identidad(IdentidadEmbeddable.builder().nombre("Doña Bertha").build())
+                        .build())
+                .build();
+        when(perfilCocineraRepository.findById(cocineraCercanaId)).thenReturn(Optional.of(perfilCercano));
+
+        MapaCocinerasRequestDTO request = MapaCocinerasRequestDTO.builder()
+                .latitud(4.6789)
+                .longitud(-74.0567)
+                .radio(2000.0) // 2km
+                .build();
+
+        List<CocineraMapaResponseDTO> resultado = cocineraMapaService.buscarCocinerasEnMapa(request);
+
+        assertEquals(1, resultado.size());
+        CocineraMapaResponseDTO item = resultado.get(0);
+        assertEquals(cocineraCercanaId, item.getCocineraId());
+        assertEquals("Doña Bertha", item.getNombreCocinera());
+        assertEquals("Ajiaco Santafereño", item.getNombrePlato());
+        assertEquals(new BigDecimal("18000"), item.getPrecio());
+        assertEquals("https://fotos.com/ajiaco.jpg", item.getFotoPlato());
+
+        // OC-235: Coordenadas ofuscadas nunca son iguales a las reales
+        assertNotEquals(platoCercano.getLatitud(), item.getLatitudOfuscada());
+        assertNotEquals(platoCercano.getLongitud(), item.getLongitudOfuscada());
+
+        // Distancia redondeada a múltiplos de 100m
+        assertEquals(0, item.getDistanciaMetros() % 100);
+
+        // OC-235: Verificación de determinismo
+        List<CocineraMapaResponseDTO> resultado2 = cocineraMapaService.buscarCocinerasEnMapa(request);
+        assertEquals(item.getLatitudOfuscada(), resultado2.get(0).getLatitudOfuscada());
+        assertEquals(item.getLongitudOfuscada(), resultado2.get(0).getLongitudOfuscada());
+
+        // OC-235: Sal distinta produce resultado distinto
+        cocineraMapaService.setOfuscacionSalt("sal-completamente-distinta");
+        List<CocineraMapaResponseDTO> resultadoSalDistinta = cocineraMapaService.buscarCocinerasEnMapa(request);
+        assertFalse(item.getLatitudOfuscada() == resultadoSalDistinta.get(0).getLatitudOfuscada()
+                        && item.getLongitudOfuscada() == resultadoSalDistinta.get(0).getLongitudOfuscada(),
+                "Una sal distinta debe generar coordenadas ofuscadas diferentes");
+
+        // Margen de ofuscación entre 100m y 300m
+        double distOfuscacion = GeoUtils.calcularDistanciaEnMetros(
+                platoCercano.getLatitud(), platoCercano.getLongitud(),
+                item.getLatitudOfuscada(), item.getLongitudOfuscada());
+        assertTrue(distOfuscacion >= GeoUtils.MARGEN_MIN_OFUSCACION_METROS * 0.99);
+        assertTrue(distOfuscacion <= GeoUtils.MARGEN_MAX_OFUSCACION_METROS * 1.01);
+    }
+
+    @Test
+    @DisplayName("OC-232 / OC-236: Retorna lista vacía si no hay platos dentro del radio o no hay ofertas activas")
+    void buscarCocinerasEnMapa_listaVaciaSinOfertas() {
+        when(platoRepository.findActivosVigentes(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
+                .thenReturn(List.of(platoLejano));
+
+        MapaCocinerasRequestDTO request = MapaCocinerasRequestDTO.builder()
+                .latitud(4.6789)
+                .longitud(-74.0567)
+                .radio(1000.0) // 1km, platoLejano está a ~15km
+                .build();
+
+        List<CocineraMapaResponseDTO> resultado = cocineraMapaService.buscarCocinerasEnMapa(request);
 
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
     }
 
     @Test
-    @DisplayName("OC-236: Parámetros nulos lanzan IllegalArgumentException")
-    void buscarEnMapa_CoordenadasNulas_LanzaExcepcion() {
-        assertThrows(IllegalArgumentException.class, () -> service.buscarCocinerasEnMapa(null, LNG_USUARIO, 2000.0));
-        assertThrows(IllegalArgumentException.class, () -> service.buscarCocinerasEnMapa(LAT_USUARIO, null, 2000.0));
+    @DisplayName("OC-232: Si una cocinera tiene múltiples platos dentro del área, se agrupa y aparece una sola vez")
+    void buscarCocinerasEnMapa_agrupaPorCocinera() {
+        PlatoEntity otroPlatoMismaCocinera = PlatoEntity.builder()
+                .id(UUID.randomUUID())
+                .cocineraId(cocineraCercanaId)
+                .nombre("Postre Natas")
+                .precioPorcion(new BigDecimal("7000"))
+                .latitud(4.6810)
+                .longitud(-74.0540)
+                .porcionesTotales(4)
+                .porcionesComprometidas(0)
+                .estado(EstadoPlato.ACTIVO)
+                .fechaExpiracion(LocalDateTime.now().plusHours(2))
+                .build();
+
+        when(platoRepository.findActivosVigentes(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))
+                .thenReturn(List.of(platoCercano, otroPlatoMismaCocinera));
+        when(perfilCocineraRepository.findById(cocineraCercanaId))
+                .thenReturn(Optional.of(PerfilCocineraEntity.builder().id(cocineraCercanaId).conjuntoResidencial("Conjunto Norte").build()));
+
+        MapaCocinerasRequestDTO request = MapaCocinerasRequestDTO.builder()
+                .latitud(4.6789)
+                .longitud(-74.0567)
+                .radio(3000.0)
+                .build();
+
+        List<CocineraMapaResponseDTO> resultado = cocineraMapaService.buscarCocinerasEnMapa(request);
+
+        assertEquals(1, resultado.size());
+        assertEquals(cocineraCercanaId, resultado.get(0).getCocineraId());
+        assertEquals("Conjunto Norte", resultado.get(0).getNombreCocinera());
     }
 }
