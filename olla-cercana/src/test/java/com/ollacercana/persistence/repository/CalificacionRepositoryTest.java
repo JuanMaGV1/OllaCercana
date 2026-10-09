@@ -1,5 +1,6 @@
 package com.ollacercana.persistence.repository;
 
+import com.ollacercana.core.models.enums.EstadoCalificacion;
 import com.ollacercana.persistence.entities.CalificacionEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,12 +30,16 @@ class CalificacionRepositoryTest {
     }
 
     private CalificacionEntity crear(UUID reservaId, int estrellas, Long compradorId) {
+        LocalDateTime ahora = LocalDateTime.now();
         return repo.save(CalificacionEntity.builder()
                 .reservaId(reservaId)
                 .compradorId(compradorId)
                 .cocineraId(cocineraId)
                 .estrellas(estrellas)
-                .fechaCreacion(LocalDateTime.now())
+                .estado(EstadoCalificacion.PUBLICADA)          
+                .fechaCreacion(ahora)
+                .fechaPublicacion(ahora)                       
+                .fechaLimitePublicacion(ahora.plusHours(72)) 
                 .build());
     }
 
@@ -54,7 +59,8 @@ class CalificacionRepositoryTest {
     void findByCocineraId() {
         for (int i = 0; i < 15; i++) crear(UUID.randomUUID(), 5, (long) i);
 
-        Page<CalificacionEntity> page = repo.findByCocineraId(cocineraId, PageRequest.of(0, 10));
+        Page<CalificacionEntity> page = repo.findByCocineraIdAndEstado(
+        cocineraId, EstadoCalificacion.PUBLICADA, PageRequest.of(0, 10));
         assertEquals(10, page.getContent().size());
         assertEquals(15, page.getTotalElements());
     }
@@ -66,8 +72,8 @@ class CalificacionRepositoryTest {
         crear(UUID.randomUUID(), 3, 2L);
         crear(UUID.randomUUID(), 5, 3L);
 
-        Page<CalificacionEntity> page = repo.findByCocineraIdAndEstrellas(
-                cocineraId, 5, PageRequest.of(0, 10));
+        Page<CalificacionEntity> page = repo.findByCocineraIdAndEstadoAndEstrellas(
+        cocineraId, EstadoCalificacion.PUBLICADA, 5, PageRequest.of(0, 10));
         assertEquals(2, page.getTotalElements());
     }
 

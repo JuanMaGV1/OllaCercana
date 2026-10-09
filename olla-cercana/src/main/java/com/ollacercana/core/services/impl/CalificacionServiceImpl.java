@@ -11,8 +11,11 @@ import com.ollacercana.controller.handlers.exception.ReservaNoEncontradaExceptio
 import com.ollacercana.controller.mappers.CalificacionMapper;
 import com.ollacercana.core.models.Calificacion;
 import com.ollacercana.core.models.Reserva;
+import com.ollacercana.core.models.enums.EstadoCalificacion;
 import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.patterns.moderacion.EvaluadorReputacionCalificacion;
 import com.ollacercana.core.services.CalificacionService;
+import com.ollacercana.core.validators.CalificacionValidator;
 import com.ollacercana.persistence.entities.CalificacionEntity;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.mappers.CalificacionEntityMapper;
@@ -30,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -42,12 +46,13 @@ public class CalificacionServiceImpl implements CalificacionService {
     private final CalificacionEntityMapper calificacionEntityMapper;
     private final ReservaEntityMapper reservaEntityMapper;
     private final CalificacionMapper calificacionMapper;
+    private final CalificacionValidator calificacionValidator;
+    private final EvaluadorReputacionCalificacion evaluadorReputacion;
 
     @Override
     @Transactional
     public CalificacionResponseDTO calificar(UUID reservaId, Long compradorId, CalificacionRequestDTO request) {
         log.info("HU-31: comprador {} calificando reserva {}", compradorId, reservaId);
-
         // 1. La reserva debe existir
         Reserva reserva = reservaRepository.findById(reservaId)
                 .map(reservaEntityMapper::toDomain)
@@ -75,7 +80,9 @@ public class CalificacionServiceImpl implements CalificacionService {
                 .cocineraId(reserva.getCocineraId())
                 .estrellas(request.getEstrellas())
                 .comentario(normalizarComentario(request.getComentario()))
+                .estado(EstadoCalificacion.PENDIENTE)
                 .fechaCreacion(LocalDateTime.now())
+                .fechaLimitePublicacion(calificacionValidator.calcularFechaLimite(LocalDateTime.now()))
                 .build();
 
         CalificacionEntity guardada = calificacionRepository.save(
@@ -99,8 +106,8 @@ public class CalificacionServiceImpl implements CalificacionService {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaCreacion"));
 
         Page<CalificacionEntity> pagina = (estrellas != null)
-                ? calificacionRepository.findByCocineraIdAndEstrellas(cocineraId, estrellas, pageable)
-                : calificacionRepository.findByCocineraId(cocineraId, pageable);
+                ? calificacionRepository.findByCocineraIdAndEstrellas(cocineraId, EstadoCalificacion.PUBLICADA, estrellas, pageable)
+                : calificacionRepository.findByCocineraId(cocineraId, EstadoCalificacion.PUBLICADA, pageable);
 
         return PaginaResponseDTO.<CalificacionResponseDTO>builder()
                 .contenido(pagina.getContent().stream()
@@ -140,18 +147,38 @@ public class CalificacionServiceImpl implements CalificacionService {
 
     /** RN-31.6: recalcula el promedio y las reseñas positivas en el perfil. */
     private void actualizarMetricasPerfil(UUID cocineraId) {
-        perfilRepository.findById(cocineraId).ifPresent(perfil -> {
-            Double promedio = calificacionRepository.promedioPorCocinera(cocineraId);
-            Long positivas = calificacionRepository.contarPositivas(cocineraId);
+    perfilRepository.findById(cocineraId).ifPresent(perfil -> {
+        Double promedio = calificacionRepository.promedioPorCocinera(cocineraId);
+        Long positivas = calificacionRepository.contarPositivas(cocineraId);
 
-            PerfilCocineraEntity actualizado = perfil.toBuilder()
-                    .promedioCalificacion(promedio != null
-                            ? Math.round(promedio * 100.0) / 100.0
-                            : 0.0)
-                    .resenasPositivas(positivas != null ? positivas.intValue() : 0)
-                    .build();
+        PerfilCocineraEntity actualizado = perfil.toBuilder()
+                .promedioCalificacion(promedio != null
+                        ? Math.round(promedio * 100.0) / 100.0 : 0.0)
+                .resenasPositivas(positivas != null ? positivas.intValue() : 0)
+                .esDestacada(positivas != null && positivas >= 50)   // ← RN-10
+                .build();
 
-            perfilRepository.save(actualizado);
-        });
-    }
+        perfilRepository.save(actualizado);
+    });
+
+}
+
+        @Override
+        @Transactional
+        public int publicarPendientesVencidas(LocalDateTime ahora) {
+        List<CalificacionEntity> pendientes = calificacionRepository
+                .findByEstadoAndFechaLimitePublicacionLessThanEqual(
+                        EstadoCalificacion.PENDIENTE, ahora);
+
+        int publicadas = 0;
+        for (CalificacionEntity entity : pendientes) {
+                Calificacion c = calificacionEntityMapper.toDomain(entity);
+                c.publicar(ahora);
+                calificacionRepository.save(calificacionEntityMapper.toEntity(c));
+                actualizarMetricasPerfil(c.getCocineraId());
+                publicadas++;
+        }
+        if (publicadas > 0) log.info("HU-31: {} calificaciones publicadas por ventana", publicadas);
+        return publicadas;
+        }
 }

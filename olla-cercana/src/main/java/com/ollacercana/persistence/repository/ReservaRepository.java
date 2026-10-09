@@ -15,8 +15,6 @@ import java.util.UUID;
 
 public interface ReservaRepository extends JpaRepository<ReservaEntity, UUID> {
 
-    // ... (los que ya tenías: findByCompradorId, countByCompradorIdAndEstado, etc.)
-
     List<ReservaEntity> findByCompradorId(Long compradorId);
     List<ReservaEntity> findByEstadoAndFechaLimiteConfirmacionBefore(EstadoReserva estado, LocalDateTime fecha);
     long countByCompradorIdAndEstado(Long compradorId, EstadoReserva estado);
@@ -72,4 +70,7 @@ public interface ReservaRepository extends JpaRepository<ReservaEntity, UUID> {
                                     @Param("estado") EstadoReserva estado,
                                     @Param("desde") LocalDateTime desde,
                                     @Param("hasta") LocalDateTime hasta);
+
+    // ---- RN-18 / OC-266: Purga de mensajes de reservas cerradas ----
+    List<ReservaEntity> findByEstadoAndFechaCompletadaLessThanEqual(EstadoReserva estado, LocalDateTime fecha);
 }

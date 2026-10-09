@@ -28,7 +28,9 @@ public class CalificacionMapper {
                 .compradorId(c.getCompradorId())
                 .estrellas(c.getEstrellas())
                 .comentario(c.getComentario())
+                .estado(c.getEstado())
                 .fechaCreacion(c.getFechaCreacion())
+                .fechaPublicacion(c.getFechaPublicacion())
                 .build();
     }
 }

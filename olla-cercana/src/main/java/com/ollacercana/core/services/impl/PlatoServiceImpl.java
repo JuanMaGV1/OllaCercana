@@ -7,6 +7,7 @@ import com.ollacercana.controller.handlers.exception.ConflictoVersionException;
 import com.ollacercana.controller.handlers.exception.PlatoNoEncontradoException;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.MedioPago;
 import com.ollacercana.core.models.enums.RestriccionAlimentaria;
 import com.ollacercana.core.models.enums.TipoAjustePorciones;
 import com.ollacercana.core.patterns.filter.FiltroCompuestoPlato;
@@ -74,13 +75,12 @@ public class PlatoServiceImpl implements PlatoService {
     }
 
     @Override
-    public List<com.ollacercana.core.models.enums.MedioPago> obtenerMediosPago(UUID platoId) {
+    @Transactional(readOnly = true)
+    public List<MedioPago> obtenerMediosPago(UUID platoId) {
         Plato plato = obtenerPorId(platoId);
-        if (plato.getCocineraId() == null || perfilCocineraRepository == null) {
-            return List.of();
-        }
+        if (plato.getCocineraId() == null) return List.of();
         return perfilCocineraRepository.findById(plato.getCocineraId())
-                .map(com.ollacercana.persistence.entities.PerfilCocineraEntity::getMediosPago)
+                .map(PerfilCocineraEntity::getMediosPago)
                 .filter(medios -> medios != null)
                 .orElse(List.of());
     }

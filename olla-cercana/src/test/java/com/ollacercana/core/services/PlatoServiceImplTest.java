@@ -3,11 +3,14 @@ package com.ollacercana.core.services;
 import com.ollacercana.controller.handlers.exception.*;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.MedioPago;
 import com.ollacercana.core.models.enums.TipoComida;
 import com.ollacercana.core.services.impl.PlatoServiceImpl;
 import com.ollacercana.core.validators.PlatoValidator;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.entities.PlatoEntity;
 import com.ollacercana.persistence.mappers.PlatoEntityMapper;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.PlatoRepository;
 
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +37,7 @@ class PlatoServiceImplTest {
     @Mock private PlatoRepository platoRepository;
     @Mock private PlatoValidator validator;
     @Mock private PlatoEntityMapper entityMapper;
+    @Mock private PerfilCocineraRepository perfilCocineraRepository;
 
     @InjectMocks private PlatoServiceImpl platoService;
 
@@ -161,5 +165,43 @@ class PlatoServiceImplTest {
 
         List<Plato> resultado = platoService.buscarCercanos(null, null);
         assertEquals(1, resultado.size());
+    }
+
+    private UUID registrarPlatoExistente() {
+        UUID platoId = UUID.randomUUID();
+        PlatoEntity entity = PlatoEntity.builder().id(platoId).cocineraId(COCINERA_ID).build();
+        Plato plato = platoEjemplo();
+        plato.setId(platoId);
+        when(platoRepository.findById(platoId)).thenReturn(Optional.of(entity));
+        when(entityMapper.toDomain(entity)).thenReturn(plato);
+        return platoId;
+    }
+
+    @Test
+    @DisplayName("OC-254: obtenerMediosPago retorna medios de pago si el perfil de la cocinera existe")
+    void obtenerMediosPago_perfilExiste_retornaMediosPagoConfigurados() {
+        UUID platoId = registrarPlatoExistente();
+
+        PerfilCocineraEntity perfil = PerfilCocineraEntity.builder()
+                .id(COCINERA_ID)
+                .mediosPago(List.of(MedioPago.NEQUI, MedioPago.EFECTIVO))
+                .build();
+        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.of(perfil));
+
+        List<MedioPago> medios = platoService.obtenerMediosPago(platoId);
+        assertEquals(2, medios.size());
+        assertTrue(medios.contains(MedioPago.NEQUI));
+        assertTrue(medios.contains(MedioPago.EFECTIVO));
+    }
+
+    @Test
+    @DisplayName("OC-254: obtenerMediosPago no falla y retorna lista vacía si el perfil de la cocinera no existe")
+    void obtenerMediosPago_perfilNoExiste_retornaListaVacia() {
+        UUID platoId = registrarPlatoExistente();
+        when(perfilCocineraRepository.findById(COCINERA_ID)).thenReturn(Optional.empty());
+
+        List<MedioPago> medios = platoService.obtenerMediosPago(platoId);
+        assertNotNull(medios);
+        assertTrue(medios.isEmpty());
     }
 }

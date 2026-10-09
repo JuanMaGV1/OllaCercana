@@ -7,8 +7,11 @@ import com.ollacercana.controller.handlers.exception.*;
 import com.ollacercana.controller.mappers.CalificacionMapper;
 import com.ollacercana.core.models.Calificacion;
 import com.ollacercana.core.models.Reserva;
+import com.ollacercana.core.models.enums.EstadoCalificacion;
 import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.patterns.moderacion.EvaluadorReputacionCalificacion;
 import com.ollacercana.core.services.impl.CalificacionServiceImpl;
+import com.ollacercana.core.validators.CalificacionValidator;
 import com.ollacercana.persistence.entities.CalificacionEntity;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.entities.ReservaEntity;
@@ -21,12 +24,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,11 +54,14 @@ class CalificacionServiceImplTest {
     private static final Long COMPRADOR_ID = 42L;
 
     @BeforeEach
-    void setUp() {
+        void setUp() {
+        CalificacionValidator validator = new CalificacionValidator(calificacionRepository);
         service = new CalificacionServiceImpl(
                 calificacionRepository, reservaRepository, perfilRepository,
-                calificacionEntityMapper, reservaEntityMapper, calificacionMapper);
-    }
+                calificacionEntityMapper, reservaEntityMapper,
+                calificacionMapper, validator,
+                new EvaluadorReputacionCalificacion(calificacionRepository, perfilRepository));
+        }
 
     private Reserva reserva(EstadoReserva estado, Long compradorId) {
         return Reserva.builder()
@@ -193,4 +201,71 @@ class CalificacionServiceImplTest {
         assertEquals(0L, result.getTotal());
         assertEquals(0L, result.getPositivas());
     }
+
+    @Test
+@DisplayName("HU-15: una calificación se guarda PENDIENTE, no publicada")
+void calificar_guardaPendiente() {
+    // GIVEN
+    Reserva r = reserva(EstadoReserva.COMPLETADA, COMPRADOR_ID);
+
+    when(reservaRepository.findById(RESERVA_ID))
+            .thenReturn(Optional.of(ReservaEntity.builder().id(RESERVA_ID).build()));
+    when(reservaEntityMapper.toDomain(any(ReservaEntity.class))).thenReturn(r);
+    when(calificacionRepository.findByReservaId(RESERVA_ID)).thenReturn(Optional.empty());
+
+    ArgumentCaptor<CalificacionEntity> captor = ArgumentCaptor.forClass(CalificacionEntity.class);
+
+    // cuando el service llama a save(...), capturamos la entidad y devolvemos una con id asignado
+    when(calificacionRepository.save(captor.capture())).thenAnswer(inv -> {
+        CalificacionEntity e = inv.getArgument(0);
+        if (e.getId() == null) e.setId(UUID.randomUUID());
+        return e;
+    });
+
+    // el mapper entity→domain debe devolver un objeto NO NULO
+    when(calificacionEntityMapper.toEntity(any(Calificacion.class))).thenAnswer(inv -> {
+        Calificacion c = inv.getArgument(0);
+        return CalificacionEntity.builder()
+                .reservaId(c.getReservaId())
+                .compradorId(c.getCompradorId())
+                .cocineraId(c.getCocineraId())
+                .estrellas(c.getEstrellas())
+                .comentario(c.getComentario())
+                .estado(c.getEstado())
+                .fechaCreacion(c.getFechaCreacion())
+                .fechaPublicacion(c.getFechaPublicacion())
+                .fechaLimitePublicacion(c.getFechaLimitePublicacion())
+                .build();
+    });
+
+    when(calificacionEntityMapper.toDomain(any(CalificacionEntity.class))).thenAnswer(inv -> {
+        CalificacionEntity e = inv.getArgument(0);
+        return Calificacion.builder()
+                .id(e.getId())
+                .reservaId(e.getReservaId())
+                .compradorId(e.getCompradorId())
+                .cocineraId(e.getCocineraId())
+                .estrellas(e.getEstrellas())
+                .comentario(e.getComentario())
+                .estado(e.getEstado())
+                .fechaCreacion(e.getFechaCreacion())
+                .fechaPublicacion(e.getFechaPublicacion())
+                .fechaLimitePublicacion(e.getFechaLimitePublicacion())
+                .build();
+    });
+
+    when(calificacionMapper.toResponse(any(Calificacion.class)))
+            .thenReturn(CalificacionResponseDTO.builder().estrellas(5).build());
+
+    when(perfilRepository.findById(COCINERA_ID)).thenReturn(Optional.empty());
+
+    // WHEN
+    service.calificar(RESERVA_ID, COMPRADOR_ID, request(5, null));
+
+    // THEN
+    CalificacionEntity guardada = captor.getValue();
+    assertEquals(EstadoCalificacion.PENDIENTE, guardada.getEstado());
+    assertNull(guardada.getFechaPublicacion());
+    assertNotNull(guardada.getFechaLimitePublicacion());
+}
 }

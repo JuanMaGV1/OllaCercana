@@ -15,48 +15,54 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.RestriccionAlimentaria;
+import com.ollacercana.core.models.enums.TipoComida;
+import com.ollacercana.core.models.enums.MedioPago;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @Schema(description = "Detalle público y respuesta de un plato")
-public class PlatoResponseDTO {
+public record PlatoResponseDTO(
+        UUID id,
+        UUID cocineraId,
+        String nombre,
+        String descripcion,
+        String fotoUrl,
+        TipoComida tipoComida,
+        List<RestriccionAlimentaria> restricciones,
+        Integer porcionesTotales,
+        Integer porcionesDisponibles,
+        BigDecimal precioPorcion,
+        EstadoPlato estado,
+        LocalDateTime horaDisponibilidad,
+        LocalDateTime fechaPublicacion,
+        LocalDateTime fechaExpiracion,
+        String puntoEntrega,
+        Double latitud,
+        Double longitud,
+        @Schema(description = "Métodos de pago que acepta la cocinera titular", allowableValues = {"NEQUI", "DAVIPLATA", "EFECTIVO", "TRANSFERENCIA_BANCARIA"}, example = "[\"NEQUI\", \"EFECTIVO\"]")
+        List<MedioPago> mediosPago,
+        @Schema(description = "Información sobre pagos en la plataforma", example = "OllaCercana no procesa dinero. El pago se realiza contra entrega")
+        String notaPago
+) {
+    public static final String NOTA_PAGO_CONTRA_ENTREGA = "OllaCercana no procesa dinero. El pago se realiza contra entrega";
 
-    public static final String NOTA_PAGO_CONTRA_ENTREGA =
-            "OllaCercana no procesa dinero. El pago se realiza contra entrega";
+    public PlatoResponseDTO(UUID id, UUID cocineraId, String nombre, String descripcion, String fotoUrl,
+            TipoComida tipoComida, List<RestriccionAlimentaria> restricciones, Integer porcionesTotales,
+            Integer porcionesDisponibles, BigDecimal precioPorcion, EstadoPlato estado,
+            LocalDateTime horaDisponibilidad, LocalDateTime fechaPublicacion, LocalDateTime fechaExpiracion,
+            String puntoEntrega, Double latitud, Double longitud) {
+        this(id, cocineraId, nombre, descripcion, fotoUrl, tipoComida, restricciones, porcionesTotales,
+                porcionesDisponibles, precioPorcion, estado, horaDisponibilidad, fechaPublicacion,
+                fechaExpiracion, puntoEntrega, latitud, longitud, List.of(), NOTA_PAGO_CONTRA_ENTREGA);
+    }
 
-    private UUID id;
-    private UUID cocineraId;
-    private String nombre;
-    private String descripcion;
-    private String fotoUrl;
-    private TipoComida tipoComida;
-    private List<RestriccionAlimentaria> restricciones;
-    private Integer porcionesTotales;
-    private Integer porcionesDisponibles;
-    private BigDecimal precioPorcion;
-    private EstadoPlato estado;
-    private LocalDateTime horaDisponibilidad;
-    private LocalDateTime fechaPublicacion;
-    private LocalDateTime fechaExpiracion;
-    private String puntoEntrega;
-    private Double latitud;
-    private Double longitud;
-
-    @Schema(description = "Métodos de pago aceptados por la cocinera",
-            allowableValues = {"NEQUI", "DAVIPLATA", "EFECTIVO", "TRANSFERENCIA_BANCARIA"},
-            example = "[\"NEQUI\", \"EFECTIVO\"]")
-    private List<MedioPago> mediosPago;
-
-    @Schema(description = "Nota informativa sobre pagos",
-            example = "OllaCercana no procesa dinero. El pago se realiza contra entrega")
-    @Builder.Default
-    private String notaPago = NOTA_PAGO_CONTRA_ENTREGA;
-
-    /** Setter fluido que usa el controller para enriquecer la respuesta. */
+    /** OC-254: copia del detalle con los medios de pago de la cocinera titular. */
     public PlatoResponseDTO withMediosPago(List<MedioPago> mediosPago) {
-        this.mediosPago = (mediosPago != null) ? mediosPago : List.of();
-        this.notaPago = NOTA_PAGO_CONTRA_ENTREGA;
-        return this;
+        return new PlatoResponseDTO(id, cocineraId, nombre, descripcion, fotoUrl, tipoComida, restricciones,
+                porcionesTotales, porcionesDisponibles, precioPorcion, estado, horaDisponibilidad,
+                fechaPublicacion, fechaExpiracion, puntoEntrega, latitud, longitud,
+                mediosPago != null ? mediosPago : List.of(), NOTA_PAGO_CONTRA_ENTREGA);
     }
 }
+

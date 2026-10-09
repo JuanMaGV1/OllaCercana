@@ -56,8 +56,7 @@ public class PlatoController implements PlatoApi {
     public ResponseEntity<PlatoResponseDTO> obtenerPorId(@PathVariable UUID id) {
         Plato plato = platoService.obtenerPorId(id);
         List<MedioPago> mediosPago = platoService.obtenerMediosPago(id);
-        PlatoResponseDTO response = platoMapper.toResponse(plato).withMediosPago(mediosPago);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(platoMapper.toResponse(plato).withMediosPago(mediosPago));
     }
 
     @Override

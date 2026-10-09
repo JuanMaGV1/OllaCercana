@@ -6,9 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * OC-193: mapper entre el POJO de dominio Calificacion y su entidad JPA.
- */
 @Component
 public class CalificacionEntityMapper {
 
@@ -21,7 +18,10 @@ public class CalificacionEntityMapper {
                 .cocineraId(c.getCocineraId())
                 .estrellas(c.getEstrellas())
                 .comentario(c.getComentario())
+                .estado(c.getEstado())                              
                 .fechaCreacion(c.getFechaCreacion())
+                .fechaPublicacion(c.getFechaPublicacion())         
+                .fechaLimitePublicacion(c.getFechaLimitePublicacion())
                 .build();
     }
 
@@ -34,7 +34,10 @@ public class CalificacionEntityMapper {
                 .cocineraId(e.getCocineraId())
                 .estrellas(e.getEstrellas())
                 .comentario(e.getComentario())
+                .estado(e.getEstado())                             
                 .fechaCreacion(e.getFechaCreacion())
+                .fechaPublicacion(e.getFechaPublicacion())          
+                .fechaLimitePublicacion(e.getFechaLimitePublicacion())
                 .build();
     }
 

@@ -265,6 +265,52 @@ class ReservaServiceImplTest {
     }
 
     @Test
+    @DisplayName("OC-255: Happy path: Crear reserva sin método de pago (opcional) es exitoso")
+    void crearReserva_sinMedioPago_Exitoso() {
+        // Arrange
+        Plato plato = plato(5, 0, EstadoPlato.ACTIVO);
+        registrarPlato(plato);
+
+        Reserva reserva = Reserva.builder()
+                .platoId(plato.getId())
+                .cantidadPorciones(1)
+                .medioPago(null)
+                .build();
+
+        // Act
+        Reserva respuesta = reservaService.crear(COMPRADOR_ID, reserva);
+
+        // Assert
+        assertNotNull(respuesta);
+        assertNull(respuesta.getMedioPago());
+        assertEquals(EstadoReserva.PENDIENTE, respuesta.getEstado());
+        verify(validator).validarParaCrear(COMPRADOR_ID, plato, 1, null);
+        verify(reservaRepository).save(any(ReservaEntity.class));
+    }
+
+    @Test
+    @DisplayName("OC-255: Crear reserva con método de pago no aceptado lanza MedioPagoNoAceptadoException")
+    void crearReserva_conMedioPagoNoAceptado_LanzaExcepcion() {
+        // Arrange
+        Plato plato = plato(5, 0, EstadoPlato.ACTIVO);
+        registrarPlato(plato);
+
+        doThrow(new MedioPagoNoAceptadoException(MedioPago.NEQUI))
+                .when(validator).validarParaCrear(COMPRADOR_ID, plato, 1, MedioPago.NEQUI);
+
+        Reserva reserva = Reserva.builder()
+                .platoId(plato.getId())
+                .cantidadPorciones(1)
+                .medioPago(MedioPago.NEQUI)
+                .build();
+
+        // Act & Assert
+        assertThrows(MedioPagoNoAceptadoException.class,
+                () -> reservaService.crear(COMPRADOR_ID, reserva));
+        verify(reservaRepository, never()).save(any(ReservaEntity.class));
+    }
+
+    @Test
     @DisplayName("2. 404: Plato no existe")
     void crearReserva_PlatoNoExiste_Lanza404() {
         when(platoRepository.findById(platoId)).thenReturn(Optional.empty());
@@ -281,8 +327,7 @@ class ReservaServiceImplTest {
         registrarPlato(plato);
 
         doThrow(new PorcionesInsuficientesException(0))
-                .when(validator).validarParaCrear(
-                        eq(COMPRADOR_ID), any(Plato.class), eq(1), nullable(MedioPago.class));
+                .when(validator).validarParaCrear(eq(COMPRADOR_ID), any(Plato.class), eq(1), isNull());
 
         Reserva reserva = Reserva.builder().platoId(plato.getId()).cantidadPorciones(1).build();
 
@@ -297,8 +342,7 @@ class ReservaServiceImplTest {
         registrarPlato(plato);
 
         doThrow(new AutoReservaException())
-                .when(validator).validarParaCrear(
-                        eq(COMPRADOR_ID), any(Plato.class), anyInt(), nullable(MedioPago.class));
+                .when(validator).validarParaCrear(eq(COMPRADOR_ID), any(Plato.class), anyInt(), isNull());
 
         Reserva reserva = Reserva.builder().platoId(plato.getId()).cantidadPorciones(1).build();
 
@@ -313,8 +357,7 @@ class ReservaServiceImplTest {
         registrarPlato(plato);
 
         doThrow(new LimiteReservasPendientesException())
-                .when(validator).validarParaCrear(
-                        eq(COMPRADOR_ID), any(Plato.class), anyInt(), nullable(MedioPago.class));
+                .when(validator).validarParaCrear(eq(COMPRADOR_ID), any(Plato.class), anyInt(), isNull());
 
         Reserva reserva = Reserva.builder().platoId(plato.getId()).cantidadPorciones(1).build();
 

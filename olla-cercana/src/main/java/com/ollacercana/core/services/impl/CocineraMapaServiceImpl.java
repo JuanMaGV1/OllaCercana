@@ -2,22 +2,27 @@ package com.ollacercana.core.services.impl;
 
 import com.ollacercana.controller.dtos.request.MapaCocinerasRequestDTO;
 import com.ollacercana.controller.dtos.response.CocineraMapaResponseDTO;
-import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.services.CocineraMapaService;
 import com.ollacercana.core.util.GeoUtils;
+import com.ollacercana.persistence.entities.CuentaEntity;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.entities.PlatoEntity;
-import com.ollacercana.persistence.mappers.PlatoEntityMapper;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.PlatoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -26,35 +31,32 @@ public class CocineraMapaServiceImpl implements CocineraMapaService {
 
     private final PlatoRepository platoRepository;
     private final PerfilCocineraRepository perfilCocineraRepository;
-    private final PlatoEntityMapper platoEntityMapper;
 
-    @Value("${ollacercana.mapa.ofuscacion-salt:olla-cercana-default-salt-dev}")
-    private String ofuscacionSalt = "olla-cercana-default-salt-dev";
+    @Value("${ollacercana.mapa.ofuscacion-salt:" + GeoUtils.DEFAULT_SALT + "}")
+    private String ofuscacionSalt = GeoUtils.DEFAULT_SALT;
 
     public void setOfuscacionSalt(String ofuscacionSalt) {
         this.ofuscacionSalt = ofuscacionSalt;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CocineraMapaResponseDTO> buscarCocinerasEnMapa(MapaCocinerasRequestDTO request) {
         log.info("Buscando cocineras en el mapa: lat={}, lon={}, radio={}m",
                 request.getLatitud(), request.getLongitud(), request.getRadio());
 
-        // Repo devuelve entities → convertir a dominio
-        List<PlatoEntity> platosActivosEntity = platoRepository.findActivosVigentes(
-                EstadoPlato.ACTIVO, LocalDateTime.now());
+        // OC-232: Reutiliza findActivosVigentes para asegurar platos activos, no expirados y con porciones disponibles > 0
+        List<PlatoEntity> platosActivos = platoRepository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now());
 
-        List<Plato> platosActivos = platosActivosEntity.stream()
-                .map(platoEntityMapper::toDomain)
-                .toList();
-
+        // Mapa auxiliar para seleccionar la mejor oferta (la más cercana) por cocinera dentro del radio
         Map<UUID, OfertaCocineraCandidata> mejoresOfertasPorCocinera = new LinkedHashMap<>();
 
-        for (Plato plato : platosActivos) {
+        for (PlatoEntity plato : platosActivos) {
             if (plato.getLatitud() == null || plato.getLongitud() == null || plato.getCocineraId() == null) {
                 continue;
             }
 
+            // OC-232: Reutiliza GeoUtils.calcularDistanciaEnMetros (Haversine)
             double distanciaReal = GeoUtils.calcularDistanciaEnMetros(
                     request.getLatitud(), request.getLongitud(),
                     plato.getLatitud(), plato.getLongitud()
@@ -63,7 +65,7 @@ public class CocineraMapaServiceImpl implements CocineraMapaService {
             if (distanciaReal <= request.getRadio()) {
                 UUID cocineraId = plato.getCocineraId();
                 OfertaCocineraCandidata existente = mejoresOfertasPorCocinera.get(cocineraId);
-                if (existente == null || distanciaReal < existente.distanciaReal) {
+                if (existente == null || distanciaReal < existente.distanciaReal()) {
                     mejoresOfertasPorCocinera.put(cocineraId, new OfertaCocineraCandidata(plato, distanciaReal));
                 }
             }
@@ -73,11 +75,13 @@ public class CocineraMapaServiceImpl implements CocineraMapaService {
 
         for (Map.Entry<UUID, OfertaCocineraCandidata> entry : mejoresOfertasPorCocinera.entrySet()) {
             UUID cocineraId = entry.getKey();
-            Plato plato = entry.getValue().plato;
-            double distanciaReal = entry.getValue().distanciaReal;
+            PlatoEntity plato = entry.getValue().plato();
+            double distanciaReal = entry.getValue().distanciaReal();
 
+            // OC-233: Distancia estimada en metros calculada ANTES de ofuscar y redondeada a múltiplos de 100
             int distanciaEstimada = GeoUtils.redondearDistanciaMultiplo100(distanciaReal);
 
+            // OC-235: Coordenadas ofuscadas con margen acotado derivado determinísticamente del ID de la cocinera y la sal secreta
             GeoUtils.CoordenadasOfuscadas coords = GeoUtils.ofuscarCoordenadas(
                     cocineraId, ofuscacionSalt, plato.getLatitud(), plato.getLongitud());
 
@@ -101,15 +105,13 @@ public class CocineraMapaServiceImpl implements CocineraMapaService {
         return resultado;
     }
 
-    /** Usa la entity directamente, sin mapear a dominio. */
     private String resolverNombreCocinera(PerfilCocineraEntity perfil) {
-        if (perfil.getCuenta() != null
-                && perfil.getCuenta().getIdentidad() != null
-                && perfil.getCuenta().getIdentidad().getNombre() != null) {
-            return perfil.getCuenta().getIdentidad().getNombre();
+        CuentaEntity cuenta = perfil.getCuenta();
+        if (cuenta != null && cuenta.getIdentidad() != null && cuenta.getIdentidad().getNombre() != null) {
+            return cuenta.getIdentidad().getNombre();
         }
-        return perfil.getConjuntoResidencial();
+        return perfil.getConjuntoResidencial() != null ? perfil.getConjuntoResidencial() : "Cocinera Local";
     }
 
-    private record OfertaCocineraCandidata(Plato plato, double distanciaReal) {}
+    private record OfertaCocineraCandidata(PlatoEntity plato, double distanciaReal) {}
 }

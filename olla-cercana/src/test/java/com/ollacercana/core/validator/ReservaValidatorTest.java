@@ -21,10 +21,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -99,7 +99,7 @@ class ReservaValidatorTest {
     }
 
     @Test
-    @DisplayName("OC-255 / OC-256: Reserva sin método de pago (null) es válida")
+    @DisplayName("OC-255 / OC-256: Reserva sin método de pago (null) es válida y se crea normalmente")
     void validarParaCrear_sinMedioPago_esValida() {
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
@@ -108,12 +108,11 @@ class ReservaValidatorTest {
     }
 
     @Test
-    @DisplayName("OC-255: Reserva con método de pago aceptado por la cocinera es válida")
+    @DisplayName("OC-255 / OC-256: Reserva con método de pago aceptado por la cocinera es válida")
     void validarParaCrear_conMedioPagoAceptado_esValida() {
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);
 
-        // ✅ Ahora usa PerfilCocineraEntity
         PerfilCocineraEntity perfilCocinera = PerfilCocineraEntity.builder()
                 .id(COCINERA_ID)
                 .mediosPago(List.of(MedioPago.NEQUI, MedioPago.EFECTIVO))
@@ -124,7 +123,7 @@ class ReservaValidatorTest {
     }
 
     @Test
-    @DisplayName("OC-255: Reserva con método de pago NO aceptado lanza MedioPagoNoAceptadoException")
+    @DisplayName("OC-255 / OC-256: Reserva con método de pago NO aceptado por la cocinera lanza MedioPagoNoAceptadoException")
     void validarParaCrear_conMedioPagoNoAceptado_lanzaExcepcion() {
         when(perfilCocineraRepository.findByCuentaId(COMPRADOR_ID)).thenReturn(Optional.empty());
         when(reservaRepository.countByCompradorIdAndEstado(COMPRADOR_ID, EstadoReserva.PENDIENTE)).thenReturn(0L);

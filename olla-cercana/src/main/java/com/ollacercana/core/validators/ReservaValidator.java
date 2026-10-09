@@ -9,6 +9,7 @@ import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.models.enums.EstadoReserva;
 import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.ReservaRepository;
@@ -25,6 +26,10 @@ public class ReservaValidator {
 
     private final ReservaRepository reservaRepository;
     private final PerfilCocineraRepository perfilCocineraRepository;
+
+    public void validarParaCrear(Long compradorId, Plato plato, int cantidadPorciones) {
+        validarParaCrear(compradorId, plato, cantidadPorciones, null);
+    }
 
     public void validarParaCrear(Long compradorId, Plato plato, int cantidadPorciones, MedioPago medioPago) {
 
@@ -52,30 +57,15 @@ public class ReservaValidator {
             throw new PorcionesInsuficientesException(plato.getPorcionesDisponibles());
         }
 
-        // OC-255: si se indica medio de pago, debe estar entre los de la cocinera
+        // OC-255: el medio de pago es opcional; si se indica, debe ser aceptado por la cocinera
         if (medioPago != null) {
-            if (plato.getCocineraId() == null) {
-                // Defensivo: si el plato no tiene cocinera, no podemos validar
-                throw new ReglaDeNegocioException(
-                        "El plato no tiene cocinera asociada; no se puede validar el medio de pago");
-            }
-
-            Optional<PerfilCocineraEntity> perfilCocineraOpt =
-                    perfilCocineraRepository.findById(plato.getCocineraId());
-
-            if (perfilCocineraOpt.isEmpty()) {
-                throw new ReglaDeNegocioException(
-                        "No existe perfil de cocinera con id: " + plato.getCocineraId());
-            }
-
-            PerfilCocineraEntity perfil = perfilCocineraOpt.get();
-            if (perfil.getMediosPago() == null || !perfil.getMediosPago().contains(medioPago)) {
+            boolean aceptado = perfilCocineraRepository.findById(plato.getCocineraId())
+                    .map(PerfilCocineraEntity::getMediosPago)
+                    .map(medios -> medios.contains(medioPago))
+                    .orElse(false);
+            if (!aceptado) {
                 throw new MedioPagoNoAceptadoException(medioPago);
             }
         }
-    }
-
-    public void validarParaCrear(Long compradorId, Plato plato, int cantidadPorciones) {
-        validarParaCrear(compradorId, plato, cantidadPorciones, null);
     }
 }

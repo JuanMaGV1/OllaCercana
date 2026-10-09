@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.ollacercana.core.models.enums.EstadoCalificacion;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,5 +24,7 @@ public class CalificacionResponseDTO {
     private Long compradorId;
     private Integer estrellas;
     private String comentario;
+    private EstadoCalificacion estado;
     private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaPublicacion;
 }

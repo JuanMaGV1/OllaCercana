@@ -8,6 +8,7 @@ import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
 import com.ollacercana.controller.dtos.response.PlatoCercanoResponseDTO;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.TipoAjustePorciones;
+import com.ollacercana.core.models.enums.MedioPago;
 
 public interface PlatoService {
 
@@ -17,8 +18,8 @@ public interface PlatoService {
 
     Plato obtenerPorId(UUID id);
 
-    List<com.ollacercana.core.models.enums.MedioPago> obtenerMediosPago(UUID platoId);
-    
+    List<MedioPago> obtenerMediosPago(UUID platoId);
+
     Plato ajustarDisponibilidad(UUID platoId, TipoAjustePorciones tipo, Integer cantidad, Integer version);
 
     void eliminar(UUID id);

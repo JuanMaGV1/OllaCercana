@@ -1,12 +1,16 @@
 package com.ollacercana.config;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
 import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.controller.handlers.exception.AutoReservaException;
 import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException;
 import com.ollacercana.controller.handlers.exception.PlatoNoEncontradoException;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.controller.handlers.GlobalExceptionHandler;
+import com.ollacercana.core.models.enums.MedioPago;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -201,13 +205,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("OC-252: Deserializacion de enum invalido responde 400 y lista los valores permitidos")
-    void cuerpoIlegible_conEnumInvalido_Retorna400YListaValoresPermitidos(){
+    @DisplayName("OC-252: Deserialización de enum inválido responde 400 y lista los valores permitidos")
+    void cuerpoIlegible_conEnumInvalido_Retorna400YListaValoresPermitidos() {
         // Arrange
-        com.fasterxml.jackson.databind.JsonMappingException.Reference ref =
-                new com.fasterxml.jackson.databind.JsonMappingException.Reference(null, "medioPago");
-        var ifx = com.fasterxml.jackson.databind.exc.InvalidFormatException.from(
-                null, "Cannot deserialize value", "BITCOIN", com.ollacercana.core.models.enums.MedioPago.class);
+        JsonMappingException.Reference ref = new JsonMappingException.Reference(null, "medioPago");
+        InvalidFormatException ifx = InvalidFormatException.from(
+                null, "Cannot deserialize value", "BITCOIN", MedioPago.class);
         ifx.prependPath(ref);
         var ex = new HttpMessageNotReadableException("JSON parse error", ifx, new MockHttpInputMessage(new byte[0]));
 
@@ -226,7 +229,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("OC-255: MedioPagoNoAceptadoException responde 400 Bad Request")
     void medioPagoNoAceptado_Retorna400() {
-        var ex = new com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException(com.ollacercana.core.models.enums.MedioPago.DAVIPLATA);
+        var ex = new MedioPagoNoAceptadoException(MedioPago.DAVIPLATA);
         ResponseEntity<ErrorResponseDTO> resp = handler.handleMedioPagoNoAceptado(ex, request);
 
         assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());

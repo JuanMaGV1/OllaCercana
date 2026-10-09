@@ -5,6 +5,7 @@ import com.ollacercana.controller.dtos.response.CalificacionResponseDTO;
 import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
 import com.ollacercana.controller.dtos.response.ResumenCalificacionesDTO;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -20,4 +21,7 @@ public interface CalificacionService {
 
     /** Resumen agregado (promedio, total, positivas). */
     ResumenCalificacionesDTO obtenerResumen(UUID cocineraId);
+
+    /** OC-196: publica las calificaciones PENDIENTES cuya ventana de 72 h ya venció. */
+    int publicarPendientesVencidas(LocalDateTime ahora);
 }
