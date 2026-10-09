@@ -18,11 +18,11 @@ import com.ollacercana.persistence.mappers.PerfilCocineraPersistenceMapper;
 import com.ollacercana.persistence.repository.CodigoOTPRepository;
 import com.ollacercana.persistence.repository.CuentaRepository;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -68,7 +68,6 @@ class PerfilCocineraServiceImplTest {
                 .roles(Set.of(Rol.COCINERA))
                 .build();
 
-        // ✅ dominio puro: solo cuentaId (no `cuenta` anidada)
         perfil = PerfilCocinera.builder()
                 .id(perfilId)
                 .cuenta(cuenta)
@@ -80,7 +79,6 @@ class PerfilCocineraServiceImplTest {
                 .verificada(false)
                 .build();
 
-        // Mappers bidireccionales
         lenient().when(cuentaMapper.toDomain(any(CuentaEntity.class))).thenReturn(cuenta);
         lenient().when(persistenceMapper.toEntity(any(PerfilCocinera.class))).thenAnswer(i -> {
             PerfilCocinera p = i.getArgument(0);
@@ -109,8 +107,8 @@ class PerfilCocineraServiceImplTest {
                     .verificada(e.isVerificada())
                     .pausada(e.isPausada())
                     .cuenta(e.getCuenta() != null
-        ? Cuenta.builder().id(e.getCuenta().getId()).build()
-        : null)
+                            ? Cuenta.builder().id(e.getCuenta().getId()).build()
+                            : null)
                     .build();
         });
     }
@@ -272,5 +270,36 @@ class PerfilCocineraServiceImplTest {
 
         List<PerfilCocinera> resultado = perfilService.listarDestacadas();
         assertEquals(1, resultado.size());
+    }
+
+    @Test
+    @DisplayName("OC-253 / OC-256: Guardar y retornar métodos de pago configurados en el perfil")
+    void perfil_guardaYRetornaMediosDePago() {
+        PerfilCocinera perfilConMedios = PerfilCocinera.builder()
+                .id(perfilId)
+                .conjuntoResidencial("Torres del Parque")
+                .mediosPago(List.of(MedioPago.NEQUI, MedioPago.DAVIPLATA, MedioPago.EFECTIVO))
+                .numeroNequi("3001234567")
+                .numeroDaviplata("3107654321")
+                .cuenta(cuenta)
+                .build();
+
+        when(cuentaRepository.findById(1L)).thenReturn(Optional.of(cuentaEntity));
+        when(perfilRepository.save(any(PerfilCocineraEntity.class))).thenAnswer(i -> i.getArgument(0));
+
+        PerfilCocinera resultado = perfilService.crearPerfil(perfilConMedios, 1L);
+
+        ArgumentCaptor<PerfilCocineraEntity> captor = ArgumentCaptor.forClass(PerfilCocineraEntity.class);
+        verify(perfilRepository).save(captor.capture());
+
+        PerfilCocineraEntity persistido = captor.getValue();
+        assertNotNull(persistido);
+        assertNotNull(persistido.getMediosPago());
+        assertEquals(3, persistido.getMediosPago().size());
+        assertTrue(persistido.getMediosPago().contains(MedioPago.NEQUI));
+        assertTrue(persistido.getMediosPago().contains(MedioPago.DAVIPLATA));
+        assertTrue(persistido.getMediosPago().contains(MedioPago.EFECTIVO));
+
+        assertEquals(List.of(MedioPago.NEQUI, MedioPago.DAVIPLATA, MedioPago.EFECTIVO), resultado.getMediosPago());
     }
 }
