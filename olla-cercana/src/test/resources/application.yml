@@ -23,12 +23,14 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://localhost:27017/ollacercana_test
+      uri: mongodb://localhost:27017/ollacercana_test?serverSelectionTimeoutMS=300&connectTimeoutMS=300
       auto-index-creation: false
 
 ollacercana:
   reservas:
     tareas-programadas: false
+  mapa:
+    ofuscacion-salt: ${OLLACERCANA_MAPA_OFUSCACION_SALT:olla-cercana-default-salt-dev}
 
 
 jwt:

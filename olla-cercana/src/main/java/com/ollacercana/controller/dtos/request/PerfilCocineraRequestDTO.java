@@ -35,6 +35,7 @@ public class PerfilCocineraRequestDTO {
     private List<String> especialidades;
 
     @NotEmpty(message = "Debe registrar al menos un medio de pago")
+    @Schema(description = "Métodos de pago aceptados por la cocinera. Valores: NEQUI, DAVIPLATA, EFECTIVO, TRANSFERENCIA_BANCARIA", allowableValues = {"NEQUI", "DAVIPLATA", "EFECTIVO", "TRANSFERENCIA_BANCARIA"}, example = "[\"NEQUI\", \"EFECTIVO\"]")
     private List<MedioPago> mediosPago;
 
     private String numeroNequi;

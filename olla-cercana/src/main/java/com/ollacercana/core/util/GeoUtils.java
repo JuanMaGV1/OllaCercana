@@ -2,11 +2,16 @@ package com.ollacercana.core.util;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Random;
+import java.util.UUID;
 
 public final class GeoUtils {
 
     private static final double RADIO_TIERRA_METROS = 6371000.0;
-    public static final double MARGEN_OFUSCACION_METROS = 100.0;
+    public static final String DEFAULT_SALT = "olla-cercana-default-salt-dev";
+    public static final double MARGEN_MIN_OFUSCACION_METROS = 100.0;
+    public static final double MARGEN_MAX_OFUSCACION_METROS = 300.0;
+    public record CoordenadasOfuscadas(double latitud, double longitud) {}
 
     private GeoUtils() {}
 
@@ -26,24 +31,6 @@ public final class GeoUtils {
         return (int) (Math.round(distanciaMetros / 100.0) * 100);
     }
 
-    /**
-     * OC-235: Ofusca coordenadas desplazándolas con un margen de seguridad
-     * para no exponer la ubicación exacta de la cocinera.
-     *
-     * @return array de dos elementos: [latitudOfuscada, longitudOfuscada]
-     */
-    public static double[] ofuscarCoordenadas(double latitud, double longitud) {
-        return ofuscarCoordenadas(latitud, longitud, MARGEN_OFUSCACION_METROS);
-    }
-
-    public static double[] ofuscarCoordenadas(double latitud, double longitud, double margenMetros) {
-        double angulo = Math.PI / 4.0; // Desplazamiento en diagonal (afecta tanto lat como lon)
-        double deltaLat = (margenMetros * Math.cos(angulo)) / RADIO_TIERRA_METROS * (180.0 / Math.PI);
-        double deltaLon = (margenMetros * Math.sin(angulo)) / (RADIO_TIERRA_METROS * Math.cos(Math.toRadians(latitud))) * (180.0 / Math.PI);
-
-        return new double[]{latitud + deltaLat, longitud + deltaLon};
-    }
-
     public static String formatearTiempoRestante(LocalDateTime fechaExpiracion) {
         if (fechaExpiracion == null) return "0m";
         LocalDateTime ahora = LocalDateTime.now();
@@ -57,5 +44,49 @@ public final class GeoUtils {
             return horas + "h " + minutos + "m";
         }
         return minutos + "m";
+    }
+
+    /**
+     * OC-235: Ofusca coordenadas geográficas desplazándolas con un margen acotado (100m a 300m)
+     * derivado de forma determinista del ID de la cocinera mezclado con una sal secreta configurable.
+     * Mismo ID y misma sal producen exactamente el mismo resultado; diferente sal o diferente ID
+     * producen desplazamientos distintos. Las coordenadas ofuscadas nunca coinciden con las reales.
+     */
+    public static CoordenadasOfuscadas ofuscarCoordenadas(UUID cocineraId, String salt, double latitud, double longitud) {
+        long seed;
+        if (cocineraId != null) {
+            String combined = (salt != null ? salt : "") + ":" + cocineraId;
+            long hash = 1125899906842597L;
+            for (int i = 0; i < combined.length(); i++) hash = 31L * hash + combined.charAt(i);
+            seed = hash;
+        } else {
+            seed = Double.doubleToLongBits(latitud) ^ Double.doubleToLongBits(longitud);
+        }
+        Random random = new Random(seed);
+        double distancia = MARGEN_MIN_OFUSCACION_METROS
+                + random.nextDouble() * (MARGEN_MAX_OFUSCACION_METROS - MARGEN_MIN_OFUSCACION_METROS);
+        double angulo = random.nextDouble() * 2 * Math.PI;
+        return ofuscarCoordenadas(latitud, longitud, distancia, angulo);
+    }
+
+    public static CoordenadasOfuscadas ofuscarCoordenadas(UUID cocineraId, double latitud, double longitud) {
+        return ofuscarCoordenadas(cocineraId, DEFAULT_SALT, latitud, longitud);
+    }
+
+    public static CoordenadasOfuscadas ofuscarCoordenadas(double latitud, double longitud) {
+        return ofuscarCoordenadas(null, DEFAULT_SALT, latitud, longitud);
+    }
+
+    /**
+     * Variante determinística para pruebas o cálculos con distancia y ángulo fijos.
+     */
+    public static CoordenadasOfuscadas ofuscarCoordenadas(double latitud, double longitud,
+                                                           double distanciaMetros, double anguloRadianes) {
+        double dLat = (distanciaMetros * Math.cos(anguloRadianes)) / RADIO_TIERRA_METROS;
+        double latRad = Math.toRadians(latitud);
+        double divisorLon = RADIO_TIERRA_METROS * Math.cos(latRad);
+        if (Math.abs(divisorLon) < 1e-6) divisorLon = 1e-6;
+        double dLon = (distanciaMetros * Math.sin(anguloRadianes)) / divisorLon;
+        return new CoordenadasOfuscadas(latitud + Math.toDegrees(dLat), longitud + Math.toDegrees(dLon));
     }
 }
