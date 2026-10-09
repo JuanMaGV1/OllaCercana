@@ -82,4 +82,6 @@ class FiltrosPlatoTest {
         compuesto.agregar(new FiltroRestricciones(List.of(RestriccionAlimentaria.SIN_LACTOSA)));
         assertFalse(compuesto.cumple(plato));
     }
+
+    
 }

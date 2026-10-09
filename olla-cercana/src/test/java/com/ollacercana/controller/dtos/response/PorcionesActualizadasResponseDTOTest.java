@@ -1,4 +1,4 @@
-package com.ollacercana.dto.response;
+package com.ollacercana.controller.dtos.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

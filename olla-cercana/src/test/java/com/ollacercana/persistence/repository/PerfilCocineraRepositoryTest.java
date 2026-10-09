@@ -1,4 +1,4 @@
-package com.ollacercana.repository;
+package com.ollacercana.persistence.repository;
 
 import com.ollacercana.core.models.enums.EstadoCuenta;
 import com.ollacercana.core.models.enums.Rol;
@@ -6,8 +6,6 @@ import com.ollacercana.persistence.entities.CredencialesEmbeddable;
 import com.ollacercana.persistence.entities.CuentaEntity;
 import com.ollacercana.persistence.entities.IdentidadEmbeddable;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
-import com.ollacercana.persistence.repository.CuentaRepository;
-import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

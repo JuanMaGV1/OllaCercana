@@ -268,4 +268,25 @@ void setUp() {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenido[0].tipoComida").value("POSTRE"));
         }
+
+        @Test
+        @DisplayName("OC-214: tipoComida inválido en query → 400")
+        void cercanos_tipoComidaInvalido_debeRetornar400() throws Exception {
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lat", "4.6789")
+                        .param("lng", "-74.0567")
+                        .param("tipoComida", "BITCOIN"))
+                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("OC-214: restricción inválida en query → 400")
+        void cercanos_restriccionInvalida_debeRetornar400() throws Exception {
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lat", "4.6789")
+                        .param("lng", "-74.0567")
+                        .param("restricciones", "PALEOLITICO"))
+                .andExpect(status().isBadRequest());
+        }
 }
