@@ -1,12 +1,16 @@
 package com.ollacercana.config;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
 import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.controller.handlers.exception.AutoReservaException;
 import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException;
 import com.ollacercana.controller.handlers.exception.PlatoNoEncontradoException;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.controller.handlers.GlobalExceptionHandler;
+import com.ollacercana.core.models.enums.MedioPago;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -198,6 +202,40 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
         assertNotNull(resp.getBody());
         assertEquals(400, resp.getBody().getStatus());
+    }
+
+    @Test
+    @DisplayName("OC-252: Deserialización de enum inválido responde 400 y lista los valores permitidos")
+    void cuerpoIlegible_conEnumInvalido_Retorna400YListaValoresPermitidos() {
+        // Arrange
+        JsonMappingException.Reference ref = new JsonMappingException.Reference(null, "medioPago");
+        InvalidFormatException ifx = InvalidFormatException.from(
+                null, "Cannot deserialize value", "BITCOIN", MedioPago.class);
+        ifx.prependPath(ref);
+        var ex = new HttpMessageNotReadableException("JSON parse error", ifx, new MockHttpInputMessage(new byte[0]));
+
+        // Act
+        ResponseEntity<ErrorResponseDTO> resp = handler.handleCuerpoIlegible(ex, request);
+
+        // Assert
+        assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        assertNotNull(resp.getBody());
+        assertEquals(400, resp.getBody().getStatus());
+        String msg = resp.getBody().getMessage();
+        assertTrue(msg.contains("Valor inválido 'BITCOIN' para el campo 'medioPago'"));
+        assertTrue(msg.contains("Valores permitidos: [NEQUI, DAVIPLATA, EFECTIVO, TRANSFERENCIA_BANCARIA]"));
+    }
+
+    @Test
+    @DisplayName("OC-255: MedioPagoNoAceptadoException responde 400 Bad Request")
+    void medioPagoNoAceptado_Retorna400() {
+        var ex = new MedioPagoNoAceptadoException(MedioPago.DAVIPLATA);
+        ResponseEntity<ErrorResponseDTO> resp = handler.handleMedioPagoNoAceptado(ex, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        assertNotNull(resp.getBody());
+        assertEquals(400, resp.getBody().getStatus());
+        assertTrue(resp.getBody().getMessage().contains("DAVIPLATA"));
     }
 
     @Test
