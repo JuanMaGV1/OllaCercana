@@ -17,7 +17,6 @@ import static org.mockito.Mockito.*;
 class PublicadorEventosReservaTest {
 
     private EventoReserva evento() {
-        // ✅ el id de EventoReserva es String, no UUID
         return new EventoReserva(
                 UUID.randomUUID().toString(),
                 TipoEvento.RESERVA_CONFIRMADA,

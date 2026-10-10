@@ -15,6 +15,7 @@ import com.ollacercana.core.models.enums.TipoEvento;
 @Setter
 @NoArgsConstructor
 public class EventoReserva {
+    
     private String id;
     private TipoEvento tipo;
     private UUID reservaId;

@@ -10,12 +10,9 @@ import com.ollacercana.controller.dtos.response.PlatoCercanoResponseDTO;
 import com.ollacercana.controller.dtos.response.PlatoResponseDTO;
 import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.controller.mappers.PlatoMapper;
-import com.ollacercana.core.models.PerfilCocinera;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.MedioPago;
 import com.ollacercana.core.services.PlatoService;
-import com.ollacercana.core.util.GeoUtils;
-import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +26,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Controller REST de Platos — vista de administración.
+ *
+ * HU-04 · HU-05 · HU-06 · HU-07 · HU-24
+ *
+ * @see PlatoApi documentación OpenAPI separada de la implementación
+ * @see OC-93 Endpoint POST /platos
+ * @see OC-109 Endpoint PATCH /disponibilidad
+ * @see OC-117 Endpoint GET /platos/cercanos
+ * @see OC-142 Maqueta detalle de plato (front)
+ */
+
 @RestController
 @RequestMapping("/api/v1/platos")
 @RequiredArgsConstructor
-
 
 public class PlatoController implements PlatoApi {
 

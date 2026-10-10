@@ -18,6 +18,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+/**
+ * Validador de reglas de negocio de Reserva.
+ *
+ * RN-03 — Porciones disponibles
+ * RN-14 — Auto-reserva prohibida
+ * RN-15 — Máximo 2 pendientes simultáneas
+ *
+ * @see OC-137 ReservaValidator
+ * @see OC-255 Validación de método de pago aceptado por la cocinera
+ * @see OC-256 Pruebas unitarias de métodos de pago
+ */
 @Component
 @RequiredArgsConstructor
 public class ReservaValidator {

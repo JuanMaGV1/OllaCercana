@@ -7,6 +7,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Mapper de persistencia — Dominio ↔ PlatoEntity (JPA).
+ *
+ * Usado por {@link com.ollacercana.core.services.impl.PlatoServiceImpl}.
+ * Mantiene el dominio libre de anotaciones JPA.
+ *
+ * @see OC-089 Crear PlatoMapper + PlatoEntityMapper
+ * @see PlatoMapper mapper de presentación
+ */
 @Component
 public class PlatoEntityMapper {
 

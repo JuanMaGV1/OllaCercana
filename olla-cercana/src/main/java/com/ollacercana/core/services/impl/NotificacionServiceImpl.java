@@ -14,6 +14,18 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * HU-17 — Historial de notificaciones in-app (MongoDB).
+ *
+ * RN-26: los avisos de reserva son obligatorios, solo el chat es configurable.
+ *
+ * @see OC-267 Maqueta pestaña Notificaciones (front)
+ * @see OC-269/270 Permisos y pruebas
+ * @see OC-271 Historial y endpoint GET /notificaciones
+ * @see OC-272 Notificación al cambiar estado de reserva
+ * @see OC-273 Endpoint para registrar token del dispositivo
+ * @see OC-294 Guardar preferencia de avisos del usuario
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

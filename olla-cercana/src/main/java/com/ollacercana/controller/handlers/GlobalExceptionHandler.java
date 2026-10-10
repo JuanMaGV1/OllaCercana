@@ -26,8 +26,22 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-   
-                                                                              
+/**
+ * Handler global de excepciones — respuesta uniforme para todos los errores.
+ *
+ * Mapeo:
+ *   400 — Errores de validación ({@link MethodArgumentNotValidException})
+ *   401 — Credenciales inválidas / no autenticado
+ *   403 — Acceso denegado ({@link AccesoDenegadoException})
+ *   404 — Recurso no encontrado ({@link ResourceNotFoundException})
+ *   409 — Conflicto de negocio ({@link ConflictoException})
+ *   422 — Regla de negocio violada ({@link ReglaDeNegocioException})
+ *   500 — Error no controlado (genérico)
+ *
+ * @see OC-054 GlobalExceptionHandler + excepciones tipadas
+ * @see OC-185 Manejo de 401 y 403 uniforme
+ * @see OC-302 Completar GlobalExceptionHandler con los 5 tipos
+ */                                                                              
    
 @RestControllerAdvice
 public class GlobalExceptionHandler {

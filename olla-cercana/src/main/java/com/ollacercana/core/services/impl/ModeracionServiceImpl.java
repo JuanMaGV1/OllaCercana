@@ -21,6 +21,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * HU-19 — Panel de moderación para ADMIN.
+ *
+ * Reglas de negocio:
+ * RN-22 — Ocultamiento preventivo tras 3 reportantes distintos
+ * RN-23 — Toda decisión queda auditada con justificación
+ * RN-09 — Reactivación de perfiles pausados por baja reputación
+ *
+ * @see OC-228 Entidad DecisionModeracion
+ * @see OC-229 ModeracionService.resolver()
+ * @see OC-230 Reactivación de perfiles pausados
+ * @see OC-234 Notificación a los afectados por decisiones
+ * @see OC-237 Endpoints admin de moderación
+ * @see OC-238 Seeder de cuenta ADMIN
+ * @see OC-239 Pruebas unitarias de moderación
+ */
 @Service
 @RequiredArgsConstructor
 public class ModeracionServiceImpl implements IModeracionService {

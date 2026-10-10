@@ -17,8 +17,17 @@ import com.ollacercana.core.models.enums.TipoAjustePorciones;
 import com.ollacercana.core.models.enums.TipoComida;
 
 /**
- * Dominio puro de Plato — SIN anotaciones JPA (viven en PlatoEntity).
- * Contiene lógica de negocio del plato (RN-02, RN-03, RN-27, RN-29).
+ * Dominio puro de un plato — sin anotaciones JPA.
+ *
+ * FEAT-05 — Oferta (OC-39)
+ * HU-04   — Publicar oferta (OC-20)
+ * HU-05   — Porciones y precio (OC-21)
+ * HU-24   — Actualizar disponibilidad (OC-48)
+ * RN-02   — Expiración a las 4h
+ * RN-03   — Disponibles = totales - comprometidas
+ * RN-27   — Precio entre 2000 y 50000, múltiplo de 100
+ * RN-28   — Máximo 3 platos activos por cocinera
+ * RN-29   — Un plato expirado no se puede modificar
  */
 @Getter
 @Setter
@@ -48,13 +57,23 @@ public class Plato {
 
                                                        
 
-    /** RN-03: porciones disponibles = totales - comprometidas. */
+    /**
+     * RN-03: porciones disponibles = totales - comprometidas.
+     *
+     * @return disponibles, nunca negativo
+     */
     public int getPorcionesDisponibles() {
         int comprometidas = porcionesComprometidas == null ? 0 : porcionesComprometidas;
         return porcionesTotales - comprometidas;
     }
 
-    /** RN-02: un plato expira a las 4 horas de publicación. */
+    /**
+     * RN-02 / RN-28: publica un plato calculando su fecha de expiración.
+     *
+     * OC-92 — Fecha de expiración +4h
+     *
+     * @throws IllegalStateException si el plato no tiene cocinera asociada
+     */
     public void publicar() {
         if (this.cocineraId == null) {
             throw new IllegalStateException("Un plato no puede publicarse sin una cocinera asociada");
@@ -75,7 +94,11 @@ public class Plato {
         this.estado = EstadoPlato.EXPIRADO;
     }
 
-    /** RN-03: recalcula el estado según las porciones disponibles. */
+    /**
+     * RN-03: recalcula el estado segÃºn las porciones disponibles.
+     *
+     * OC-100 — calcularDisponibles()
+     */
     public void recalcularEstado() {
         if (this.estado == EstadoPlato.EXPIRADO || this.estado == EstadoPlato.OCULTO) return;
         if (getPorcionesDisponibles() <= 0) {
@@ -85,7 +108,14 @@ public class Plato {
         }
     }
 
-    /** RN-03: descuenta porciones comprometidas (al reservar). */
+    /**
+     * RN-03: descuenta porciones comprometidas (al reservar).
+     *
+     * OC-138 — ReservaService.crear()
+     *
+     * @throws IllegalArgumentException si cantidad <= 0
+     * @throws IllegalStateException    si cantidad > disponibles
+     */
     public void comprometerPorciones(int cantidad) {
         if (cantidad <= 0) {
             throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
@@ -99,7 +129,11 @@ public class Plato {
         recalcularEstado();
     }
 
-    /** RN-03: libera porciones comprometidas (al cancelar/rechazar reserva). */
+    /**
+     * RN-03: libera porciones comprometidas (al cancelar/rechazar reserva).
+     *
+     * OC-147 — ReservaService.rechazar() con liberación de porciones
+     */
     public void liberarPorciones(int cantidad) {
         this.porcionesComprometidas = Math.max(0, this.porcionesComprometidas - cantidad);
         recalcularEstado();
@@ -119,7 +153,14 @@ public class Plato {
         recalcularEstado();
     }
 
-    /** HU-24: ajusta manualmente la disponibilidad (aumentar, disminuir, marcar agotado). */
+    /**
+     * HU-24: ajusta manualmente la disponibilidad.
+     *
+     * OC-104 — DTO AjusteDisponibilidadRequest
+     * OC-106 — ajustarDisponibilidad() en el Service
+     * OC-108 — Validación "no menor que comprometidas"
+     * RN-27   — Rango de porciones 1–30
+     */
     public void ajustarDisponibilidad(TipoAjustePorciones tipo, Integer cantidad) {
         int comprometidasSeguras = this.porcionesComprometidas == null ? 0 : this.porcionesComprometidas;
 
@@ -131,6 +172,7 @@ public class Plato {
         recalcularEstado();
     }
 
+    /** RN-02: un plato solo está vigente si no ha expirado. */
     public boolean estaVigente() {
         return this.fechaExpiracion != null && LocalDateTime.now().isBefore(this.fechaExpiracion);
     }

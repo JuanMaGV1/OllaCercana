@@ -8,6 +8,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * Tarea programada que purga los mensajes de chat de reservas cerradas hace más de 30 días.
+ *
+ * HU-13 — Coordinación de entrega por chat
+ * RN-18 — Retención de historial de chat durante 30 días
+ * OC-266 — Programar la purga de mensajes a los 30 días
+ *
+ * Respeta el flag {@code ollacercana.reservas.tareas-programadas}.
+ * Intervalo configurable: {@code ollacercana.chat.intervalo-purga-ms}
+ * (por defecto 86400000 ms = 24 h).
+ *
+ * @see com.ollacercana.core.services.ChatService#purgarMensajesAntiguos()
+ * @see com.ollacercana.core.services.impl.ChatServiceImpl
+ */
 @Component
 @RequiredArgsConstructor
 public class ChatScheduler {

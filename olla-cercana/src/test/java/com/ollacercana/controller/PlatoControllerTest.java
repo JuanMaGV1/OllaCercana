@@ -168,7 +168,6 @@ void setUp() {
 
         String id = objectMapper.readTree(json).get("id").asText();
 
-        // ✅ Lee la versión desde el repositorio, no del JSON.
         UUID platoUuid = UUID.fromString(id);
         Integer version = jdbcTemplate.queryForObject(
                 "SELECT version FROM platos WHERE id = ?", Integer.class, platoUuid);

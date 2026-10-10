@@ -13,8 +13,20 @@ import com.ollacercana.core.models.enums.MedioPago;
 import com.ollacercana.core.models.enums.MotivoRechazo;
 
 /**
- * Dominio puro de Reserva — SIN anotaciones JPA.
- * Las columnas viven en persistence.entity.ReservaEntity.
+ * Dominio puro de Reserva — sin anotaciones JPA.
+ *
+ * FEAT-07 — Reservas (OC-41)
+ * HU-11   — Apartar porciones (OC-27)
+ * HU-12   — Aceptar / rechazar (OC-28)
+ * HU-23   — Confirmar entrega y cerrar transacción (OC-47)
+ * RN-04   — 10 minutos para confirmar; si no, expira
+ * RN-14   — La cocinera no puede reservar su propio plato
+ * RN-15   — Máximo 2 reservas pendientes simultáneas
+ * RN-16   — Lock optimista (@Version)
+ * RN-17   — Chat habilitado solo tras confirmar
+ * RN-25   — Recordatorio a la cocinera a los 7 min
+ * RN-32   — Solo se completa si está CONFIRMADA
+ * RN-33   — Cierre automático a las 24h
  */
 @Getter
 @Setter
@@ -65,6 +77,13 @@ public class Reserva {
         this.recordatorioRecogidaEnviado = true;
     }
 
+    /**
+     * HU-11: construye una reserva en estado PENDIENTE con hora límite.
+     *
+     * OC-138 — ReservaService.crear()
+     * RN-33  — Calcula montoTotal = precio × cantidad
+     * RN-04  — Fecha límite = ahora + 10 min
+     */
     public static Reserva crear(Plato plato, Long compradorId, int cantidadPorciones,
                                 MedioPago medioPago, String notaComprador, LocalDateTime ahora) {
         if (plato == null) throw new IllegalArgumentException("La reserva debe estar asociada a un plato");
@@ -90,6 +109,17 @@ public class Reserva {
                 .build();
     }
 
+    /**
+     * HU-12: confirmación de la cocinera. Habilita el chat.
+     *
+     * OC-146 — ReservaService.confirmar()
+     * RN-04  — Valida que no haya expirado
+     * RN-17  — Activa el chat
+     *
+     * @throws ReservaNoPendienteException  si ya fue gestionada
+     * @throws ReservaVencidaException      si pasaron los 10 min
+     * @throws DecisionReservaInvalidaException si horaEstimada es nula o pasada
+     */
     public void confirmar(LocalDateTime horaEstimada, LocalDateTime ahora) {
         validarQueSePuedeDecidir(ahora);
         if (horaEstimada == null || !horaEstimada.isAfter(ahora)) {
@@ -103,6 +133,14 @@ public class Reserva {
         this.estadoChat = EstadoChat.ACTIVO;
     }
 
+    /**
+     * HU-12: rechazo de la cocinera con motivo.
+     *
+     * OC-147 — ReservaService.rechazar() con liberación de porciones
+     * RN-04  — Valida vigencia
+     *
+     * @throws DecisionReservaInvalidaException si motivo es nulo o si OTRO sin comentario
+     */
     public void rechazar(MotivoRechazo motivo, String comentario, LocalDateTime ahora) {
         validarQueSePuedeDecidir(ahora);
         if (motivo == null) throw new DecisionReservaInvalidaException("El motivo de rechazo es obligatorio");
@@ -125,6 +163,15 @@ public class Reserva {
         this.estado = EstadoReserva.EXPIRADA;
     }
 
+    /**
+     * HU-23: cierre de la transacción. Habilita la calificación.
+     *
+     * OC-156 — ReservaService.completar()
+     * OC-159 — Cambio de estado del chat a SOLO_LECTURA (RN-17)
+     * RN-32  — Solo desde CONFIRMADA
+     *
+     * @throws ReservaNoConfirmadaException si el estado no es CONFIRMADA
+     */
     public void completar(String comentario, LocalDateTime ahora) {
         verificarQueEstaConfirmada();
         String limpio = (comentario == null || comentario.isBlank()) ? null : comentario.trim();
@@ -142,11 +189,21 @@ public class Reserva {
         if (this.estado != EstadoReserva.CONFIRMADA) throw new ReservaNoConfirmadaException(this.estado);
     }
 
+    /**
+     * RN-33: si pasaron 24h desde la confirmación, corresponde cierre automático.
+     *
+     * OC-157 — Expiración automática a las 24h
+     */
     public boolean cierreAutomaticoVencido(LocalDateTime ahora) {
         return this.estado == EstadoReserva.CONFIRMADA && this.fechaDecision != null
                 && !ahora.isBefore(this.fechaDecision.plusHours(HORAS_PARA_CIERRE_AUTOMATICO));
     }
 
+    /**
+     * RN-25: si pasaron 7 min desde la creación y sigue pendiente, enviar recordatorio.
+     *
+     * <p>OC-149 — Recordatorio a los 7 min
+     */
     public boolean requiereRecordatorio(LocalDateTime ahora) {
         return estaPendiente() && !this.recordatorioEnviado
                 && !ahora.isBefore(this.fechaCreacion.plusMinutes(MINUTOS_PARA_RECORDATORIO))

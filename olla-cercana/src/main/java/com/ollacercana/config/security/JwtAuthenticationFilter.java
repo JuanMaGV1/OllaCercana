@@ -19,10 +19,22 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Filtro JWT — intercepta cada petición antes de llegar al Controller.
+ *
+ * Extrae {@code Bearer <token>}, valida firma y expiración, carga
+ * {@link UserDetails} y setea el {@code SecurityContext}.
+ *
+ * Si el token falta o es inválido, la petición sigue sin autenticar
+ * (el {@link com.ollacercana.config.SecurityConfig} la rechazará con 401).
+ *
+ * @see OC-180 JwtAuthenticationFilter
+ * @see OC-183 Leer la identidad desde el token (no headers)
+ * @see OC-185 Manejo uniforme de 401/403
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

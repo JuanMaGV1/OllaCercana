@@ -8,9 +8,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * OC-006 / OC-007 / OC-008: Iterator sobre el catálogo de platos.
- * Recorre la colección aplicando el filtro (normalmente Composite) sin exponer
- * la estructura interna.
+ * Patrón Iterator — recorre el catálogo de platos aplicando filtros.
+ *
+ * Se combina con Composite ({@link com.ollacercana.core.patterns.filter.FiltroCompuestoPlato})
+ * para resolver búsqueda y filtrado sin exponer la estructura interna.
+ *
+ * @see OC-006 Catálogo con Iterator/Composite
+ * @see OC-007 Filtros combinables
+ * @see OC-008 Filtro por distancia
  */
 public class CatalogoIterator implements Iterator<Plato> {
 

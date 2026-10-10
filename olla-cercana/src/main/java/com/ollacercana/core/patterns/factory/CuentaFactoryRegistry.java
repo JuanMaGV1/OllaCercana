@@ -9,8 +9,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * OC-001: registra las fábricas disponibles y delega según el rol solicitado.
- * Extensible sin tocar CuentaServiceImpl (OCP).
+ * Patrón Factory Method — registro de fábricas por rol.
+ *
+ * Extensible sin modificar el servicio (OCP). Cada fábrica concreta
+ * declara {@code soporta(request)} y encapsula las reglas de creación.
+ *
+ * @see OC-001 Factory Method de cuentas (RN-01)
+ * @see FabricaComprador
+ * @see FabricaCocinera
+ * @see FabricaAdministrador
  */
 @Component
 @RequiredArgsConstructor

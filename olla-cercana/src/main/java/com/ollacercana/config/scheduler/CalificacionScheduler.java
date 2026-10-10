@@ -10,6 +10,23 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+/**
+ * Tarea programada que publica las calificaciones PENDIENTES cuya ventana de 72 h venció.
+ *
+ * HU-15 — Calificación del intercambio comunitario
+ * RN-19 — Ventana de publicación de 72 h
+ * RN-20 — Publicación automática cuando la contraparte no califica
+ * OC-196 — Publicación por ventana de 72 h
+ *
+ * Respeta el flag {@code ollacercana.calificaciones.tareas-programadas}:
+ * si está en {@code false} (entorno de pruebas), no ejecuta nada.
+ *
+ * Intervalo configurable: {@code ollacercana.calificaciones.intervalo-ms}
+ * (por defecto 600000 ms = 10 min).
+ *
+ * @see com.ollacercana.core.services.CalificacionService#publicarPendientesVencidas(java.time.LocalDateTime)
+ * @see com.ollacercana.core.services.impl.CalificacionServiceImpl
+ */
 @Component
 @RequiredArgsConstructor
 public class CalificacionScheduler {

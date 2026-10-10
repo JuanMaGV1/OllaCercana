@@ -22,6 +22,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Controller REST de Reservas.
+ *
+ * HU-11 · HU-12 · HU-14 · HU-23
+ *
+ * @see OC-140 Endpoint POST /reservas
+ * @see OC-150 Endpoint PATCH /decision
+ * @see OC-160 Endpoint POST /completar
+ * @see OC-255 Validación de método de pago
+ */
 @RestController
 @RequestMapping("/api/v1/reservas")
 @RequiredArgsConstructor

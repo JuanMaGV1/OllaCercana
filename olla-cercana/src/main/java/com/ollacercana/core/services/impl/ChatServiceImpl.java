@@ -26,6 +26,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * HU-13 — Coordinación de entrega por chat (persistido en MongoDB).
+ *
+ * Reglas de negocio:
+ * RN-17 — Chat solo ACTIVO tras confirmar reserva; SOLO_LECTURA al completar
+ * RN-18 — Purga automática a los 30 días de reservas completadas
+ *
+ * @see OC-245 Documento MensajeChat
+ * @see OC-246 DTOs y mapper del chat
+ * @see OC-247 Endpoints de chat y ChatApi
+ * @see OC-248 ChatValidator
+ * @see OC-249 Pruebas unitarias de chat
+ * @see OC-263 ChatService.enviar() con evento NUEVO_MENSAJE_CHAT
+ * @see OC-264 ChatService.listar() con cursor
+ * @see OC-265 Mensajes no leídos
+ * @see OC-266 Purga a los 30 días
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

@@ -23,7 +23,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Tag(name = "Chat de Reservas", description = "Endpoints para mensajería entre comprador y cocinera (OC-247)")
+/**
+ * Documentación OpenAPI de Chat de Reservas (MongoDB).
+ *
+ * FEAT-11 — Interacción (chat y notificaciones)
+ * HU-13   — Coordinación de entrega
+ * RN-17   — Chat solo ACTIVO tras confirmar; SOLO_LECTURA al completar
+ * RN-18   — Retención 30 días
+ *
+ * Todos los endpoints requieren COMPRADOR o COCINERA participante.
+ *
+ * @see OC-245 Documento MensajeChat
+ * @see OC-247 Endpoints y ChatApi
+ * @see OC-263 Envío con evento
+ * @see OC-264 Polling con cursor
+ * @see OC-265 Mensajes no leídos
+ */
+@Tag(name = "Chat de Reservas", description = "Endpoints para mensajerÃ­a entre comprador y cocinera (OC-247)")
+@SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_NAME)
 @RequestMapping("/api/v1/reservas/{id}/mensajes")
 public interface ChatApi {
 

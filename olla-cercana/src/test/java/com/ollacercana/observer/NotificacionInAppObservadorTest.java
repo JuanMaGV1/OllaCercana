@@ -39,7 +39,6 @@ class NotificacionInAppObservadorTest {
 
     @BeforeEach
     void setUp() {
-        // ✅ Mapper bidireccional mínimo
         lenient().when(notificacionMapper.toDocument(any(Notificacion.class))).thenAnswer(i -> {
             Notificacion n = i.getArgument(0);
             return NotificacionDocument.builder()
@@ -57,7 +56,6 @@ class NotificacionInAppObservadorTest {
     }
 
     private EventoReserva evento(TipoEvento tipo, Map<String, Object> payload) {
-        // ✅ id String, no UUID
         return new EventoReserva(
                 UUID.randomUUID().toString(),
                 tipo,

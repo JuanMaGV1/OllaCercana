@@ -11,6 +11,16 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Validador de reglas de negocio de Chat.
+ *
+ * Valida: reserva existe (404), usuario es parte (403), chat ACTIVO (409),
+ * y texto dentro de límites.
+ *
+ * @see OC-248 ChatValidator
+ * @see OC-249 Pruebas unitarias de chat
+ * @see RN-17 chat solo ACTIVO tras confirmar
+ */
 @Component
 @RequiredArgsConstructor
 public class ChatValidator {

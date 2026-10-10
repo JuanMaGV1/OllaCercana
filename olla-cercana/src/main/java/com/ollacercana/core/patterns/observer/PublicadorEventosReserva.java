@@ -8,9 +8,20 @@ import com.ollacercana.core.models.EventoReserva;
 
 import java.util.List;
 
-   
-                             
-   
+/**
+ * Patrón Observer — punto único de publicación de eventos de reserva.
+ *
+ * Implementado en Sprint 2 para desacoplar el dominio de las acciones
+ * reactivas (auditoría, notificaciones in-app, otorgamiento de medallas).
+ *
+ * FEAT-11 — Interacción (chat y notificaciones) — OC-49
+ *
+ * @see OC-133 Entidad EventoReserva + enum TipoEvento
+ * @see OC-263 Publicación del evento NUEVO_MENSAJE_CHAT
+ *
+ * @implNote Si un observador falla, los demás siguen ejecutándose — se loguea
+ *           el error pero no se propaga para no romper el flujo principal.
+ */
 
 @Component
 public class PublicadorEventosReserva {

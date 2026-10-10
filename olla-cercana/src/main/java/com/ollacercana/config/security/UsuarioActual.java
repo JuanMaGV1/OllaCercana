@@ -16,6 +16,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Helper para obtener la identidad del usuario autenticado desde el JWT.
+ *
+ * Reemplaza el uso de headers {@code X-Cocinera-Id} / {@code X-Comprador-Id}
+ * que existían en Sprint 2 (eliminados en OC-183).
+ *
+ * @see OC-183 Leer la identidad desde el token
+ * @see JwtService que emite {@code cuentaId} y {@code cocineraId}
+ */
 @Component
 @RequiredArgsConstructor
 public class UsuarioActual {
@@ -43,7 +52,6 @@ public class UsuarioActual {
         try {
             return Long.parseLong(username);
         } catch (NumberFormatException e) {
-            // ✅ el repo devuelve CuentaEntity, no Cuenta
             return cuentaRepository.findByIdentificador(username)
                     .map(cuentaEntity -> cuentaEntity.getId())
                     .orElseThrow(() -> new AccesoDenegadoException("No se pudo resolver el ID de cuenta del usuario actual"));

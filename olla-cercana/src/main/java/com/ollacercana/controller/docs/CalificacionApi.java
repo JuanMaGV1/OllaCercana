@@ -7,7 +7,6 @@ import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
 import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
 import com.ollacercana.controller.dtos.response.ResumenCalificacionesDTO;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,8 +20,25 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * OC-031 HU-15: calificación mutua y reputación pública (RN-19, RN-20, RN-31).
+ * Documentación OpenAPI de Calificaciones y Reputación.
+ *
+ * FEAT-08 — Confianza y reputación
+ * HU-15   — Calificación del intercambio
+ * HU-22   — Consulta pública de reputación
+ * RN-19   — Ventana de 72 h
+ * RN-20   — Publicación simultánea
+ * RN-31   — Una calificación por reserva, solo el comprador
+ *
+ * Los endpoints de consulta ({@code GET /cocineras/{id}/calificaciones})
+ * son públicos; el de creación requiere rol COMPRADOR.
+ *
+ * @see OC-192 Entidad Calificacion
+ * @see OC-199 Endpoint POST /reservas/{id}/calificacion
+ * @see OC-200 Pruebas unitarias de calificación
+ * @see OC-203/204 Reputación pública
+ * @see OC-205 Pruebas unitarias de reputación
  */
+
 @Tag(name = "Calificaciones", description = "HU-15 / HU-22 — calificación y reputación")
 public interface CalificacionApi {
 

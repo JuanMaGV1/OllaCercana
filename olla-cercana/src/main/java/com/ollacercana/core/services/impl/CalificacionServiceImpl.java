@@ -37,13 +37,23 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * OC-031 HU-15 / HU-22 — Implementación del servicio de calificaciones.
+ * HU-15 / HU-22 — Implementación del servicio de calificaciones.
  *
- * Cubre:
- *  - RN-19: ventana de publicación (72h) cuando solo califica una parte.
- *  - RN-20: publicación simultánea de ambas reseñas para evitar represalias.
- *  - RN-31: una sola calificación por reserva, solo el comprador, solo COMPLETADAS.
- *  - HU-22: agregados públicos (promedio, total, positivas) para el perfil.
+ * Reglas de negocio cubiertas:
+ * RN-19 — Ventana de publicación (72h) cuando solo califica una parte
+ * RN-20 — Publicación simultánea de ambas reseñas
+ * RN-31 — Una sola calificación por reserva, solo el comprador, solo COMPLETADAS
+ *
+ * @see OC-192 Entidad Calificacion y enum EstadoCalificacion
+ * @see OC-193 CalificacionRepository, DTOs y mapper
+ * @see OC-194 CalificacionValidator
+ * @see OC-195 CalificacionService.calificar()
+ * @see OC-196 Scheduler de publicación 72h
+ * @see OC-197 Actualización de métricas de reputación (RN-10)
+ * @see OC-198 Evaluador de reputación para pausa (RN-09)
+ * @see OC-199 Endpoint POST /calificaciones
+ * @see OC-200 Pruebas unitarias de calificación
+ * @see OC-203/204/205 Reputación pública (HU-22)
  */
 @Slf4j
 @Service

@@ -15,6 +15,15 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Validador de reglas de negocio de Plato.
+ *
+ * Cadena Chain of Responsibility: CocineraHabilitada → Precio → LimitePlatos.
+ *
+ * @see OC-091 Validador: cocinera verificada, no pausada, máx 3 activos (RN-28)
+ * @see OC-099 Validador con rangos RN-27 (precio, porciones)
+ * @see OC-104/105/106/107/108 Ajuste de disponibilidad con lock optimista
+ */
 @Component
 @RequiredArgsConstructor
 public class PlatoValidator {

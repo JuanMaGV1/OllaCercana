@@ -21,13 +21,14 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * HU-19 / OC-035: implementación del panel de moderación (solo ADMIN).
- * RN-09, RN-22, RN-23 aplicadas en el servicio.
+ * Controller REST de Moderación (solo ADMIN).
  *
- * Nota: las anotaciones @GetMapping/@PostMapping se repiten en la clase porque
- * Spring MVC resuelve los mappings por reflexión directa sobre el controller,
- * no por herencia desde la interfaz. La interfaz ModeracionApi conserva la
- * documentación Swagger (@Operation, @Tag).
+ * HU-19 · RN-09 · RN-22 · RN-23
+ *
+ * @see ModeracionApi documentación OpenAPI
+ * @see OC-237 Endpoints admin de moderación
+ * @see OC-229 ModeracionService.resolver()
+ * @see OC-230 Reactivación de perfiles pausados
  */
 @RestController
 @RequestMapping("/api/v1/admin/moderacion")

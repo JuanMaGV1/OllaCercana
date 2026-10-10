@@ -17,6 +17,22 @@ import com.ollacercana.controller.dtos.response.RegistroResponseDTO;
 
 import java.util.Map;
 
+/**
+ * Documentación OpenAPI de Gestión de Cuentas.
+ *
+ * FEAT-04 — Autenticación / Perfil
+ * HU-01   — Registro de cuenta
+ * HU-17   — Preferencias de avisos
+ *
+ * El patrón de la interfaz separa documentación de implementación:
+ * {@link com.ollacercana.controller.CuentaController} la implementa y solo
+ * aporta lógica; aquí vive todo {@code @Tag}, {@code @Operation} y
+ * {@code @ApiResponse}.
+ *
+ * @see OC-060 DTOs RegistroRequest + RegistroResponse
+ * @see OC-065 Endpoint POST /cuentas
+ * @see OC-094 Preferencia de avisos in-app
+ */
 @Tag(name = "Gestión de Cuentas", description = "API para el registro y administración de cuentas de usuario")
 public interface CuentaApi {
 

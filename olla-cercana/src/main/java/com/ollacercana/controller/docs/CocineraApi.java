@@ -21,6 +21,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
+/**
+ * Documentación OpenAPI de métricas e historial de la cocinera.
+ *
+ * FEAT-08 — Confianza y reputación
+ * HU-20   — Historial e ingresos referenciales
+ *
+ * Escenario 2 de la HU: sin ventas → ceros y plato vacío.
+ * Escenario 3: detalle por pedido incluye calificación (nula si no la tiene).
+ *
+ * @see OC-275 Maqueta pestaña Historial (front)
+ * @see OC-276 Endpoint GET /cocineras/metricas
+ * @see OC-277 Consulta de ingresos por periodo
+ * @see OC-297 Endpoint GET /cocineras/historial
+ * @see OC-298 Pruebas unitarias de métricas
+ */
 @Tag(name = "Cocineras", description = "Resumen de historial e ingresos referenciales de la cocinera (HU-20)")
 @RequestMapping("/api/v1/cocineras")
 public interface CocineraApi {

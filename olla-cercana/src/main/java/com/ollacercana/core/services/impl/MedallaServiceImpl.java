@@ -29,6 +29,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * HU-21 — Servicio de insignias comunitarias.
+ *
+ * Reglas cubiertas:
+ * Vecino Fiel: 3 entregas en el mismo mes con la misma cocinera
+ * Conjunto Olla Verde: 100% de porciones vendidas en la semana
+ *
+ * @see OC-278 Modelo de medallas y catálogo de hitos
+ * @see OC-279 Otorgar Vecino Fiel y endpoint GET /usuarios/{id}/medallas
+ * @see OC-280 Pruebas unitarias de medallas
+ * @see OC-299 Balance semanal de Conjunto Olla Verde
+ * @see OC-300/301 Maquetas front (fuera de alcance backend)
+ */
 @Service
 @RequiredArgsConstructor
 public class MedallaServiceImpl implements MedallaService {

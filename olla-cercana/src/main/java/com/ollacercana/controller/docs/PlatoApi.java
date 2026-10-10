@@ -21,6 +21,30 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Documentación OpenAPI de Platos.
+ *
+ * FEAT-05 — Oferta (administración)
+ * FEAT-06 — Catálogo (consulta)
+ * HU-04   — Publicar oferta
+ * HU-05   — Porciones y precio
+ * HU-06   — Platos cercanos por radio (RN-05)
+ * HU-07   — Filtros por tipo y restricciones
+ * HU-24   — Actualizar disponibilidad
+ *
+ * Nota: los endpoints de consulta pública ({@code GET /platos/cercanos}
+ * y {@code GET /platos/{id}}) no exponen {@code puntoEntrega} (RN-05).
+ *
+ * @see OC-088 DTOs PlatoRequest + PlatoResponse
+ * @see OC-093 Endpoints POST/GET/PUT/DELETE /platos
+ * @see OC-109 Endpoint PATCH /disponibilidad
+ * @see OC-114 DTO ConsultaPlatosRequest
+ * @see OC-117 Endpoint GET /platos/cercanos
+ * @see OC-121 DTO PlatoCercanoResponse
+ * @see OC-123 Nunca exponer dirección exacta (RN-05)
+ * @see OC-127 Filtro por tipoComida
+ * @see OC-128 Filtro por restricciones alimentarias
+ */
 @Tag(name = "Platos", description = "Gestión de ofertas de comida casera")
 @RequestMapping("/api/v1/platos")
 public interface PlatoApi {
@@ -55,22 +79,22 @@ public interface PlatoApi {
             @Valid @RequestBody AjusteDisponibilidadRequest request
     );
 
-   @Operation(
-        summary = "Consultar platos cercanos (HU-06 + HU-07, RN-05)",
-        description = """
-            Retorna los platos disponibles dentro del radio especificado, ordenados por cercanía.
-            No revela la dirección exacta de la cocinera (RN-05).
-            Filtros opcionales: tipoComida (HU-07) y restricciones alimentarias (HU-07).
-            """
-        )
-        @ApiResponses({
-                @ApiResponse(responseCode = "200", description = "Listado paginado de platos cercanos"),
-                @ApiResponse(responseCode = "400", description = "Latitud/longitud faltantes o fuera de rango")
-        })
-        @GetMapping("/cercanos")
-        ResponseEntity<PaginaResponseDTO<PlatoCercanoResponseDTO>> consultarCercanos(
-                @ParameterObject @Valid @ModelAttribute ConsultaPlatosRequest request
-        );
+       @Operation(
+            summary = "Consultar platos cercanos (HU-06 + HU-07, RN-05)",
+            description = """
+                Retorna los platos disponibles dentro del radio especificado, ordenados por cercanÃ­a.
+                No revela la direcciÃ³n exacta de la cocinera (RN-05).
+                Filtros opcionales: tipoComida (HU-07) y restricciones alimentarias (HU-07).
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Listado paginado de platos cercanos"),
+            @ApiResponse(responseCode = "400", description = "Latitud/longitud faltantes o fuera de rango")
+    })
+    @GetMapping("/cercanos")
+    ResponseEntity<PaginaResponseDTO<PlatoCercanoResponseDTO>> consultarCercanos(
+            @ParameterObject @Valid @ModelAttribute ConsultaPlatosRequest request
+    );
 
     @Operation(
             summary = "Eliminar un plato",
@@ -78,4 +102,6 @@ public interface PlatoApi {
     )
     @DeleteMapping("/{id}")
     ResponseEntity<Void> eliminar(@PathVariable UUID id);
+
+    
 }
