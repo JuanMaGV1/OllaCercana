@@ -3,6 +3,7 @@ package com.ollacercana.core.services;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.controller.handlers.exception.ReservaNoConfirmadaException;
 import com.ollacercana.controller.handlers.exception.ReservaNoEncontradaException;
+import com.ollacercana.controller.mappers.ReservaMapper;
 import com.ollacercana.core.models.EventoReserva;
 import com.ollacercana.core.models.Reserva;
 import com.ollacercana.core.models.enums.EstadoChat;
@@ -58,6 +59,7 @@ class ReservaServiceImplCierreTest {
     @Mock private PlatoEntityMapper platoEntityMapper;
     @Mock private EventoMapper eventoMapper;
     @Mock private ObservadorReserva observador;
+    @Mock private ReservaMapper reservaMapper;
 
     private ReservaServiceImpl reservaService;
 
@@ -67,7 +69,7 @@ class ReservaServiceImplCierreTest {
         reservaService = new ReservaServiceImpl(
                 reservaRepository, platoRepository, perfilCocineraRepository,
                 reporteRepository, eventoReservaRepository, publicador,
-                validator, reservaEntityMapper, platoEntityMapper, eventoMapper);
+                validator, reservaEntityMapper, platoEntityMapper, eventoMapper, reservaMapper);
 
         // Mapper genérico: preserva TODOS los campos relevantes.
         lenient().when(reservaEntityMapper.toEntity(any(Reserva.class))).thenAnswer(i -> {

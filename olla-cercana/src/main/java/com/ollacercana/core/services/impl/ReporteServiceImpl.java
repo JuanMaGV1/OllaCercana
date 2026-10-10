@@ -1,4 +1,4 @@
-package com.ollacercana.core.services;
+package com.ollacercana.core.services.impl;
 
 import com.ollacercana.controller.dtos.request.ReporteCrearDTO;
 import com.ollacercana.controller.dtos.response.ReporteDTO;
@@ -8,6 +8,7 @@ import com.ollacercana.core.models.Reporte;
 import com.ollacercana.core.models.enums.EstadoReporte;
 import com.ollacercana.core.patterns.moderacion.ModeracionReporteChainConfig;
 import com.ollacercana.core.validators.ReporteValidator;
+import com.ollacercana.core.services.IReporteService;
 import com.ollacercana.persistence.entities.ReporteEntity;
 import com.ollacercana.persistence.mappers.ReporteEntityMapper;
 import com.ollacercana.persistence.repository.ReporteRepository;
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class ReporteService {
+public class ReporteServiceImpl implements IReporteService {
 
     private final ReporteRepository reporteRepository;
     private final ReporteValidator reporteValidator;

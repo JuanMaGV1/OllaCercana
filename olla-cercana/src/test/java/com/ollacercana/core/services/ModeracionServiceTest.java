@@ -4,6 +4,7 @@ import com.ollacercana.controller.dtos.request.EjecutarDecisionDTO;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.core.models.*;
 import com.ollacercana.core.models.enums.*;
+import com.ollacercana.core.services.impl.ModeracionServiceImpl;
 import com.ollacercana.persistence.entities.*;
 import com.ollacercana.persistence.mappers.*;
 import com.ollacercana.persistence.repository.*;
@@ -40,7 +41,7 @@ class ModeracionServiceTest {
     @Mock private PerfilCocineraDomainMapper perfilDomainMapper;
     @Mock private NotificacionDocumentMapper notificacionMapper;
 
-    private ModeracionService service;
+    private ModeracionServiceImpl service;
 
     private final UUID reporteId = UUID.randomUUID();
     private final UUID platoId = UUID.randomUUID();
@@ -49,7 +50,7 @@ class ModeracionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ModeracionService(
+        service = new ModeracionServiceImpl(
                 reporteRepository, decisionRepository, platoRepository,
                 cuentaRepository, perfilRepository, notificacionRepository,
                 reporteMapper, decisionMapper, platoMapper, cuentaMapper,

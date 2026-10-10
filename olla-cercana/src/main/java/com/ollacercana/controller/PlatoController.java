@@ -38,7 +38,6 @@ public class PlatoController implements PlatoApi {
 
     private final PlatoService platoService;
     private final PlatoMapper platoMapper;
-    private final PerfilCocineraRepository perfilCocineraRepository;
     private final UsuarioActual usuarioActual;
     
     @Override

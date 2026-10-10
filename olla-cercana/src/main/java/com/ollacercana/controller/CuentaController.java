@@ -7,6 +7,7 @@ import com.ollacercana.controller.dtos.response.RegistroResponseDTO;
 import com.ollacercana.controller.mappers.CuentaMapper;
 import com.ollacercana.core.models.Cuenta;
 import com.ollacercana.core.services.ICuentaService;
+import com.ollacercana.core.patterns.factory.CuentaFactoryRegistry;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,17 +32,14 @@ public class CuentaController implements CuentaApi {
     private final ICuentaService cuentaService;
     private final CuentaMapper cuentaMapper;
     private final UsuarioActual usuarioActual;
+    private final CuentaFactoryRegistry cuentaFactoryRegistry;
 
     @Override
     @PostMapping
     public ResponseEntity<RegistroResponseDTO> registrar(@Valid @RequestBody RegistroRequestDTO request) {
 
-        Cuenta cuentaDominio = cuentaMapper.toDomain(request);
-
-
+        Cuenta cuentaDominio = cuentaFactoryRegistry.crear(request);
         Cuenta cuentaGuardada = cuentaService.registrar(cuentaDominio);
-
-
         RegistroResponseDTO response = cuentaMapper.toResponseDTO(cuentaGuardada);
 
 

@@ -2,7 +2,6 @@ package com.ollacercana.core.services;
 
 import com.ollacercana.core.models.Medalla;
 import com.ollacercana.core.models.MedallaUsuario;
-import com.ollacercana.core.models.PerfilCocinera;
 import com.ollacercana.core.models.enums.CodigoMedalla;
 import com.ollacercana.core.models.enums.EstadoReserva;
 import com.ollacercana.core.services.impl.MedallaServiceImpl;

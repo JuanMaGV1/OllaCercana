@@ -1,6 +1,7 @@
 package com.ollacercana.core.services;
 
 import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
+import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
 import com.ollacercana.core.models.Reserva;
 import com.ollacercana.core.models.enums.MotivoRechazo;
 
@@ -37,4 +38,6 @@ public interface ReservaService extends IReservaService {
     List<UUID> buscarReservasParaRecordatorioRecogida(LocalDateTime ahora);
 
     void marcarRecordatorioRecogidaEnviado(UUID reservaId);
+
+    ReservaResponseDTO obtenerConDetalle(UUID reservaId);
 }

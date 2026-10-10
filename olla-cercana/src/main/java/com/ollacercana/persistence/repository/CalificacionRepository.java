@@ -46,4 +46,10 @@ public interface CalificacionRepository extends JpaRepository<CalificacionEntity
 
     List<CalificacionEntity> findByEstadoAndFechaLimitePublicacionLessThanEqual(
         EstadoCalificacion estado, LocalDateTime ahora);
+
+        /**
+ * OC-195 / RN-20: busca la calificación de la contraparte en la misma reserva.
+ * Si existe, la actual se puede publicar sin esperar la ventana de 72h.
+ */
+Optional<CalificacionEntity> findByReservaIdAndCompradorIdNot(UUID reservaId, Long compradorId);
 }

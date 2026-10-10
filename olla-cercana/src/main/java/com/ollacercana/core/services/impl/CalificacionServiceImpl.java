@@ -32,9 +32,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
+/**
+ * OC-031 HU-15 / HU-22 — Implementación del servicio de calificaciones.
+ *
+ * Cubre:
+ *  - RN-19: ventana de publicación (72h) cuando solo califica una parte.
+ *  - RN-20: publicación simultánea de ambas reseñas para evitar represalias.
+ *  - RN-31: una sola calificación por reserva, solo el comprador, solo COMPLETADAS.
+ *  - HU-22: agregados públicos (promedio, total, positivas) para el perfil.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -49,10 +59,15 @@ public class CalificacionServiceImpl implements CalificacionService {
     private final CalificacionValidator calificacionValidator;
     private final EvaluadorReputacionCalificacion evaluadorReputacion;
 
+    // =====================================================================
+    // HU-15 · Calificar una reserva completada
+    // =====================================================================
+
     @Override
     @Transactional
     public CalificacionResponseDTO calificar(UUID reservaId, Long compradorId, CalificacionRequestDTO request) {
         log.info("HU-31: comprador {} calificando reserva {}", compradorId, reservaId);
+
         // 1. La reserva debe existir
         Reserva reserva = reservaRepository.findById(reservaId)
                 .map(reservaEntityMapper::toDomain)
@@ -73,7 +88,8 @@ public class CalificacionServiceImpl implements CalificacionService {
             throw new CalificacionDuplicadaException();
         }
 
-        // 5. Construir y persistir
+        // 5. Construir y persistir la calificación como PENDIENTE
+        LocalDateTime ahora = LocalDateTime.now();
         Calificacion calificacion = Calificacion.builder()
                 .reservaId(reservaId)
                 .compradorId(compradorId)
@@ -81,15 +97,19 @@ public class CalificacionServiceImpl implements CalificacionService {
                 .estrellas(request.getEstrellas())
                 .comentario(normalizarComentario(request.getComentario()))
                 .estado(EstadoCalificacion.PENDIENTE)
-                .fechaCreacion(LocalDateTime.now())
-                .fechaLimitePublicacion(calificacionValidator.calcularFechaLimite(LocalDateTime.now()))
+                .fechaCreacion(ahora)
+                .fechaLimitePublicacion(calificacionValidator.calcularFechaLimite(ahora))
                 .build();
 
         CalificacionEntity guardada = calificacionRepository.save(
                 calificacionEntityMapper.toEntity(calificacion));
         Calificacion domain = calificacionEntityMapper.toDomain(guardada);
 
-        // 6. RN-31.6: actualizar métricas del perfil
+        // 6. OC-195 / RN-20: si la contraparte ya calificó, publicar AMBAS
+        //    simultáneamente para evitar represalias.
+        publicarAmbasSiCorresponde(reserva, compradorId, domain, ahora);
+
+        // 7. RN-31.6: actualizar métricas del perfil (promedio + reseñas positivas)
         actualizarMetricasPerfil(reserva.getCocineraId());
 
         log.info("HU-31: calificación {} guardada ({} estrellas) para la cocinera {}",
@@ -97,6 +117,45 @@ public class CalificacionServiceImpl implements CalificacionService {
 
         return calificacionMapper.toResponse(domain);
     }
+
+    /**
+     * OC-195 / RN-20: si la contraparte (cocinera) ya había calificado esta reserva,
+     * se publican las dos al mismo tiempo en lugar de esperar la ventana de 72h.
+     *
+     * Si no hay contraparte, la calificación queda PENDIENTE y el scheduler
+     * {@code CalificacionScheduler} la publicará cuando venza la ventana.
+     */
+    private void publicarAmbasSiCorresponde(Reserva reserva,
+                                            Long compradorId,
+                                            Calificacion nueva,
+                                            LocalDateTime ahora) {
+
+        Optional<CalificacionEntity> contraparteOpt =
+                calificacionRepository.findByReservaIdAndCompradorIdNot(reserva.getId(), compradorId);
+
+        if (contraparteOpt.isEmpty()) {
+            // Caso RN-19: la contraparte aún no califica. Se publicará por scheduler.
+            return;
+        }
+
+        // Paso explícito para evitar la inferencia ambigua del Optional.map
+        CalificacionEntity contraparteEntity = contraparteOpt.get();
+        Calificacion contraparte = calificacionEntityMapper.toDomain(contraparteEntity);
+
+        // Publicar ambas en el mismo instante (RN-20: "publicación simultánea")
+        nueva.publicar(ahora);
+        contraparte.publicar(ahora);
+
+        calificacionRepository.save(calificacionEntityMapper.toEntity(nueva));
+        calificacionRepository.save(calificacionEntityMapper.toEntity(contraparte));
+
+        log.info("HU-15/RN-20: ambas calificaciones de la reserva {} publicadas simultáneamente",
+                reserva.getId());
+    }
+
+    // =====================================================================
+    // HU-22 · Consulta pública de reseñas y resumen de reputación
+    // =====================================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -106,8 +165,10 @@ public class CalificacionServiceImpl implements CalificacionService {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaCreacion"));
 
         Page<CalificacionEntity> pagina = (estrellas != null)
-                ? calificacionRepository.findByCocineraIdAndEstrellas(cocineraId, EstadoCalificacion.PUBLICADA, estrellas, pageable)
-                : calificacionRepository.findByCocineraId(cocineraId, EstadoCalificacion.PUBLICADA, pageable);
+                ? calificacionRepository.findByCocineraIdAndEstrellas(
+                        cocineraId, EstadoCalificacion.PUBLICADA, estrellas, pageable)
+                : calificacionRepository.findByCocineraId(
+                        cocineraId, EstadoCalificacion.PUBLICADA, pageable);
 
         return PaginaResponseDTO.<CalificacionResponseDTO>builder()
                 .contenido(pagina.getContent().stream()
@@ -136,7 +197,34 @@ public class CalificacionServiceImpl implements CalificacionService {
                 .build();
     }
 
-    // ============ Helpers privados ============
+    // =====================================================================
+    // Scheduler · Publicación por ventana de 72h (RN-19 / RN-20)
+    // =====================================================================
+
+    @Override
+    @Transactional
+    public int publicarPendientesVencidas(LocalDateTime ahora) {
+        List<CalificacionEntity> pendientes = calificacionRepository
+                .findByEstadoAndFechaLimitePublicacionLessThanEqual(
+                        EstadoCalificacion.PENDIENTE, ahora);
+
+        int publicadas = 0;
+        for (CalificacionEntity entity : pendientes) {
+            Calificacion c = calificacionEntityMapper.toDomain(entity);
+            c.publicar(ahora);
+            calificacionRepository.save(calificacionEntityMapper.toEntity(c));
+            actualizarMetricasPerfil(c.getCocineraId());
+            publicadas++;
+        }
+        if (publicadas > 0) {
+            log.info("HU-31: {} calificaciones publicadas por ventana", publicadas);
+        }
+        return publicadas;
+    }
+
+    // =====================================================================
+    // Helpers privados
+    // =====================================================================
 
     /** RN-31.5: normaliza el comentario (trim, null si vacío). */
     private String normalizarComentario(String comentario) {
@@ -147,38 +235,18 @@ public class CalificacionServiceImpl implements CalificacionService {
 
     /** RN-31.6: recalcula el promedio y las reseñas positivas en el perfil. */
     private void actualizarMetricasPerfil(UUID cocineraId) {
-    perfilRepository.findById(cocineraId).ifPresent(perfil -> {
-        Double promedio = calificacionRepository.promedioPorCocinera(cocineraId);
-        Long positivas = calificacionRepository.contarPositivas(cocineraId);
+        perfilRepository.findById(cocineraId).ifPresent(perfil -> {
+            Double promedio = calificacionRepository.promedioPorCocinera(cocineraId);
+            Long positivas = calificacionRepository.contarPositivas(cocineraId);
 
-        PerfilCocineraEntity actualizado = perfil.toBuilder()
-                .promedioCalificacion(promedio != null
-                        ? Math.round(promedio * 100.0) / 100.0 : 0.0)
-                .resenasPositivas(positivas != null ? positivas.intValue() : 0)
-                .esDestacada(positivas != null && positivas >= 50)   // ← RN-10
-                .build();
+            PerfilCocineraEntity actualizado = perfil.toBuilder()
+                    .promedioCalificacion(promedio != null
+                            ? Math.round(promedio * 100.0) / 100.0 : 0.0)
+                    .resenasPositivas(positivas != null ? positivas.intValue() : 0)
+                    .esDestacada(positivas != null && positivas >= 50)   // ← RN-10
+                    .build();
 
-        perfilRepository.save(actualizado);
-    });
-
-}
-
-        @Override
-        @Transactional
-        public int publicarPendientesVencidas(LocalDateTime ahora) {
-        List<CalificacionEntity> pendientes = calificacionRepository
-                .findByEstadoAndFechaLimitePublicacionLessThanEqual(
-                        EstadoCalificacion.PENDIENTE, ahora);
-
-        int publicadas = 0;
-        for (CalificacionEntity entity : pendientes) {
-                Calificacion c = calificacionEntityMapper.toDomain(entity);
-                c.publicar(ahora);
-                calificacionRepository.save(calificacionEntityMapper.toEntity(c));
-                actualizarMetricasPerfil(c.getCocineraId());
-                publicadas++;
-        }
-        if (publicadas > 0) log.info("HU-31: {} calificaciones publicadas por ventana", publicadas);
-        return publicadas;
-        }
+            perfilRepository.save(actualizado);
+        });
+    }
 }

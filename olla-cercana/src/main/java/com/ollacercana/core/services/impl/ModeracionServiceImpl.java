@@ -1,10 +1,11 @@
-package com.ollacercana.core.services;
+package com.ollacercana.core.services.impl;
 
 import com.ollacercana.controller.dtos.request.EjecutarDecisionDTO;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.controller.handlers.exception.ResourceNotFoundException;
 import com.ollacercana.core.models.*;
 import com.ollacercana.core.models.enums.*;
+import com.ollacercana.core.services.IModeracionService;
 import com.ollacercana.persistence.entities.*;
 import com.ollacercana.persistence.mappers.*;
 import com.ollacercana.persistence.repository.*;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ModeracionService {
+public class ModeracionServiceImpl implements IModeracionService {
 
     private final ReporteRepository reporteRepository;
     private final DecisionModeracionRepository decisionRepository;
@@ -38,11 +39,17 @@ public class ModeracionService {
     private final PerfilCocineraDomainMapper perfilDomainMapper;
     private final NotificacionDocumentMapper notificacionMapper;
 
+    @Override
+    @Transactional(readOnly = true)
     public Page<Reporte> obtenerReportes(EstadoReporte estado, Pageable pageable) {
         Page<ReporteEntity> pagina = (estado != null)
                 ? reporteRepository.findByEstado(estado, pageable)
                 : reporteRepository.findAll(pageable);
-        List<Reporte> dominios = pagina.getContent().stream().map(reporteMapper::toDomain).toList();
+
+        List<Reporte> dominios = pagina.getContent().stream()
+                .map(reporteMapper::toDomain)
+                .toList();
+
         return new PageImpl<>(dominios, pageable, pagina.getTotalElements());
     }
 

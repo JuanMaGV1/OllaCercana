@@ -1,6 +1,7 @@
 package com.ollacercana.controller;
 
 import com.ollacercana.config.security.UsuarioActual;
+import com.ollacercana.controller.docs.CalificacionApi;
 import com.ollacercana.controller.dtos.request.CalificacionRequestDTO;
 import com.ollacercana.controller.dtos.response.CalificacionResponseDTO;
 import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class CalificacionController {
+public class CalificacionController implements CalificacionApi{
 
     private final CalificacionService calificacionService;
     private final UsuarioActual usuarioActual;

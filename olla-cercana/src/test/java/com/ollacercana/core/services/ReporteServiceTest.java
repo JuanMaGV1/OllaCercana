@@ -11,6 +11,7 @@ import com.ollacercana.core.models.enums.MotivoReporte;
 import com.ollacercana.core.models.enums.ObjetivoReporte;
 import com.ollacercana.core.patterns.moderacion.ModeracionReporteChainConfig;
 import com.ollacercana.core.patterns.moderacion.ModeracionReporteHandler;
+import com.ollacercana.core.services.impl.ReporteServiceImpl;
 import com.ollacercana.core.validators.ReporteValidator;
 import com.ollacercana.persistence.entities.ReporteEntity;
 import com.ollacercana.persistence.mappers.PlatoEntityMapper;
@@ -46,14 +47,14 @@ class ReporteServiceTest {
     @Mock private ModeracionReporteChainConfig moderacionChain;
     @Mock private ModeracionReporteHandler chainHandler;
 
-    private ReporteService reporteService;
+    private ReporteServiceImpl reporteService;
 
     @BeforeEach
     void setUp() {
         ReporteValidator reporteValidator = new ReporteValidator(
                 platoRepository, perfilCocineraRepository, cuentaRepository,
                 reporteRepository, platoEntityMapper);
-        reporteService = new ReporteService(
+        reporteService = new ReporteServiceImpl(
                 reporteRepository, reporteValidator, reporteEntityMapper,
                 reporteMapper, moderacionChain);
     }

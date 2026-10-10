@@ -8,13 +8,9 @@ import com.ollacercana.controller.dtos.request.ReservaRequestDTO;
 import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
 import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.controller.mappers.ReservaMapper;
-import com.ollacercana.core.models.PerfilCocinera;
-import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.Reserva;
 import com.ollacercana.core.models.enums.Rol;
-import com.ollacercana.core.services.PlatoService;
 import com.ollacercana.core.services.ReservaService;
-import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +28,6 @@ import java.util.UUID;
 public class ReservaController implements ReservaApi {
 
     private final ReservaService reservaService;
-    private final PlatoService platoService;
-    private final PerfilCocineraRepository perfilCocineraRepository;
     private final ReservaMapper reservaMapper;
     private final UsuarioActual usuarioActual;
 
@@ -44,15 +38,8 @@ public class ReservaController implements ReservaApi {
         Long compradorId = usuarioActual.getCuentaId();
         Reserva reserva = reservaMapper.toDomain(request);
         Reserva guardada = reservaService.crear(compradorId, reserva);
-
-        Plato plato = platoService.obtenerPorId(guardada.getPlatoId());
-
-        String conjunto = perfilCocineraRepository.findById(guardada.getCocineraId())
-                .map(perfil -> perfil.getConjuntoResidencial())
-                .orElse("Conjunto Residencial");
-
-        ReservaResponseDTO response = reservaMapper.toResponseDTO(guardada, plato.getNombre(), conjunto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(reservaService.obtenerConDetalle(guardada.getId()));
     }
 
     @Override

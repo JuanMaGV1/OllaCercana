@@ -185,4 +185,15 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(status).body(body);
     }
+
+    @ExceptionHandler(org.springframework.data.mapping.PropertyReferenceException.class)
+    public ResponseEntity<ErrorResponseDTO> handlePropertyReference(
+            org.springframework.data.mapping.PropertyReferenceException ex,
+            HttpServletRequest request) {
+        log.warn("Campo de ordenamiento inválido: {}", ex.getPropertyName());
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Campo de ordenamiento inválido: '" + ex.getPropertyName() + "'",
+                request.getRequestURI());
+    }
 }

@@ -49,6 +49,7 @@ public class CuentaEntity {
     protected void onCreate() {
         if (this.fechaRegistro == null) this.fechaRegistro = LocalDateTime.now();
         if (this.estado == null) this.estado = EstadoCuenta.ACTIVO;
+        if (this.avisosActivos == null) this.avisosActivos = true;
         if (this.credenciales != null && this.credenciales.getCelularVerificado() == null) {
             this.credenciales.setCelularVerificado(false);
         }

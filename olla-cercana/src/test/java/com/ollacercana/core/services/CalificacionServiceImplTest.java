@@ -13,7 +13,6 @@ import com.ollacercana.core.patterns.moderacion.EvaluadorReputacionCalificacion;
 import com.ollacercana.core.services.impl.CalificacionServiceImpl;
 import com.ollacercana.core.validators.CalificacionValidator;
 import com.ollacercana.persistence.entities.CalificacionEntity;
-import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.entities.ReservaEntity;
 import com.ollacercana.persistence.mappers.CalificacionEntityMapper;
 import com.ollacercana.persistence.mappers.ReservaEntityMapper;
@@ -31,7 +30,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;

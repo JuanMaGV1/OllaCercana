@@ -35,22 +35,18 @@ public class CuentaServiceImpl implements ICuentaService {
         log.info("Registrando cuenta para correo: {}",
                 cuenta.getIdentidad() != null ? cuenta.getIdentidad().getCorreo() : "N/A");
 
-        if (cuenta.getIdentidad() != null) {
+            // 1) validaciones previas
             cuentaValidator.validarCorreoUnico(cuenta.getIdentidad().getCorreo());
             cuentaValidator.validarCelularUnico(cuenta.getIdentidad().getCelular());
-        }
-
-        if (cuenta.getCredenciales() != null) {
             cuentaValidator.validarPasswordSegura(cuenta.getCredenciales().getContrasenaHash());
+
+            // 2) hash
             String hasheada = passwordEncoder.encode(cuenta.getCredenciales().getContrasenaHash());
             cuenta.getCredenciales().setContrasenaHash(hasheada);
+
+            cuenta.inicializar();
+            return entityMapper.toDomain(cuentaRepository.save(entityMapper.toEntity(cuenta)));
         }
-
-        cuenta.inicializar();  // ← asigna defaults de dominio
-
-        CuentaEntity guardada = cuentaRepository.save(entityMapper.toEntity(cuenta));
-        return entityMapper.toDomain(guardada);
-    }
 
     @Override
     @Transactional(readOnly = true)

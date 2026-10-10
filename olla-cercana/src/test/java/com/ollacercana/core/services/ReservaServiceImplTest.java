@@ -2,6 +2,7 @@ package com.ollacercana.core.services;
 
 import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
 import com.ollacercana.controller.handlers.exception.*;
+import com.ollacercana.controller.mappers.ReservaMapper;
 import com.ollacercana.core.models.EventoReserva;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.Reserva;
@@ -43,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,6 +59,7 @@ class ReservaServiceImplTest {
     @Mock private PlatoEntityMapper platoEntityMapper;
     @Mock private EventoMapper eventoMapper;
     @Mock private ObservadorReserva observador;
+    @Mock private ReservaMapper reservaMapper;
 
     private ReservaServiceImpl reservaService;
 
@@ -80,7 +81,8 @@ class ReservaServiceImplTest {
                 validator,
                 reservaEntityMapper,
                 platoEntityMapper,
-                eventoMapper);
+                eventoMapper,
+                reservaMapper);
 
         lenient().when(reservaEntityMapper.toEntity(any(Reserva.class))).thenAnswer(i -> {
             Reserva r = i.getArgument(0);
