@@ -1,6 +1,8 @@
 package com.ollacercana.core.services.impl;
 
+import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.CuentaNoEncontradaException;
 import com.ollacercana.core.models.Cuenta;
 import com.ollacercana.core.models.enums.EstadoCuenta;
 import com.ollacercana.core.services.ICuentaService;
@@ -33,22 +35,18 @@ public class CuentaServiceImpl implements ICuentaService {
         log.info("Registrando cuenta para correo: {}",
                 cuenta.getIdentidad() != null ? cuenta.getIdentidad().getCorreo() : "N/A");
 
-        if (cuenta.getIdentidad() != null) {
+            // 1) validaciones previas
             cuentaValidator.validarCorreoUnico(cuenta.getIdentidad().getCorreo());
             cuentaValidator.validarCelularUnico(cuenta.getIdentidad().getCelular());
-        }
-
-        if (cuenta.getCredenciales() != null) {
             cuentaValidator.validarPasswordSegura(cuenta.getCredenciales().getContrasenaHash());
+
+            // 2) hash
             String hasheada = passwordEncoder.encode(cuenta.getCredenciales().getContrasenaHash());
             cuenta.getCredenciales().setContrasenaHash(hasheada);
+
+            cuenta.inicializar();
+            return entityMapper.toDomain(cuentaRepository.save(entityMapper.toEntity(cuenta)));
         }
-
-        cuenta.inicializar();  // ← asigna defaults de dominio
-
-        CuentaEntity guardada = cuentaRepository.save(entityMapper.toEntity(cuenta));
-        return entityMapper.toDomain(guardada);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -66,5 +64,17 @@ public class CuentaServiceImpl implements ICuentaService {
             throw new BadCredentialsException("Credenciales inválidas");
         }
         return cuenta;
+    }
+    @Override
+    @Transactional
+    public void cambiarAvisos(Long cuentaId, boolean activos, Long solicitanteId) {
+        if (!cuentaId.equals(solicitanteId)) {
+            throw new AccesoDenegadoException("No puedes modificar los avisos de otra cuenta");
+        }
+        CuentaEntity entity = cuentaRepository.findById(cuentaId)
+                .orElseThrow(() -> new CuentaNoEncontradaException(cuentaId));
+        entity.setAvisosActivos(activos);
+        cuentaRepository.save(entity);
+        log.info("Cuenta {} cambió avisos a {}", cuentaId, activos);
     }
 }

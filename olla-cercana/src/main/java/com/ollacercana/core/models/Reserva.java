@@ -51,6 +51,19 @@ public class Reserva {
     private boolean calificacionHabilitada;
     private Integer calificacion;
     private Integer version;
+    private boolean recordatorioRecogidaEnviado;
+
+    public boolean requiereRecordatorioRecogida(LocalDateTime ahora) {
+        return this.estado == EstadoReserva.CONFIRMADA
+                && !this.recordatorioRecogidaEnviado
+                && this.horaEstimadaEntrega != null
+                && !ahora.isBefore(this.horaEstimadaEntrega.minusMinutes(15))
+                && ahora.isBefore(this.horaEstimadaEntrega);
+    }
+
+    public void marcarRecordatorioRecogidaEnviado() {
+        this.recordatorioRecogidaEnviado = true;
+    }
 
     public static Reserva crear(Plato plato, Long compradorId, int cantidadPorciones,
                                 MedioPago medioPago, String notaComprador, LocalDateTime ahora) {

@@ -1,7 +1,9 @@
 package com.ollacercana.core.services.impl;
 
 import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
+import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
 import com.ollacercana.controller.handlers.exception.*;
+import com.ollacercana.controller.mappers.ReservaMapper;
 import com.ollacercana.core.models.EventoReserva;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.Reserva;
@@ -15,6 +17,7 @@ import com.ollacercana.core.services.ReservaService;
 import com.ollacercana.core.validators.ReservaValidator;
 import com.ollacercana.core.models.*;
 import com.ollacercana.core.models.enums.*;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.entities.PlatoEntity;
 import com.ollacercana.persistence.entities.ReservaEntity;
 import com.ollacercana.persistence.mappers.EventoMapper;
@@ -54,6 +57,7 @@ public class ReservaServiceImpl implements ReservaService {
     private final PlatoEntityMapper platoEntityMapper;
     private PublicadorEventosPorciones publicadorEventosPorciones;
     private final EventoMapper eventoMapper;
+    private final ReservaMapper reservaMapper;
 
     @Autowired(required = false)
     public void setPublicadorEventosPorciones(PublicadorEventosPorciones p) {
@@ -70,7 +74,8 @@ public class ReservaServiceImpl implements ReservaService {
                               ReservaValidator validator,
                               ReservaEntityMapper reservaEntityMapper,
                               PlatoEntityMapper platoEntityMapper,
-                              EventoMapper eventoMapper) {
+                              EventoMapper eventoMapper,
+                              ReservaMapper reservaMapper) {
         this.reservaRepository = reservaRepository;
         this.platoRepository = platoRepository;
         this.perfilCocineraRepository = perfilCocineraRepository;
@@ -81,6 +86,7 @@ public class ReservaServiceImpl implements ReservaService {
         this.reservaEntityMapper = reservaEntityMapper;
         this.platoEntityMapper = platoEntityMapper;
         this.eventoMapper = eventoMapper;
+        this.reservaMapper = reservaMapper;
     }
 
     @Override
@@ -320,5 +326,34 @@ public class ReservaServiceImpl implements ReservaService {
         return reservaRepository.findById(reservaId)
                 .map(reservaEntityMapper::toDomain)
                 .orElseThrow(() -> new ReservaNoEncontradaException(reservaId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> buscarReservasParaRecordatorioRecogida(LocalDateTime ahora) {
+        return reservaRepository.findParaRecordatorioRecogida(ahora, ahora.plusMinutes(15))
+                .stream()
+                .map(ReservaEntity::getId)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void marcarRecordatorioRecogidaEnviado(UUID reservaId) {
+        Reserva reserva = buscar(reservaId);
+        reserva.marcarRecordatorioRecogidaEnviado();
+        reservaRepository.save(reservaEntityMapper.toEntity(reserva));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReservaResponseDTO obtenerConDetalle(UUID reservaId) {
+        Reserva r = buscar(reservaId);
+        String platoNombre = platoRepository.findById(r.getPlatoId())
+                .map(PlatoEntity::getNombre).orElse("Plato eliminado");
+        String conjunto = perfilCocineraRepository.findById(r.getCocineraId())
+                .map(PerfilCocineraEntity::getConjuntoResidencial)
+                .orElse("Conjunto Residencial");
+        return reservaMapper.toResponseDTO(r, platoNombre, conjunto);
     }
 }

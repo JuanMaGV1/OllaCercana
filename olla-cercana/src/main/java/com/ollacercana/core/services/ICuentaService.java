@@ -12,4 +12,5 @@ public interface ICuentaService {
        
     Cuenta registrar(Cuenta cuenta);
     Cuenta autenticar(String identificador, String password);
+    void cambiarAvisos(Long cuentaId, boolean activos, Long solicitanteId);
 }

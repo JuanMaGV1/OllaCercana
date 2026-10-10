@@ -1,0 +1,252 @@
+package com.ollacercana.core.services.impl;
+
+import com.ollacercana.controller.dtos.request.CalificacionRequestDTO;
+import com.ollacercana.controller.dtos.response.CalificacionResponseDTO;
+import com.ollacercana.controller.dtos.response.PaginaResponseDTO;
+import com.ollacercana.controller.dtos.response.ResumenCalificacionesDTO;
+import com.ollacercana.controller.handlers.exception.AccesoDenegadoCalificacionException;
+import com.ollacercana.controller.handlers.exception.CalificacionDuplicadaException;
+import com.ollacercana.controller.handlers.exception.ReservaNoCompletadaException;
+import com.ollacercana.controller.handlers.exception.ReservaNoEncontradaException;
+import com.ollacercana.controller.mappers.CalificacionMapper;
+import com.ollacercana.core.models.Calificacion;
+import com.ollacercana.core.models.Reserva;
+import com.ollacercana.core.models.enums.EstadoCalificacion;
+import com.ollacercana.core.models.enums.EstadoReserva;
+import com.ollacercana.core.patterns.moderacion.EvaluadorReputacionCalificacion;
+import com.ollacercana.core.services.CalificacionService;
+import com.ollacercana.core.validators.CalificacionValidator;
+import com.ollacercana.persistence.entities.CalificacionEntity;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.mappers.CalificacionEntityMapper;
+import com.ollacercana.persistence.mappers.ReservaEntityMapper;
+import com.ollacercana.persistence.repository.CalificacionRepository;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.ReservaRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * OC-031 HU-15 / HU-22 — Implementación del servicio de calificaciones.
+ *
+ * Cubre:
+ *  - RN-19: ventana de publicación (72h) cuando solo califica una parte.
+ *  - RN-20: publicación simultánea de ambas reseñas para evitar represalias.
+ *  - RN-31: una sola calificación por reserva, solo el comprador, solo COMPLETADAS.
+ *  - HU-22: agregados públicos (promedio, total, positivas) para el perfil.
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class CalificacionServiceImpl implements CalificacionService {
+
+    private final CalificacionRepository calificacionRepository;
+    private final ReservaRepository reservaRepository;
+    private final PerfilCocineraRepository perfilRepository;
+    private final CalificacionEntityMapper calificacionEntityMapper;
+    private final ReservaEntityMapper reservaEntityMapper;
+    private final CalificacionMapper calificacionMapper;
+    private final CalificacionValidator calificacionValidator;
+    private final EvaluadorReputacionCalificacion evaluadorReputacion;
+
+    // =====================================================================
+    // HU-15 · Calificar una reserva completada
+    // =====================================================================
+
+    @Override
+    @Transactional
+    public CalificacionResponseDTO calificar(UUID reservaId, Long compradorId, CalificacionRequestDTO request) {
+        log.info("HU-31: comprador {} calificando reserva {}", compradorId, reservaId);
+
+        // 1. La reserva debe existir
+        Reserva reserva = reservaRepository.findById(reservaId)
+                .map(reservaEntityMapper::toDomain)
+                .orElseThrow(() -> new ReservaNoEncontradaException(reservaId));
+
+        // 2. RN-31.1: solo el comprador de la reserva puede calificar
+        if (!reserva.getCompradorId().equals(compradorId)) {
+            throw new AccesoDenegadoCalificacionException();
+        }
+
+        // 3. RN-31.2: solo reservas COMPLETADAS
+        if (reserva.getEstado() != EstadoReserva.COMPLETADA) {
+            throw new ReservaNoCompletadaException(reserva.getEstado());
+        }
+
+        // 4. RN-31.3: una sola calificación por reserva
+        if (calificacionRepository.findByReservaId(reservaId).isPresent()) {
+            throw new CalificacionDuplicadaException();
+        }
+
+        // 5. Construir y persistir la calificación como PENDIENTE
+        LocalDateTime ahora = LocalDateTime.now();
+        Calificacion calificacion = Calificacion.builder()
+                .reservaId(reservaId)
+                .compradorId(compradorId)
+                .cocineraId(reserva.getCocineraId())
+                .estrellas(request.getEstrellas())
+                .comentario(normalizarComentario(request.getComentario()))
+                .estado(EstadoCalificacion.PENDIENTE)
+                .fechaCreacion(ahora)
+                .fechaLimitePublicacion(calificacionValidator.calcularFechaLimite(ahora))
+                .build();
+
+        CalificacionEntity guardada = calificacionRepository.save(
+                calificacionEntityMapper.toEntity(calificacion));
+        Calificacion domain = calificacionEntityMapper.toDomain(guardada);
+
+        // 6. OC-195 / RN-20: si la contraparte ya calificó, publicar AMBAS
+        //    simultáneamente para evitar represalias.
+        publicarAmbasSiCorresponde(reserva, compradorId, domain, ahora);
+
+        // 7. RN-31.6: actualizar métricas del perfil (promedio + reseñas positivas)
+        actualizarMetricasPerfil(reserva.getCocineraId());
+
+        log.info("HU-31: calificación {} guardada ({} estrellas) para la cocinera {}",
+                domain.getId(), domain.getEstrellas(), domain.getCocineraId());
+
+        return calificacionMapper.toResponse(domain);
+    }
+
+    /**
+     * OC-195 / RN-20: si la contraparte (cocinera) ya había calificado esta reserva,
+     * se publican las dos al mismo tiempo en lugar de esperar la ventana de 72h.
+     *
+     * Si no hay contraparte, la calificación queda PENDIENTE y el scheduler
+     * {@code CalificacionScheduler} la publicará cuando venza la ventana.
+     */
+    private void publicarAmbasSiCorresponde(Reserva reserva,
+                                            Long compradorId,
+                                            Calificacion nueva,
+                                            LocalDateTime ahora) {
+
+        Optional<CalificacionEntity> contraparteOpt =
+                calificacionRepository.findByReservaIdAndCompradorIdNot(reserva.getId(), compradorId);
+
+        if (contraparteOpt.isEmpty()) {
+            // Caso RN-19: la contraparte aún no califica. Se publicará por scheduler.
+            return;
+        }
+
+        // Paso explícito para evitar la inferencia ambigua del Optional.map
+        CalificacionEntity contraparteEntity = contraparteOpt.get();
+        Calificacion contraparte = calificacionEntityMapper.toDomain(contraparteEntity);
+
+        // Publicar ambas en el mismo instante (RN-20: "publicación simultánea")
+        nueva.publicar(ahora);
+        contraparte.publicar(ahora);
+
+        calificacionRepository.save(calificacionEntityMapper.toEntity(nueva));
+        calificacionRepository.save(calificacionEntityMapper.toEntity(contraparte));
+
+        log.info("HU-15/RN-20: ambas calificaciones de la reserva {} publicadas simultáneamente",
+                reserva.getId());
+    }
+
+    // =====================================================================
+    // HU-22 · Consulta pública de reseñas y resumen de reputación
+    // =====================================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaResponseDTO<CalificacionResponseDTO> listarPorCocinera(
+            UUID cocineraId, Integer estrellas, int page, int size) {
+
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaCreacion"));
+
+        Page<CalificacionEntity> pagina = (estrellas != null)
+                ? calificacionRepository.findByCocineraIdAndEstrellas(
+                        cocineraId, EstadoCalificacion.PUBLICADA, estrellas, pageable)
+                : calificacionRepository.findByCocineraId(
+                        cocineraId, EstadoCalificacion.PUBLICADA, pageable);
+
+        return PaginaResponseDTO.<CalificacionResponseDTO>builder()
+                .contenido(pagina.getContent().stream()
+                        .map(calificacionEntityMapper::toDomain)
+                        .map(calificacionMapper::toResponse)
+                        .toList())
+                .page(pagina.getNumber())
+                .size(pagina.getSize())
+                .totalElementos(pagina.getTotalElements())
+                .totalPaginas(pagina.getTotalPages())
+                .hayMas(pagina.hasNext())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResumenCalificacionesDTO obtenerResumen(UUID cocineraId) {
+        Double promedio = calificacionRepository.promedioPorCocinera(cocineraId);
+        Long total = calificacionRepository.contarTotal(cocineraId);
+        Long positivas = calificacionRepository.contarPositivas(cocineraId);
+
+        return ResumenCalificacionesDTO.builder()
+                .promedio(promedio != null ? Math.round(promedio * 100.0) / 100.0 : null)
+                .total(total != null ? total : 0L)
+                .positivas(positivas != null ? positivas : 0L)
+                .build();
+    }
+
+    // =====================================================================
+    // Scheduler · Publicación por ventana de 72h (RN-19 / RN-20)
+    // =====================================================================
+
+    @Override
+    @Transactional
+    public int publicarPendientesVencidas(LocalDateTime ahora) {
+        List<CalificacionEntity> pendientes = calificacionRepository
+                .findByEstadoAndFechaLimitePublicacionLessThanEqual(
+                        EstadoCalificacion.PENDIENTE, ahora);
+
+        int publicadas = 0;
+        for (CalificacionEntity entity : pendientes) {
+            Calificacion c = calificacionEntityMapper.toDomain(entity);
+            c.publicar(ahora);
+            calificacionRepository.save(calificacionEntityMapper.toEntity(c));
+            actualizarMetricasPerfil(c.getCocineraId());
+            publicadas++;
+        }
+        if (publicadas > 0) {
+            log.info("HU-31: {} calificaciones publicadas por ventana", publicadas);
+        }
+        return publicadas;
+    }
+
+    // =====================================================================
+    // Helpers privados
+    // =====================================================================
+
+    /** RN-31.5: normaliza el comentario (trim, null si vacío). */
+    private String normalizarComentario(String comentario) {
+        if (comentario == null) return null;
+        String t = comentario.trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    /** RN-31.6: recalcula el promedio y las reseñas positivas en el perfil. */
+    private void actualizarMetricasPerfil(UUID cocineraId) {
+        perfilRepository.findById(cocineraId).ifPresent(perfil -> {
+            Double promedio = calificacionRepository.promedioPorCocinera(cocineraId);
+            Long positivas = calificacionRepository.contarPositivas(cocineraId);
+
+            PerfilCocineraEntity actualizado = perfil.toBuilder()
+                    .promedioCalificacion(promedio != null
+                            ? Math.round(promedio * 100.0) / 100.0 : 0.0)
+                    .resenasPositivas(positivas != null ? positivas.intValue() : 0)
+                    .esDestacada(positivas != null && positivas >= 50)   // ← RN-10
+                    .build();
+
+            perfilRepository.save(actualizado);
+        });
+    }
+}

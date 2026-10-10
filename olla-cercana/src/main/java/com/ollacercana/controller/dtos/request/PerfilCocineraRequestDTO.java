@@ -1,5 +1,6 @@
 package com.ollacercana.controller.dtos.request;
 
+import com.ollacercana.core.models.enums.MedioPago;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -11,8 +12,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-
-import com.ollacercana.core.models.enums.MedioPago;
 
 @Data
 @NoArgsConstructor

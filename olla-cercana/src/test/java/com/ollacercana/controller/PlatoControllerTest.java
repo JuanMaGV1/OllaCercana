@@ -50,6 +50,12 @@ class PlatoControllerTest {
                     "INSERT INTO perfiles_cocinera (id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     COCINERA_ID, "Torres del Parque", true, false, false, 0.0, 0);
         }
+        Integer countMedios = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM perfil_medios_pago WHERE perfil_id = ?", Integer.class, COCINERA_ID);
+        if (countMedios == null || countMedios == 0) {
+            jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'NEQUI')", COCINERA_ID);
+            jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'EFECTIVO')", COCINERA_ID);
+        }
     }
     @BeforeEach
 void setUp() {
@@ -266,5 +272,26 @@ void setUp() {
                         .param("tipoComida", "POSTRE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenido[0].tipoComida").value("POSTRE"));
+        }
+
+        @Test
+        @DisplayName("OC-214: tipoComida inválido en query → 400")
+        void cercanos_tipoComidaInvalido_debeRetornar400() throws Exception {
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lat", "4.6789")
+                        .param("lng", "-74.0567")
+                        .param("tipoComida", "BITCOIN"))
+                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("OC-214: restricción inválida en query → 400")
+        void cercanos_restriccionInvalida_debeRetornar400() throws Exception {
+        mockMvc.perform(get("/api/v1/platos/cercanos")
+                        .param("lat", "4.6789")
+                        .param("lng", "-74.0567")
+                        .param("restricciones", "PALEOLITICO"))
+                .andExpect(status().isBadRequest());
         }
 }

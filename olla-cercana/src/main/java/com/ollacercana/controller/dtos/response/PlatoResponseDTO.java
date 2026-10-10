@@ -1,5 +1,15 @@
 package com.ollacercana.controller.dtos.response;
 
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.MedioPago;
+import com.ollacercana.core.models.enums.RestriccionAlimentaria;
+import com.ollacercana.core.models.enums.TipoComida;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;

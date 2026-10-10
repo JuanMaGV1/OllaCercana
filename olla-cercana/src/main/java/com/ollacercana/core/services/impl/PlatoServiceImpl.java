@@ -8,11 +8,11 @@ import com.ollacercana.controller.handlers.exception.PlatoNoEncontradoException;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.models.enums.MedioPago;
-import com.ollacercana.core.models.enums.RestriccionAlimentaria;
 import com.ollacercana.core.models.enums.TipoAjustePorciones;
 import com.ollacercana.core.patterns.filter.FiltroCompuestoPlato;
 import com.ollacercana.core.patterns.filter.FiltroDistanciaMaxima;
 import com.ollacercana.core.patterns.filter.FiltroRestricciones;
+import com.ollacercana.core.patterns.iterator.CatalogoIterator;
 import com.ollacercana.core.patterns.observer.PublicadorEventosPorciones;
 import com.ollacercana.core.services.PlatoService;
 import com.ollacercana.core.util.GeoUtils;
@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -124,7 +125,10 @@ public class PlatoServiceImpl implements PlatoService {
         if (latitudCliente != null && longitudCliente != null) {
             filtro.agregar(new FiltroDistanciaMaxima(latitudCliente, longitudCliente, 2000.0));
         }
-        return activos.stream().filter(filtro::cumple).toList();
+        CatalogoIterator it = new CatalogoIterator(activos, filtro);
+        List<Plato> resultado = new ArrayList<>();
+        while (it.hasNext()) resultado.add(it.next());
+        return resultado;
     }
 
 @Override
@@ -207,5 +211,15 @@ private PlatoCercanoResponseDTO mapearACercano(Plato plato, Double lat, Double l
             .distanciaAproximada(distanciaAproximada)
             .tiempoRestante(GeoUtils.formatearTiempoRestante(plato.getFechaExpiracion()))
             .build();
+}
+
+@Override
+@Transactional(readOnly = true)
+public String obtenerConjuntoDePlato(UUID platoId) {
+    Plato plato = obtenerPorId(platoId);
+    if (plato.getCocineraId() == null) return "Conjunto no especificado";
+    return perfilCocineraRepository.findById(plato.getCocineraId())
+            .map(PerfilCocineraEntity::getConjuntoResidencial)
+            .orElse("Conjunto no especificado");
 }
 }

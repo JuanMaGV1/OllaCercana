@@ -25,4 +25,6 @@ public interface PlatoService {
     void eliminar(UUID id);
 
     PaginaResponseDTO<PlatoCercanoResponseDTO> consultarCercanos(ConsultaPlatosRequest request);
+
+    String obtenerConjuntoDePlato(UUID platoId);
 }

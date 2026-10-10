@@ -21,6 +21,7 @@ public class Cuenta {
     private EstadoCuenta estado;
     private Set<Rol> roles;
     private LocalDateTime fechaRegistro;
+    private Boolean avisosActivos;
 
     /** Inicializa valores por defecto al crear una cuenta nueva. */
     public void inicializar() {
@@ -29,5 +30,6 @@ public class Cuenta {
         if (this.credenciales != null && this.credenciales.getCelularVerificado() == null) {
             this.credenciales.setCelularVerificado(false);
         }
+        if (this.avisosActivos == null) this.avisosActivos = true;
     }
 }

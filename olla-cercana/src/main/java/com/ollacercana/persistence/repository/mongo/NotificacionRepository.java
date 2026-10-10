@@ -12,4 +12,9 @@ public interface NotificacionRepository extends MongoRepository<NotificacionDocu
     List<NotificacionDocument> findByReservaIdOrderByFechaCreacionAsc(UUID reservaId);
     List<NotificacionDocument> findByCompradorIdAndLeidaFalse(Long compradorId);
     List<NotificacionDocument> findByCocineraIdAndLeidaFalse(UUID cocineraId);
+    List<NotificacionDocument> findByCompradorIdOrCocineraIdOrderByFechaCreacionDesc(
+        Long compradorId, Long cocineraId);
+
+    long countByLeidaFalseAndCompradorIdOrLeidaFalseAndCocineraId(
+            Long compradorId, Long cocineraId);
 }

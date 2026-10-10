@@ -13,7 +13,7 @@ import com.ollacercana.core.models.enums.MedioPago;
 @Table(name = "perfiles_cocinera")
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder=true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class PerfilCocineraEntity {

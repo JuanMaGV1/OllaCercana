@@ -2,9 +2,9 @@ package com.ollacercana.core.validators;
 
 import com.ollacercana.controller.handlers.exception.AutoReservaException;
 import com.ollacercana.controller.handlers.exception.LimiteReservasPendientesException;
+import com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException;
 import com.ollacercana.controller.handlers.exception.PorcionesInsuficientesException;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
-import com.ollacercana.core.models.PerfilCocinera;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.models.enums.EstadoReserva;
@@ -33,17 +33,13 @@ public class ReservaValidator {
 
     public void validarParaCrear(Long compradorId, Plato plato, int cantidadPorciones, MedioPago medioPago) {
 
-        // ✅ RN: el plato debe estar ACTIVO (rechaza OCULTO, AGOTADO, EXPIRADO)
         if (plato.getEstado() != EstadoPlato.ACTIVO) {
             throw new ReglaDeNegocioException("El plato no está disponible para reservar");
         }
-
-        // ✅ RN: el plato debe seguir vigente
         if (!plato.estaVigente()) {
             throw new ReglaDeNegocioException("El plato no está disponible para reservar");
         }
 
-        // RN-14: auto-reserva (usa entity directamente, no necesita dominio)
         Optional<PerfilCocineraEntity> perfilComprador =
                 perfilCocineraRepository.findByCuentaId(compradorId);
         if (perfilComprador.isPresent()
@@ -51,14 +47,12 @@ public class ReservaValidator {
             throw new AutoReservaException();
         }
 
-        // RN-15: límite de 2 reservas pendientes
         long pendientes = reservaRepository
                 .countByCompradorIdAndEstado(compradorId, EstadoReserva.PENDIENTE);
         if (pendientes >= MAX_RESERVAS_PENDIENTES) {
             throw new LimiteReservasPendientesException();
         }
 
-        // RN-03: porciones suficientes
         if (plato.getPorcionesDisponibles() < cantidadPorciones) {
             throw new PorcionesInsuficientesException(plato.getPorcionesDisponibles());
         }

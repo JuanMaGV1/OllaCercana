@@ -119,7 +119,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleMedioPagoNoAceptado(MedioPagoNoAceptadoException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
     }
-
+    
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponseDTO> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
@@ -184,5 +184,16 @@ public class GlobalExceptionHandler {
                 .path(path)
                 .build();
         return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(org.springframework.data.mapping.PropertyReferenceException.class)
+    public ResponseEntity<ErrorResponseDTO> handlePropertyReference(
+            org.springframework.data.mapping.PropertyReferenceException ex,
+            HttpServletRequest request) {
+        log.warn("Campo de ordenamiento inválido: {}", ex.getPropertyName());
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Campo de ordenamiento inválido: '" + ex.getPropertyName() + "'",
+                request.getRequestURI());
     }
 }

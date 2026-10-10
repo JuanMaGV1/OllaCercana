@@ -61,5 +61,9 @@ public class ReservaEntity {
     @Column(name = "calificacion_habilitada") private boolean calificacionHabilitada;
     @Column(name = "calificacion", nullable = true) private Integer calificacion;
 
+    @Column(name = "recordatorio_recogida_enviado", nullable = false)
+    @Builder.Default
+    private boolean recordatorioRecogidaEnviado = false;
+
     @Version private Integer version;
 }

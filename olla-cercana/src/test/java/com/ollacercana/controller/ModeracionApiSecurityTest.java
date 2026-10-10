@@ -1,43 +1,41 @@
 package com.ollacercana.controller;
 
-import com.ollacercana.core.services.ModeracionService;
+import com.ollacercana.core.services.IModeracionService;
 import com.ollacercana.config.security.UsuarioActual;
-import com.ollacercana.config.security.JwtService;
-import com.ollacercana.config.security.CustomUserDetailsService;
-import com.ollacercana.config.security.CustomAccessDeniedHandler;
-import com.ollacercana.config.security.CustomAuthenticationEntryPoint;
-import com.ollacercana.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.is;
 
-@WebMvcTest(ModeracionApi.class)
-@Import({SecurityConfig.class, CustomAccessDeniedHandler.class, CustomAuthenticationEntryPoint.class})
+/**
+ * HU-19 / OC-035: solo ADMIN puede acceder al panel de moderación.
+ * Escenario 3 de HU-19: "No tiene permisos para ver esta sección".
+ *
+ * Se usa @SpringBootTest para que la cadena de seguridad completa (incluido
+ * el AuthorizationManagerBeforeMethodInterceptor de @EnableMethodSecurity)
+ * esté activa. Con @WebMvcTest el interceptor de @PreAuthorize no se aplica
+ * y los tests de rol dan falsos positivos.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
 class ModeracionApiSecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private ModeracionService moderacionService;
+    private IModeracionService moderacionService;
 
     @MockBean
     private UsuarioActual usuarioActual;
-
-    @MockBean
-    private JwtService jwtService;
-
-    @MockBean
-    private CustomUserDetailsService userDetailsService;
 
     @Test
     @WithMockUser(roles = "COMPRADOR")
