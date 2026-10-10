@@ -16,6 +16,23 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Documentación OpenAPI de Notificaciones in-app (MongoDB).
+ *
+ * FEAT-11 — Interacción
+ * HU-17   — Recepción de avisos
+ * RN-26   — Solo los avisos de chat son configurables
+ *
+ * Endpoints por usuario autenticado: el {@code cuentaId} se obtiene
+ * del JWT vía {@link com.ollacercana.config.security.UsuarioActual}, nunca
+ * del path.
+ *
+ * @see OC-267 Maqueta pestaña Notificaciones (front)
+ * @see OC-271 Historial y endpoint GET /notificaciones
+ * @see OC-272 Disparo al cambiar estado de reserva
+ * @see OC-273 Registro de token del dispositivo
+ * @see OC-294 Preferencia de avisos
+ */
 @Tag(name = "Notificaciones", description = "Historial de avisos in-app del usuario (HU-17)")
 @RequestMapping("/api/v1/notificaciones")
 public interface NotificacionApi {

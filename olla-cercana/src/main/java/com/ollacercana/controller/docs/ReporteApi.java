@@ -22,11 +22,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
 
 /**
- * HU-18 / OC-034: reportar publicaciones o usuarios por incumplimiento.
- * RN-22 (ocultamiento preventivo con 3 reportantes distintos),
- * RN-23 (toda decisión de moderación queda auditada).
+ * Documentación OpenAPI de Reportes.
  *
- * Los motivos del reporte se exponen para alimentar el combo del formulario.
+ * FEAT-09 — Moderación
+ * HU-18   — Reportar publicaciones o usuarios
+ * RN-22   — 3 reportantes distintos → ocultamiento preventivo
+ * RN-23   — Toda decisión auditada
+ *
+ * El {@code GET /reportes/motivos} alimenta el formulario del frontend
+ * con el enum {@code MotivoReporte}.
+ *
+ * @see OC-215 Entidad Reporte ampliada
+ * @see OC-216 DTOs, mapper y ReporteValidator
+ * @see OC-217 ReporteService.crear()
+ * @see OC-218 Cadena de moderación
+ * @see OC-220 Ocultamiento preventivo
+ * @see OC-221 Endpoints POST /reportes y GET /reportes/motivos
+ * @see OC-222 Pruebas unitarias de reportes
  */
 @Tag(name = "Reportes", description = "HU-18 — Reportar publicaciones o usuarios")
 @RequestMapping("/api/v1/reportes")

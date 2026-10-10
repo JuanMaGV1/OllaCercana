@@ -10,6 +10,16 @@ import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 
+/**
+ * Mapper MapStruct de presentación — RequestDTO ↔ Dominio ↔ ResponseDTO.
+ *
+ * Usado por {@link com.ollacercana.controller.PlatoController}.
+ * El dominio NO conoce DTOs, y el Controller NO conoce entidades JPA.
+ *
+ * @see OC-089 Crear PlatoMapper + PlatoEntityMapper
+ * @see PlatoEntityMapper mapper de persistencia (dominio ↔ entidad)
+ */
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface PlatoMapper {
 

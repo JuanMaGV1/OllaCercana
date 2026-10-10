@@ -1,8 +1,7 @@
 package com.ollacercana.controller.handlers.exception;
 
 import com.ollacercana.core.models.enums.EstadoReserva;
-
-                                                                   
+                                                            
                                                                                  
 public class ReservaNoPendienteException extends ConflictoException {
     public ReservaNoPendienteException(EstadoReserva estadoActual) {

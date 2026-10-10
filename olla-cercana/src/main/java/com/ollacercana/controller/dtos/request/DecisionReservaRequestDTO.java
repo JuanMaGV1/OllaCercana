@@ -11,10 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
-
-   
-                                                                          
-   
+                                                                      
 @Schema(description = "Decisión de la cocinera sobre una solicitud de reserva pendiente (HU-12)")
 public record DecisionReservaRequestDTO(
 

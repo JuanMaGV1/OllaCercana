@@ -70,7 +70,6 @@ class PerfilCocineraValidatorTest {
     @Test
     @DisplayName("validarParaCrear: Cuenta ya tiene perfil asociado lanza ConflictoException")
     void validarParaCrear_perfilYaExistente_lanzaConflicto() {
-        // ✅ el repo devuelve PerfilCocineraEntity
         when(perfilCocineraRepository.findByCuentaId(cuenta.getId()))
                 .thenReturn(Optional.of(PerfilCocineraEntity.builder().build()));
 

@@ -5,9 +5,6 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-   
-                                                                             
-   
 @Schema(description = "Confirmación de entrega y pago contra entrega para cerrar la transacción (HU-23)")
 public record CierreTransaccionRequestDTO(
 

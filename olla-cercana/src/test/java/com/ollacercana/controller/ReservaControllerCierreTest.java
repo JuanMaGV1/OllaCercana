@@ -58,8 +58,7 @@ class ReservaControllerCierreTest {
     void setUp() {
         lenient().when(usuarioActual.getCuentaId()).thenReturn(42L);
         lenient().when(usuarioActual.tieneRol(Rol.ADMIN)).thenReturn(false);
-
-        // ✅ Entity JPA, no dominio
+        
         plato = platoRepository.save(PlatoEntity.builder()
                 .id(UUID.randomUUID())
                 .cocineraId(UUID.randomUUID())
@@ -82,7 +81,6 @@ class ReservaControllerCierreTest {
 
         lenient().when(usuarioActual.getCocineraId()).thenReturn(plato.getCocineraId());
 
-        // ✅ ReservaEntity — armada con el builder, no con el dominio
         LocalDateTime ahora = LocalDateTime.now();
         reserva = reservaRepository.save(ReservaEntity.builder()
                 .id(UUID.randomUUID())

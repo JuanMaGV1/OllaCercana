@@ -1,10 +1,8 @@
 package com.ollacercana.core.patterns.moderacion;
 
-import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.Reporte;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.models.enums.ObjetivoReporte;
-import com.ollacercana.persistence.entities.PlatoEntity;
 import com.ollacercana.persistence.mappers.PlatoEntityMapper;
 import com.ollacercana.persistence.repository.PlatoRepository;
 import com.ollacercana.persistence.repository.ReporteRepository;

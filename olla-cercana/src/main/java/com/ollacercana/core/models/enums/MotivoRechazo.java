@@ -1,6 +1,5 @@
 package com.ollacercana.core.models.enums;
 
-
 public enum MotivoRechazo {
     INGREDIENTES_INSUFICIENTES("Me quedé sin ingredientes para esta porción"),
     SIN_TIEMPO_DE_ENTREGA("No alcanzo a entregar el pedido a tiempo"),

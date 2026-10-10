@@ -28,6 +28,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * HU-20 — Métricas e historial de ventas de la cocinera.
+ * 
+ * Retorna ingresos referenciales, porciones entregadas y plato más pedido.
+ * Respeta el escenario "sin ventas": ceros y plato vacío.
+ *
+ * @see OC-275 Maqueta pestaña Historial (front)
+ * @see OC-276 Endpoint GET /cocineras/metricas
+ * @see OC-277 Consulta de ingresos por periodo
+ * @see OC-295/296 Maquetas front
+ * @see OC-297 Endpoint del historial de pedidos
+ * @see OC-298 Pruebas unitarias de métricas e historial
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

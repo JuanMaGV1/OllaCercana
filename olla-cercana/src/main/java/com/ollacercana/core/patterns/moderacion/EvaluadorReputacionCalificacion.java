@@ -1,6 +1,5 @@
 package com.ollacercana.core.patterns.moderacion;
 
-import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.repository.CalificacionRepository;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import lombok.RequiredArgsConstructor;

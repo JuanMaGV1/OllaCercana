@@ -9,22 +9,31 @@ import org.springframework.stereotype.Component;
 import com.ollacercana.core.services.ReservaService;
 
 import java.util.UUID;
-
-   
-                                                                                        
-                                                                            
+                                                                        
+/**
+ * Tarea programada con tres responsabilidades sobre el ciclo de vida de reservas.
+ *
+ * HU-12 — Aceptar o rechazar solicitudes
+ * HU-23 — Confirmar entrega y cerrar transacción
+ * RN-04 — Expiración a los 10 minutos si la cocinera no responde
+ * RN-25 — Recordatorio a la cocinera a los 7 min
+ * RN-33 — Cierre automático a las 24 h si nadie confirma
+ *
+ * Ejecuta cada minuto (configurable):
+ *   {@code expirarReservasVencidas()} — RN-04 · OC-148
+ *   {@code completarReservasSinCierre()} — RN-33 · OC-157
+ *   {@code enviarRecordatorios()} — RN-25 · OC-149
+ *
+ * @see com.ollacercana.core.services.ReservaService
+ * @see com.ollacercana.core.services.impl.ReservaServiceImpl
+ */                                                                            
    
 @Component
 @RequiredArgsConstructor
 public class ReservaScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(ReservaScheduler.class);
-
-    private final ReservaService reservaService;
-
-       
-                                                                                          
-                                         
+    private final ReservaService reservaService;                               
        
     @Scheduled(fixedRateString = "${ollacercana.reservas.intervalo-revision-ms:60000}",
             initialDelayString = "${ollacercana.reservas.intervalo-revision-ms:60000}")
@@ -37,11 +46,7 @@ public class ReservaScheduler {
                 log.warn("No se pudo expirar la reserva {}: {}", reservaId, e.getMessage());
             }
         }
-    }
-
-       
-                                                                                                   
-                                                                                                               
+    }                                                                                                      
        
     @Scheduled(fixedRateString = "${ollacercana.reservas.intervalo-cierre-ms:600000}",
             initialDelayString = "${ollacercana.reservas.intervalo-cierre-ms:600000}")
@@ -54,10 +59,7 @@ public class ReservaScheduler {
                 log.warn("No se pudo completar automáticamente la reserva {}: {}", reservaId, e.getMessage());
             }
         }
-    }
-
-       
-                                                                                                      
+    }                                                                                               
        
     @Scheduled(fixedRateString = "${ollacercana.reservas.intervalo-revision-ms:60000}",
             initialDelayString = "${ollacercana.reservas.intervalo-revision-ms:60000}")

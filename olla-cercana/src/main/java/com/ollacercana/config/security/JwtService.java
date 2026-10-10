@@ -18,6 +18,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio de generación y validación de JWT.
+ *
+ * FEAT-12 — Seguridad JWT y roles — OC-169
+ * Claims emitidos: {@code correo}, {@code roles}, {@code cuentaId}, {@code cocineraId}
+ * Algoritmo: HS256 (HMAC-SHA256), secret en {@code application.yml} Base64.
+ *
+ * @see OC-170 Dependencias y configuración JWT
+ * @see OC-174 Implementación real de JwtService
+ * @see OC-182 Integración con SesionController
+ * @see OC-188 Pruebas unitarias de seguridad
+ */
 @Slf4j
 @Service
 public class JwtService {

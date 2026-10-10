@@ -24,6 +24,32 @@
     <jjwt.version>0.12.3</jjwt.version>
     <springdoc.version>2.5.0</springdoc.version>
     <jacoco.version>0.8.12</jacoco.version>
+
+    <sonar.projectKey>ollacercana</sonar.projectKey>
+    <sonar.projectName>OllaCercana</sonar.projectName>
+    <sonar.host.url>http://localhost:9000</sonar.host.url>
+    <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+    <sonar.coverage.jacoco.xmlReportPaths>
+        ${project.basedir}/target/site/jacoco/jacoco.xml
+    </sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.exclusions>
+        **/config/seeders/**,
+        **/controller/handlers/exception/**,
+        **/controller/docs/**,
+        **/persistence/document/**,
+        **/*Application.java,
+        **/core/models/**,
+        **/controller/dtos/**
+    </sonar.exclusions>
+    <sonar.coverage.exclusions>
+        **/config/seeders/**,
+        **/controller/handlers/exception/**,
+        **/controller/docs/**,
+        **/*Application.java,
+        **/core/models/**,
+        **/controller/dtos/**,
+        **/core/patterns/factory/**
+    </sonar.coverage.exclusions>
   </properties>
 
   <dependencies>
@@ -123,7 +149,11 @@
 
   <build>
     <plugins>
-                                                                                                  
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>3.11.0.3922</version>
+    </plugin>                                                                                
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -169,6 +199,16 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco.version}</version>
+        <configuration>
+        <excludes>
+              <exclude>**/config/seeders/**</exclude>
+              <exclude>**/controller/handlers/exception/**</exclude>
+              <exclude>**/controller/docs/**</exclude>
+              <exclude>**/core/models/**</exclude>
+              <exclude>**/controller/dtos/**</exclude>
+              <exclude>**/*Application.class</exclude>
+          </excludes>
+        </configuration>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -177,11 +217,17 @@
             </goals>
           </execution>
           <execution>
-            <id>report</id>
-            <phase>test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
+              <id>report</id>
+              <phase>test</phase>
+              <goals>
+                  <goal>report</goal>
+              </goals>
+              <configuration>
+                  <formats>
+                      <format>HTML</format>
+                      <format>XML</format>
+                  </formats>
+              </configuration>
           </execution>
         </executions>
       </plugin>

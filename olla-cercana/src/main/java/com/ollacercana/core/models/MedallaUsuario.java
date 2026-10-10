@@ -29,4 +29,5 @@ public class MedallaUsuario {
     public boolean estaVigente(LocalDateTime ahora) {
         return vigenteHasta == null || vigenteHasta.isAfter(ahora);
     }
+    
 }

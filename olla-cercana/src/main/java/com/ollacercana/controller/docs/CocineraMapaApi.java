@@ -18,6 +18,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
+/**
+ * Documentación OpenAPI del mapa interactivo de cocineras.
+ *
+ * FEAT-06 — Catálogo
+ * HU-09   — Mapa interactivo de cocineras
+ * RN-05   — Coordenadas ofuscadas + distancia redondeada a 100m
+ *
+ * Endpoint público: {@code GET /cocineras/mapa}.
+ *
+ * @see OC-231 DTO MapaCocinerasRequestDTO con validación
+ * @see OC-232 Consulta por área (Haversine)
+ * @see OC-233 Endpoint GET /cocineras/mapa
+ * @see OC-235 Ofuscación de coordenadas
+ * @see OC-236 Pruebas unitarias de zona y ofuscación
+ */
 @Tag(name = "Cocineras Mapa", description = "Mapa interactivo y geolocalización de cocineras con oferta activa")
 @RequestMapping("/api/v1/cocineras")
 public interface CocineraMapaApi {

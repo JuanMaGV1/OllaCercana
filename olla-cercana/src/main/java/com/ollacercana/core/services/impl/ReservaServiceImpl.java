@@ -89,6 +89,20 @@ public class ReservaServiceImpl implements ReservaService {
         this.reservaMapper = reservaMapper;
     }
 
+    /**
+     * HU-11 · RN-03 · RN-14 · RN-15 · RN-33
+     * Crea una reserva PENDIENTE descontando porciones y calculando monto.
+     *
+     * Flujo:
+     * 1. Carga el plato o lanza 404
+     * 2. Valida con {@link ReservaValidator} (autorreserva, límite pendientes, stock)
+     * 3. Compromete porciones con lock optimista
+     * 4. Persiste y publica evento {@code RESERVA_CREADA}
+     *
+     * @see OC-138 ReservaService.crear() con transacción
+     * @see OC-139 @Transactional y bloqueo optimista
+     * @see OC-133 Entidad EventoReserva (Observer)
+     */
     @Override
     @Transactional
     public Reserva crear(Long compradorId, Reserva reserva) {
@@ -227,6 +241,14 @@ public class ReservaServiceImpl implements ReservaService {
                     Map.of("minutosRestantes", minutos)));
     }
 
+    /**
+     * HU-23 · RN-32 · RN-17
+     * Cierra la transacción y habilita la calificación.
+     *
+     * @see OC-156 ReservaService.completar()
+     * @see OC-158 Bloqueo si existe Reporte ABIERTO
+     * @see OC-159 Cambio de estado del chat a SOLO_LECTURA
+     */
     @Override
     @Transactional
     public Reserva completar(UUID reservaId, String comentario) {

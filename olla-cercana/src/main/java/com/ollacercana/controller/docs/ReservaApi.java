@@ -9,7 +9,6 @@ import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,6 +22,32 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Documentación OpenAPI de Reservas.
+ *
+ * FEAT-07 — Reservas
+ * HU-11   — Apartar porciones
+ * HU-12   — Confirmar / rechazar
+ * HU-14   — Métodos de pago
+ * HU-23   — Cerrar transacción
+ *
+ * Reglas de negocio visibles en los códigos HTTP:
+ *
+ *   RN-03 → 409 sin porciones
+ *   RN-14 → 422 autorreserva
+ *   RN-15 → 409 máximo 2 pendientes
+ *   RN-16 → 409 conflicto de versión
+ *   RN-32 → 422 cierre sin confirmar
+ *   RN-33 → 409/422 cierre automático
+ *
+ * @see OC-134 DTO ReservaRequest + ReservaResponse
+ * @see OC-140 Endpoint POST /reservas
+ * @see OC-145 DTO DecisionReservaRequest
+ * @see OC-150 Endpoint PATCH /decision
+ * @see OC-155 DTO CierreTransaccionRequest
+ * @see OC-160 Endpoint POST /completar
+ * @see OC-255 Validación de método de pago aceptado
+ */
 @Tag(name = "Reservas", description = "API para creación, decisión y administración de reservas (HU-04, HU-12, HU-23)")
 @RequestMapping("/api/v1/reservas")
 public interface ReservaApi {

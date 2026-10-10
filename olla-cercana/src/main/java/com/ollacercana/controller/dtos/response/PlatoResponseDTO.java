@@ -5,21 +5,11 @@ import com.ollacercana.core.models.enums.MedioPago;
 import com.ollacercana.core.models.enums.RestriccionAlimentaria;
 import com.ollacercana.core.models.enums.TipoComida;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import com.ollacercana.core.models.enums.EstadoPlato;
-import com.ollacercana.core.models.enums.RestriccionAlimentaria;
-import com.ollacercana.core.models.enums.TipoComida;
-import com.ollacercana.core.models.enums.MedioPago;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Detalle público y respuesta de un plato")
 public record PlatoResponseDTO(
@@ -37,7 +27,6 @@ public record PlatoResponseDTO(
         LocalDateTime horaDisponibilidad,
         LocalDateTime fechaPublicacion,
         LocalDateTime fechaExpiracion,
-        String puntoEntrega,
         Double latitud,
         Double longitud,
         @Schema(description = "Métodos de pago que acepta la cocinera titular", allowableValues = {"NEQUI", "DAVIPLATA", "EFECTIVO", "TRANSFERENCIA_BANCARIA"}, example = "[\"NEQUI\", \"EFECTIVO\"]")
@@ -54,14 +43,14 @@ public record PlatoResponseDTO(
             String puntoEntrega, Double latitud, Double longitud) {
         this(id, cocineraId, nombre, descripcion, fotoUrl, tipoComida, restricciones, porcionesTotales,
                 porcionesDisponibles, precioPorcion, estado, horaDisponibilidad, fechaPublicacion,
-                fechaExpiracion, puntoEntrega, latitud, longitud, List.of(), NOTA_PAGO_CONTRA_ENTREGA);
+                fechaExpiracion, latitud, longitud, List.of(), NOTA_PAGO_CONTRA_ENTREGA);
     }
 
     /** OC-254: copia del detalle con los medios de pago de la cocinera titular. */
     public PlatoResponseDTO withMediosPago(List<MedioPago> mediosPago) {
         return new PlatoResponseDTO(id, cocineraId, nombre, descripcion, fotoUrl, tipoComida, restricciones,
                 porcionesTotales, porcionesDisponibles, precioPorcion, estado, horaDisponibilidad,
-                fechaPublicacion, fechaExpiracion, puntoEntrega, latitud, longitud,
+                fechaPublicacion, fechaExpiracion, latitud, longitud,
                 mediosPago != null ? mediosPago : List.of(), NOTA_PAGO_CONTRA_ENTREGA);
     }
 }

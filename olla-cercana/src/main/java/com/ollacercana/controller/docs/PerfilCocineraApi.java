@@ -20,6 +20,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Documentación OpenAPI del perfil de cocinera.
+ *
+ * FEAT-04 — Autenticación / Perfil
+ * HU-03   — Configuración de perfil y conjunto residencial
+ * HU-14   — Medios de pago aceptados
+ * RN-01   — Verificación de celular obligatoria
+ * RN-05   — Nunca exponer dirección exacta
+ *
+ * @see OC-077 Entidad PerfilCocinera
+ * @see OC-078 DTOs PerfilCocineraRequest + Response
+ * @see OC-082 PerfilCocineraService con verificación OTP
+ * @see OC-083 Endpoints POST/PUT /perfiles
+ * @see OC-084 Pruebas unitarias del perfil
+ * @see OC-253 Guardar medios de pago
+ */
 @Tag(name = "Perfiles de Cocinera", description = "API para gestión, consulta y validación OTP del perfil de cocinera")
 public interface PerfilCocineraApi {
 

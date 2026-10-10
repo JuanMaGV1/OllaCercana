@@ -5,6 +5,17 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.UUID;
 
+/**
+ * Utilidades geoespaciales — cálculo de distancia y ofuscación (RN-05).
+ *
+ * Fórmula Haversine con radio terrestre 6371000 m.
+ * Ofuscación determinística: mismo (id, salt) → mismo resultado.
+ *
+ * @see OC-115 Query Haversine (RN-05)
+ * @see OC-122 Redondeo de distancia a 100m
+ * @see OC-235 Ofuscación de coordenadas
+ * @see OC-236 Pruebas unitarias de zona y ofuscación
+ */
 public final class GeoUtils {
 
     private static final double RADIO_TIERRA_METROS = 6371000.0;

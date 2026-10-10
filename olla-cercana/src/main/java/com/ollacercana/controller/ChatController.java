@@ -17,6 +17,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Controller REST de Chat de Reservas (MongoDB).
+ *
+ * HU-13 · RN-17 · RN-18
+ * Solo accesible por COMPRADOR y COCINERA de la reserva.
+ *
+ * @see ChatApi
+ * @see OC-247 Endpoints de chat
+ * @see OC-263 Envío con evento
+ * @see OC-264 Polling con cursor
+ * @see OC-265 Mensajes no leídos
+ */
 @RestController
 @RequestMapping("/api/v1/reservas/{id}/mensajes")
 @RequiredArgsConstructor

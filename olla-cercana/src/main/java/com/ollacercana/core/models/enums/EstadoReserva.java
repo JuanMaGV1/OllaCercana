@@ -1,7 +1,4 @@
 package com.ollacercana.core.models.enums;
-
-   
-                                   
    
 public enum EstadoReserva {
     PENDIENTE,

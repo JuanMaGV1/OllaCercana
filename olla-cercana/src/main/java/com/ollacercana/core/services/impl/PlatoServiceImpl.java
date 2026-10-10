@@ -55,6 +55,14 @@ public class PlatoServiceImpl implements PlatoService {
         this.publicadorEventosPorciones = publicadorEventosPorciones;
     }
 
+    /**
+     * HU-04 · RN-02 · RN-28
+     * Publica un plato calculando expiración a 4h.
+     *
+     * @see OC-92  PlatoService.crear() con fecha expiración +4h
+     * @see OC-99  Validador con rangos RN-27 (precio, porciones)
+     * @see OC-91  Validador: cocinera verificada, no pausada, máx 3 activos
+     */
     @Override
     @Transactional
     public Plato crear(Plato plato) {
@@ -86,6 +94,17 @@ public class PlatoServiceImpl implements PlatoService {
                 .orElse(List.of());
     }
 
+    /**
+     * HU-24 · RN-27
+     * Ajusta disponibilidad con control optimista de versión.
+     *
+     * @see OC-104 DTO AjusteDisponibilidadRequest
+     * @see OC-105 @Version en PlatoEntity
+     * @see OC-106 MÃ©todo ajustarDisponibilidad
+     * @see OC-107 Control de versión optimista
+     * @see OC-108 Validación "no menor que comprometidas"
+     * @see OC-109 Endpoint PATCH /disponibilidad
+     */
     @Override
     @Transactional
     public Plato ajustarDisponibilidad(UUID platoId, TipoAjustePorciones tipo, Integer cantidad, Integer version) {
@@ -131,6 +150,20 @@ public class PlatoServiceImpl implements PlatoService {
         return resultado;
     }
 
+    /**
+     * HU-06 + HU-07 · RN-05
+     * Consulta paginada de platos cercanos con filtros y distancia redondeada.
+     *
+     * NO expone {@code puntoEntrega} — RN-05.
+     * Distancia redondeada a múltiplos de 100m con {@link GeoUtils}.
+     *
+     * @see OC-115 Query Haversine
+     * @see OC-116 consultarCercanos() en el Service
+     * @see OC-117 Endpoint GET /api/v1/platos/cercanos
+     * @see OC-123 Nunca exponer dirección exacta
+     * @see OC-127 Filtro por tipoComida
+     * @see OC-128 Filtro por restricciones
+     */
 @Override
 @Transactional(readOnly = true)
 public PaginaResponseDTO<PlatoCercanoResponseDTO> consultarCercanos(ConsultaPlatosRequest request) {
@@ -193,8 +226,6 @@ private PlatoCercanoResponseDTO mapearACercano(Plato plato, Double lat, Double l
         distanciaAproximada = GeoUtils.redondearDistanciaMultiplo100(distancia);
     }
 
-    // ✅ Obtener el conjunto residencial desde el perfil de la cocinera
-    //    (NUNCA exponer plato.getPuntoEntrega() — viola RN-05)
     String conjunto = perfilCocineraRepository.findById(plato.getCocineraId())
             .map(PerfilCocineraEntity::getConjuntoResidencial)
             .orElse("Conjunto no especificado");

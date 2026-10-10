@@ -38,8 +38,8 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
     private final CuentaRepository cuentaRepository;
     private final CodigoOTPRepository codigoOTPRepository;
     private final IPerfilCocineraValidator validator;
-    private final PerfilCocineraDomainMapper domainMapper;        // Entity → Dominio
-    private final PerfilCocineraPersistenceMapper persistenceMapper; // Dominio → Entity
+    private final PerfilCocineraDomainMapper domainMapper;        
+    private final PerfilCocineraPersistenceMapper persistenceMapper;
     private final CuentaEntityMapper cuentaMapper;
 
     @Override

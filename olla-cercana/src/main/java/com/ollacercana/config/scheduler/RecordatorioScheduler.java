@@ -16,6 +16,26 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Tarea programada que envía recordatorios de recogida 15 minutos antes de la hora acordada.
+ *
+ * HU-17 — Recepción de avisos del estado de la reserva y mensajes
+ * RN-25 — Recordatorio al comprador 15 min antes de la hora de entrega
+ * OC-291 — Maqueta alerta (front)
+ * OC-292 — Programar el recordatorio 15 min antes
+ *
+ * Publica un evento {@code RECORDATORIO_RESERVA} con flag
+ * {@code recordatorioRecogida=true} para que el {@link com.ollacercana.core.patterns.observer.NotificacionInAppObservador}
+ * lo persista.
+ *
+ * Respeta el flag {@code ollacercana.notificaciones.tareas-programadas}.
+ * Intervalo configurable: {@code ollacercana.notificaciones.intervalo-recordatorio-ms}
+ * (por defecto 60000 ms = 1 min).
+ *
+ * @see com.ollacercana.core.services.ReservaService#buscarReservasParaRecordatorioRecogida(java.time.LocalDateTime)
+ * @see com.ollacercana.core.patterns.observer.PublicadorEventosReserva
+ */
+
 @Component
 @RequiredArgsConstructor
 public class RecordatorioScheduler {

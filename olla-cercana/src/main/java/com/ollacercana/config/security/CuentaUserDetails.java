@@ -4,8 +4,6 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.ollacercana.core.models.Cuenta;
-
 import java.util.Collection;
 import java.util.UUID;
 

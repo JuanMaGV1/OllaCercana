@@ -6,10 +6,6 @@ import com.ollacercana.core.models.Plato;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-   
-                                                                                                  
-                                                             
-   
 @Component
 public class PublicadorEventosPorciones {
 
@@ -19,10 +15,6 @@ public class PublicadorEventosPorciones {
         this.publisher = publisher;
     }
 
-       
-                                                                                   
-                                                  
-       
     public void publicarSiCambio(int disponiblesAntes, Plato plato) {
         if (plato.getPorcionesDisponibles() != disponiblesAntes) {
             publisher.publishEvent(PorcionesActualizadasResponseDTO.de(plato));

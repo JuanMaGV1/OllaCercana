@@ -14,6 +14,18 @@ import com.ollacercana.controller.dtos.request.LoginRequestDTO;
 import com.ollacercana.controller.dtos.response.ErrorResponseDTO;
 import com.ollacercana.controller.dtos.response.LoginResponseDTO;
 
+/**
+ * Documentación OpenAPI de Sesiones.
+ *
+ * FEAT-04 — Autenticación / Perfil
+ * HU-02   — Inicio de sesión
+ * FEAT-12 — Seguridad JWT y roles
+ *
+ * @see OC-069 DTO LoginRequest + LoginResponse
+ * @see OC-071 Endpoint POST /sesiones
+ * @see OC-182 Integrar JWT real en el login
+ * @see OC-188 Pruebas unitarias de seguridad
+ */
 @Tag(name = "Sesiones", description = "API para gestión de sesiones y autenticación de usuarios")
 public interface SesionApi {
 

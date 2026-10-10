@@ -71,7 +71,6 @@ class CuentaServiceImplTest {
                 .estado(EstadoCuenta.ACTIVO)
                 .build();
 
-        // ✅ Mapper bidireccional (dominio <-> entity)
         lenient().when(entityMapper.toEntity(any(Cuenta.class))).thenAnswer(i -> {
             Cuenta c = i.getArgument(0);
             return CuentaEntity.builder()

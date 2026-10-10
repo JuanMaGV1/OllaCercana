@@ -39,8 +39,7 @@ class PlatoCercanoControllerTest {
     void setUp() {
         platoRepository.deleteAll();
         perfilRepository.deleteAll();
-
-        // ✅ Entity JPA (no dominio)
+        
         PerfilCocineraEntity perfil = PerfilCocineraEntity.builder()
                 .conjuntoResidencial("Torres del Sol")
                 .numeroNequi("3001234567")

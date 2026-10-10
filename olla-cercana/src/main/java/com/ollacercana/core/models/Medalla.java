@@ -21,4 +21,5 @@ public class Medalla {
     private CodigoMedalla codigo;
     private String nombre;
     private String requisito;
+    
 }

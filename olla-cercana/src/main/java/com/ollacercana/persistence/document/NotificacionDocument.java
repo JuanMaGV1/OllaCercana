@@ -11,7 +11,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Document(collection = "notificaciones")
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter 
+@Setter 
+@Builder 
+@NoArgsConstructor 
+@AllArgsConstructor
 public class NotificacionDocument {
 
     @Id private String id;

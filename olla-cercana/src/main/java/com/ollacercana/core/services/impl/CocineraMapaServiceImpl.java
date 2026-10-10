@@ -24,6 +24,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * HU-09 — Mapa interactivo de cocineras con privacidad.
+ *
+ * RN-05: coordenadas ofuscadas determinísticamente + distancia redondeada a 100m.
+ *
+ * @see OC-231 DTO MapaCocinerasRequestDTO con validación
+ * @see OC-232 Consulta de cocineras por área (Haversine)
+ * @see OC-233 Endpoint GET /cocineras/mapa
+ * @see OC-235 Ofuscación de coordenadas
+ * @see OC-236 Pruebas unitarias de zona y ofuscación
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
