@@ -8,6 +8,9 @@ import com.ollacercana.controller.dtos.request.RegistroRequestDTO;
  * Cada implementación encapsula las reglas de construcción según el rol.
  */
 public interface CuentaFactory {
+
     boolean soporta(RegistroRequestDTO request);
+
     Cuenta crear(RegistroRequestDTO request);
+    
 }

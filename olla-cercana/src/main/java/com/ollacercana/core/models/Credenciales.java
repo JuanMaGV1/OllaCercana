@@ -8,6 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Credenciales {
+    
     private String contrasenaHash;
     private String tokenFCM;
     private Boolean celularVerificado;

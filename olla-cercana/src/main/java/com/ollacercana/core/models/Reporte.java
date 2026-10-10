@@ -31,4 +31,5 @@ public class Reporte {
     private UUID reservaId;
     private EstadoReporte estado;
     private LocalDateTime fechaCreacion;
+    
 }

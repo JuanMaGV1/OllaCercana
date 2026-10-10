@@ -53,9 +53,7 @@ public class Plato {
     private Double latitud;
     private Double longitud;
     private String puntoEntrega;
-    private Integer version;
-
-                                                       
+    private Integer version;                                           
 
     /**
      * RN-03: porciones disponibles = totales - comprometidas.

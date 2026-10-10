@@ -23,4 +23,5 @@ public class Notificacion {
     private LocalDateTime fechaCreacion;
 
     public void marcarLeida() { this.leida = true; }
+    
 }

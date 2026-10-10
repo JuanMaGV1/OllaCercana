@@ -6,6 +6,7 @@ import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.RestriccionAlimentaria;
 
 public record FiltroRestricciones(List<RestriccionAlimentaria> requeridas) implements FiltroPlato {
+    
     @Override
     public boolean cumple(Plato plato) {
         if (requeridas == null || requeridas.isEmpty()) return true;

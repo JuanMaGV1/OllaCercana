@@ -9,5 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface EventoReservaRepository extends MongoRepository<EventoReservaDocument, String> {
+    
     List<EventoReservaDocument> findByReservaId(UUID reservaId);
 }

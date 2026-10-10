@@ -35,4 +35,5 @@ public class PerfilCocinera {
 
     public boolean verificada() { return this.verificada; }
     public boolean pausada() { return this.pausada; }
+    
 }

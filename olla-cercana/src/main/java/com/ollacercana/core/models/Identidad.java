@@ -8,8 +8,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Identidad {
+
     private String nombre;
     private String correo;
     private String celular;
     private String fotoUrl;
+    
 }

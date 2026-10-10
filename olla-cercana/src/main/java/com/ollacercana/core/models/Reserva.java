@@ -221,4 +221,5 @@ public class Reserva {
         if (!estaPendiente()) throw new ReservaNoPendienteException(this.estado);
         if (estaVencida(ahora)) throw new ReservaVencidaException();
     }
+    
 }

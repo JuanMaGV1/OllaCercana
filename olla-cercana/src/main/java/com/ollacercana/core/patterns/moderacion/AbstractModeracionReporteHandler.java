@@ -3,6 +3,7 @@ package com.ollacercana.core.patterns.moderacion;
 import com.ollacercana.core.models.Reporte;
 
 public abstract class AbstractModeracionReporteHandler implements ModeracionReporteHandler {
+    
     private ModeracionReporteHandler next;
 
     @Override
