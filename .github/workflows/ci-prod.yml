@@ -18,8 +18,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+          cache-dependency-path: 'olla-cercana/pom.xml' # <-- Busca el pom en la subcarpeta para la caché
 
       - name: Run Tests with Maven
+        working-directory: olla-cercana # <-- Ejecuta Maven dentro de la subcarpeta
         run: mvn clean test
 
   deploy-prod:
@@ -39,7 +41,7 @@ jobs:
       - name: Build and Push Docker Image (PROD)
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./olla-cercana # <-- Contexto y Dockerfile dentro de la subcarpeta
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/olla-cercana:latest
