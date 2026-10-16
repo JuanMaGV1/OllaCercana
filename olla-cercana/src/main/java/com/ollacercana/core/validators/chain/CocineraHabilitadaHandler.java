@@ -1,6 +1,5 @@
 package com.ollacercana.core.validators.chain;
 
-import com.ollacercana.controller.handlers.exception.CocineraNoEncontradaException;
 import com.ollacercana.controller.handlers.exception.CocineraNoVerificadaException;
 import com.ollacercana.controller.handlers.exception.CocineraPausadaException;
 import com.ollacercana.controller.handlers.exception.PlatoSinCocineraException;

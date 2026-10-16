@@ -133,7 +133,7 @@ class ReservaServiceImplCierreTest {
     }
 
     private Reserva reservaConfirmada(int horasDesdeConfirmacion) {
-        LocalDateTime confirmadaEn = LocalDateTime.now().minusHours(horasDesdeConfirmacion);
+        LocalDateTime confirmadaEn = LocalDateTime.now(java.time.ZoneId.systemDefault()).minusHours(horasDesdeConfirmacion);
         UUID id = UUID.randomUUID();
         UUID platoId = UUID.randomUUID();
 
@@ -224,8 +224,8 @@ class ReservaServiceImplCierreTest {
                     .platoId(UUID.randomUUID()).cocineraId(COCINERA_ID).compradorId(COMPRADOR_ID)
                     .cantidadPorciones(2).montoTotal(new BigDecimal("32000"))
                     .estado(estado)
-                    .fechaCreacion(LocalDateTime.now().minusMinutes(1))
-                    .fechaLimiteConfirmacion(LocalDateTime.now().plusMinutes(9))
+                    .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(1))
+                    .fechaLimiteConfirmacion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(9))
                     .build();
             Reserva dominio = Reserva.builder().id(id).estado(estado).build();
             when(reservaRepository.findById(id)).thenReturn(Optional.of(entidad));
@@ -259,7 +259,7 @@ class ReservaServiceImplCierreTest {
         UUID id = UUID.randomUUID();
         ReservaEntity vieja = ReservaEntity.builder()
                 .id(id).estado(EstadoReserva.CONFIRMADA)
-                .fechaDecision(LocalDateTime.now().minusHours(30)).build();
+                .fechaDecision(LocalDateTime.now(java.time.ZoneId.systemDefault()).minusHours(30)).build();
         when(reservaRepository.findByEstadoAndFechaDecisionLessThanEqual(
                 eq(EstadoReserva.CONFIRMADA), any(LocalDateTime.class)))
                 .thenReturn(List.of(vieja));

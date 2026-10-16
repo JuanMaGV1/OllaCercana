@@ -1,6 +1,5 @@
 package com.ollacercana.config.security;
 
-import com.ollacercana.config.security.CustomUserDetailsService;
 import com.ollacercana.core.models.enums.EstadoCuenta;
 import com.ollacercana.core.models.enums.Rol;
 import com.ollacercana.persistence.entities.CredencialesEmbeddable;

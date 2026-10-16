@@ -76,6 +76,7 @@ class NotificadorPorcionesImplTest {
     @Test
     @DisplayName("Notificar sin suscriptores no falla")
     void sinSuscriptores_NoFalla() {
-        notificador.notificar(new PorcionesActualizadasResponseDTO(platoA, 2, EstadoPorciones.DISPONIBLE));
+        var evento = new PorcionesActualizadasResponseDTO(platoA, 2, EstadoPorciones.DISPONIBLE);
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> notificador.notificar(evento));
     }
 }

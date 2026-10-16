@@ -25,24 +25,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.time.ZoneId;
 
-/**
- * HU-13 — Coordinación de entrega por chat (persistido en MongoDB).
- *
- * Reglas de negocio:
- * RN-17 — Chat solo ACTIVO tras confirmar reserva; SOLO_LECTURA al completar
- * RN-18 — Purga automática a los 30 días de reservas completadas
- *
- * @see OC-245 Documento MensajeChat
- * @see OC-246 DTOs y mapper del chat
- * @see OC-247 Endpoints de chat y ChatApi
- * @see OC-248 ChatValidator
- * @see OC-249 Pruebas unitarias de chat
- * @see OC-263 ChatService.enviar() con evento NUEVO_MENSAJE_CHAT
- * @see OC-264 ChatService.listar() con cursor
- * @see OC-265 Mensajes no leídos
- * @see OC-266 Purga a los 30 días
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -71,20 +55,19 @@ public class ChatServiceImpl implements ChatService {
         ReservaEntity reserva = chatValidator.validarParaEnviarMensaje(reservaId, cuentaId, cocineraId, request.texto());
 
         Rol autorRol = (cocineraId != null && cocineraId.equals(reserva.getCocineraId())) ? Rol.COCINERA : Rol.COMPRADOR;
-        String autorId = (autorRol == Rol.COCINERA) ? cocineraId.toString() : cuentaId.toString();
+        String autorId = (autorRol == Rol.COCINERA && cocineraId != null) ? cocineraId.toString() : String.valueOf(cuentaId);
 
         MensajeChatDocument doc = MensajeChatDocument.builder()
                 .reservaId(reservaId)
                 .autorRol(autorRol)
                 .autorId(autorId)
                 .texto(request.texto().trim())
-                .fecha(LocalDateTime.now())
+                .fecha(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .leido(false)
                 .build();
 
         MensajeChatDocument guardado = mensajeChatRepository.save(doc);
 
-        // OC-263: Publicar el evento NUEVO_MENSAJE_CHAT
         if (publicadorEventosReserva != null) {
             EventoReserva evento = EventoReserva.builder()
                     .id(UUID.randomUUID().toString())
@@ -112,7 +95,6 @@ public class ChatServiceImpl implements ChatService {
         Long cuentaId = usuarioActual.getCuentaId();
         UUID cocineraId = usuarioActual.getCocineraIdOpt().orElse(null);
 
-        // OC-264: Valida acceso sin exigir que el chat esté ACTIVO (permite SOLO_LECTURA)
         chatValidator.validarAccesoChat(reservaId, cuentaId, cocineraId);
 
         List<MensajeChatDocument> mensajes = (desde != null)
@@ -153,13 +135,17 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public long purgarMensajesAntiguos() {
-        LocalDateTime limite = LocalDateTime.now().minusDays(DIAS_RETENCION_CHAT);
-        return purgarMensajesDeReservasCerradas(limite);
+        LocalDateTime limite = LocalDateTime.now(ZoneId.systemDefault()).minusDays(DIAS_RETENCION_CHAT);
+        return ejecutarPurga(limite);
     }
 
     @Override
     @Transactional
     public long purgarMensajesDeReservasCerradas(LocalDateTime limite) {
+        return ejecutarPurga(limite);
+    }
+
+    private long ejecutarPurga(LocalDateTime limite) {
         List<ReservaEntity> cerradasAntiguas = reservaRepository.findByEstadoAndFechaCompletadaLessThanEqual(
                 EstadoReserva.COMPLETADA, limite);
 

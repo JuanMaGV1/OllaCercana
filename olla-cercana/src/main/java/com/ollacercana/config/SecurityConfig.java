@@ -45,23 +45,33 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                                                                     
+                        // 1. Autenticación y registro
                         .requestMatchers(HttpMethod.POST, "/api/v1/sesiones", "/api/v1/cuentas").permitAll()
 
-                                                                          
+                        // 2. Documentación Swagger / OpenAPI
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                                                                             
+                        // 3. Catálogo y consultas públicas
                         .requestMatchers(HttpMethod.GET, "/api/v1/platos/cercanos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/platos/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/perfiles/destacadas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/cocineras/mapa").permitAll()
 
-                                                            
+                        // 4. Calificaciones y reputación pública (HU-22)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/cocineras/*/calificaciones/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/cocineras/*/calificaciones/resumen").permitAll()
+
+                        // 5. Medallas e insignias públicas (HU-21)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/*/medallas").permitAll()
+
+                        // 6. Motivos de reporte para formularios (HU-18)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reportes/motivos").permitAll()
+
+                        // El resto de peticiones requiere autenticación por rol
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -76,9 +86,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:8080",
+                "https://*.azurewebsites.net"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

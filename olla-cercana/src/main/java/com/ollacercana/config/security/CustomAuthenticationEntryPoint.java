@@ -31,7 +31,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setCharacterEncoding("UTF-8");
 
         ErrorResponseDTO error = ErrorResponseDTO.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("Unauthorized")
                 .message("No estás autenticado o el token es inválido")

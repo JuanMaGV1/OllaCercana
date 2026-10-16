@@ -6,7 +6,6 @@ import com.ollacercana.persistence.entities.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -37,7 +36,7 @@ class EntityMappersTest {
                 .restricciones(List.of(RestriccionAlimentaria.SIN_GLUTEN))
                 .porcionesTotales(5).porcionesComprometidas(1)
                 .precioPorcion(new BigDecimal("16000")).estado(EstadoPlato.ACTIVO)
-                .fechaPublicacion(LocalDateTime.now()).fechaExpiracion(LocalDateTime.now().plusHours(4))
+                .fechaPublicacion(LocalDateTime.now(java.time.ZoneId.systemDefault())).fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(4))
                 .latitud(4.6).longitud(-74.0).puntoEntrega("portería").version(0).build();
 
         PlatoEntity entity = platoMapper.toEntity(p);
@@ -80,8 +79,8 @@ class EntityMappersTest {
                 .id(UUID.randomUUID()).platoId(UUID.randomUUID()).cocineraId(UUID.randomUUID())
                 .compradorId(2L).cantidadPorciones(2).montoTotal(new BigDecimal("32000"))
                 .medioPago(MedioPago.NEQUI).estado(EstadoReserva.PENDIENTE)
-                .notaComprador("sin cebolla").fechaCreacion(LocalDateTime.now())
-                .fechaLimiteConfirmacion(LocalDateTime.now().plusMinutes(10))
+                .notaComprador("sin cebolla").fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
+                .fechaLimiteConfirmacion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(10))
                 .estadoChat(EstadoChat.INACTIVO).build();
 
         ReservaEntity e = reservaMapper.toEntity(r);
@@ -100,7 +99,7 @@ class EntityMappersTest {
                 .id(UUID.randomUUID()).objetivo(ObjetivoReporte.PLATO)
                 .objetivoId(UUID.randomUUID()).motivo(MotivoReporte.CONTENIDO_INAPROPIADO)
                 .reportanteId(1L).estado(EstadoReporte.ABIERTO)
-                .fechaCreacion(LocalDateTime.now()).build();
+                .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault())).build();
 
         assertEquals(MotivoReporte.CONTENIDO_INAPROPIADO, reporteMapper.toDomain(reporteMapper.toEntity(r)).getMotivo());
         assertNull(reporteMapper.toEntity(null));
@@ -114,9 +113,9 @@ class EntityMappersTest {
                 .id(UUID.randomUUID()).reservaId(UUID.randomUUID()).compradorId(1L)
                 .cocineraId(UUID.randomUUID()).estrellas(5).comentario("ok")
                 .estado(EstadoCalificacion.PUBLICADA)
-                .fechaCreacion(LocalDateTime.now())
-                .fechaPublicacion(LocalDateTime.now())
-                .fechaLimitePublicacion(LocalDateTime.now().plusHours(72)).build();
+                .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
+                .fechaPublicacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
+                .fechaLimitePublicacion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(72)).build();
 
         CalificacionEntity e = calificacionMapper.toEntity(c);
         assertEquals(EstadoCalificacion.PUBLICADA, e.getEstado());

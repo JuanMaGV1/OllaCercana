@@ -103,7 +103,7 @@ public class NotificacionInAppObservador implements ObservadorReserva {
                 .titulo(titulo)
                 .mensaje(mensaje)
                 .leida(false)
-                .fechaCreacion(LocalDateTime.now())
+                .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .build();
     }
 

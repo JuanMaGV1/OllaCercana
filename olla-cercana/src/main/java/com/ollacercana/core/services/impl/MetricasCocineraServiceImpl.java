@@ -16,6 +16,7 @@ import com.ollacercana.persistence.repository.CuentaRepository;
 import com.ollacercana.persistence.repository.PlatoPedidosProjection;
 import com.ollacercana.persistence.repository.PlatoRepository;
 import com.ollacercana.persistence.repository.ReservaRepository;
+import com.ollacercana.core.models.Identidad;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -116,7 +117,7 @@ public class MetricasCocineraServiceImpl implements MetricasCocineraService {
         String comprador = cuentaRepository.findById(reserva.getCompradorId())
                 .map(cuentaMapper::toDomain)
                 .map(Cuenta::getIdentidad)
-                .map(identidad -> identidad.getNombre())
+                .map(Identidad::getNombre)
                 .orElse(COMPRADOR_DESCONOCIDO);
         String plato = platoRepository.findById(reserva.getPlatoId())
                 .map(platoMapper::toDomain)

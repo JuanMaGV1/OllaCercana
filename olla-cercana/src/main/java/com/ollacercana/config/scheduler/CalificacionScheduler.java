@@ -43,7 +43,7 @@ public class CalificacionScheduler {
     public void publicarPendientes() {
         if (!tareasProgramadas) return;
         try {
-            int publicadas = calificacionService.publicarPendientesVencidas(LocalDateTime.now());
+            int publicadas = calificacionService.publicarPendientesVencidas(LocalDateTime.now(java.time.ZoneId.systemDefault()));
             if (publicadas > 0) log.info("Publicadas {} calificaciones por ventana", publicadas);
         } catch (RuntimeException e) {
             log.warn("No se pudo ejecutar la publicación de calificaciones: {}", e.getMessage());

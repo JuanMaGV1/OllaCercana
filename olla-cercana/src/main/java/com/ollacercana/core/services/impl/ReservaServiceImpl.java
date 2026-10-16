@@ -2,7 +2,11 @@ package com.ollacercana.core.services.impl;
 
 import com.ollacercana.controller.dtos.request.DecisionReservaRequestDTO;
 import com.ollacercana.controller.dtos.response.ReservaResponseDTO;
-import com.ollacercana.controller.handlers.exception.*;
+import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
+import com.ollacercana.controller.handlers.exception.ConflictoException;
+import com.ollacercana.controller.handlers.exception.PlatoNoEncontradoException;
+import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
+import com.ollacercana.controller.handlers.exception.ReservaNoEncontradaException;
 import com.ollacercana.controller.mappers.ReservaMapper;
 import com.ollacercana.core.models.EventoReserva;
 import com.ollacercana.core.models.Plato;
@@ -15,8 +19,6 @@ import com.ollacercana.core.patterns.observer.PublicadorEventosPorciones;
 import com.ollacercana.core.patterns.observer.PublicadorEventosReserva;
 import com.ollacercana.core.services.ReservaService;
 import com.ollacercana.core.validators.ReservaValidator;
-import com.ollacercana.core.models.*;
-import com.ollacercana.core.models.enums.*;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.entities.PlatoEntity;
 import com.ollacercana.persistence.entities.ReservaEntity;
@@ -37,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,20 +92,6 @@ public class ReservaServiceImpl implements ReservaService {
         this.reservaMapper = reservaMapper;
     }
 
-    /**
-     * HU-11 · RN-03 · RN-14 · RN-15 · RN-33
-     * Crea una reserva PENDIENTE descontando porciones y calculando monto.
-     *
-     * Flujo:
-     * 1. Carga el plato o lanza 404
-     * 2. Valida con {@link ReservaValidator} (autorreserva, límite pendientes, stock)
-     * 3. Compromete porciones con lock optimista
-     * 4. Persiste y publica evento {@code RESERVA_CREADA}
-     *
-     * @see OC-138 ReservaService.crear() con transacción
-     * @see OC-139 @Transactional y bloqueo optimista
-     * @see OC-133 Entidad EventoReserva (Observer)
-     */
     @Override
     @Transactional
     public Reserva crear(Long compradorId, Reserva reserva) {
@@ -122,7 +111,7 @@ public class ReservaServiceImpl implements ReservaService {
         }
         publicarPorciones(disponiblesAntes, plato);
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         Reserva nueva = Reserva.crear(plato, compradorId, reserva.getCantidadPorciones(),
                 reserva.getMedioPago(), reserva.getNotaComprador(), ahora);
         if (reserva.getId() != null) nueva.setId(reserva.getId());
@@ -135,12 +124,12 @@ public class ReservaServiceImpl implements ReservaService {
                         "monto", dominioGuardado.getMontoTotal()));
 
         if (eventoReservaRepository != null) {
-        try {
-            eventoReservaRepository.save(eventoMapper.toDocument(evento));
-        } catch (Exception e) {
-            log.warn("No se pudo registrar evento en Mongo: {}", e.getMessage());
+            try {
+                eventoReservaRepository.save(eventoMapper.toDocument(evento));
+            } catch (Exception e) {
+                log.warn("No se pudo registrar evento en Mongo: {}", e.getMessage());
+            }
         }
-    }
         if (publicador != null) publicador.publicar(evento);
 
         return dominioGuardado;
@@ -153,7 +142,7 @@ public class ReservaServiceImpl implements ReservaService {
     @Override
     @Transactional(readOnly = true)
     public List<Reserva> listarPendientesDeCocinera(UUID cocineraId) {
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         return reservaRepository
                 .findByCocineraIdAndEstadoOrderByFechaLimiteConfirmacionAsc(cocineraId, EstadoReserva.PENDIENTE)
                 .stream()
@@ -191,7 +180,7 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional(readOnly = true)
     public List<UUID> buscarReservasVencidas() {
         return reservaRepository
-                .findByEstadoAndFechaLimiteConfirmacionLessThanEqual(EstadoReserva.PENDIENTE, LocalDateTime.now())
+                .findByEstadoAndFechaLimiteConfirmacionLessThanEqual(EstadoReserva.PENDIENTE, LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .stream().map(ReservaEntity::getId).toList();
     }
 
@@ -199,7 +188,7 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional
     public Reserva expirar(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         if (!reserva.estaPendiente() || !reserva.estaVencida(ahora)) return reserva;
 
         reserva.expirar(ahora);
@@ -215,7 +204,7 @@ public class ReservaServiceImpl implements ReservaService {
     @Override
     @Transactional(readOnly = true)
     public List<UUID> buscarReservasParaRecordatorio() {
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         return reservaRepository
                 .findPendientesParaRecordatorio(
                         EstadoReserva.PENDIENTE,
@@ -228,27 +217,23 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional
     public void enviarRecordatorio(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         if (!reserva.requiereRecordatorio(ahora)) return;
 
         reserva.marcarRecordatorioEnviado();
         ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
         Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
-        long minutos = Math.max(1, Duration.between(ahora, reserva.getFechaLimiteConfirmacion()).toMinutes());
+        long minutos = Math.max(1, Duration.between(
+                ahora.atZone(ZoneId.systemDefault()),
+                reserva.getFechaLimiteConfirmacion().atZone(ZoneId.systemDefault())
+        ).toMinutes());
+
         if (publicador != null)
             publicador.publicar(EventoReserva.de(TipoEvento.RECORDATORIO_RESERVA, dominio,
                     Map.of("minutosRestantes", minutos)));
     }
 
-    /**
-     * HU-23 · RN-32 · RN-17
-     * Cierra la transacción y habilita la calificación.
-     *
-     * @see OC-156 ReservaService.completar()
-     * @see OC-158 Bloqueo si existe Reporte ABIERTO
-     * @see OC-159 Cambio de estado del chat a SOLO_LECTURA
-     */
     @Override
     @Transactional
     public Reserva completar(UUID reservaId, String comentario) {
@@ -261,7 +246,7 @@ public class ReservaServiceImpl implements ReservaService {
     @Override
     @Transactional(readOnly = true)
     public List<UUID> buscarReservasParaCierreAutomatico() {
-        LocalDateTime limite = LocalDateTime.now().minusHours(Reserva.HORAS_PARA_CIERRE_AUTOMATICO);
+        LocalDateTime limite = LocalDateTime.now(java.time.ZoneId.systemDefault()).minusHours(Reserva.HORAS_PARA_CIERRE_AUTOMATICO);
         return reservaRepository.findByEstadoAndFechaDecisionLessThanEqual(EstadoReserva.CONFIRMADA, limite)
                 .stream().map(ReservaEntity::getId).toList();
     }
@@ -270,13 +255,13 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional
     public Reserva completarAutomaticamente(UUID reservaId) {
         Reserva reserva = buscar(reservaId);
-        if (!reserva.cierreAutomaticoVencido(LocalDateTime.now())) return reserva;
+        if (!reserva.cierreAutomaticoVencido(LocalDateTime.now(java.time.ZoneId.systemDefault()))) return reserva;
         if (tieneReporteAbierto(reserva)) return reserva;
         return cerrar(reserva, null, true);
     }
 
     private Reserva cerrar(Reserva reserva, String comentario, boolean automatica) {
-        reserva.completar(comentario, LocalDateTime.now());
+        reserva.completar(comentario, LocalDateTime.now(java.time.ZoneId.systemDefault()));
         ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
         Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
@@ -298,7 +283,7 @@ public class ReservaServiceImpl implements ReservaService {
     }
 
     private Reserva confirmar(Reserva reserva, LocalDateTime horaEstimada) {
-        reserva.confirmar(horaEstimada, LocalDateTime.now());
+        reserva.confirmar(horaEstimada, LocalDateTime.now(java.time.ZoneId.systemDefault()));
         ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
         Reserva dominio = reservaEntityMapper.toDomain(guardada);
 
@@ -309,7 +294,7 @@ public class ReservaServiceImpl implements ReservaService {
     }
 
     private Reserva rechazar(Reserva reserva, MotivoRechazo motivo, String comentario) {
-        reserva.rechazar(motivo, comentario, LocalDateTime.now());
+        reserva.rechazar(motivo, comentario, LocalDateTime.now(java.time.ZoneId.systemDefault()));
         liberarPorciones(reserva);
         ReservaEntity guardada = reservaRepository.save(reservaEntityMapper.toEntity(reserva));
         Reserva dominio = reservaEntityMapper.toDomain(guardada);

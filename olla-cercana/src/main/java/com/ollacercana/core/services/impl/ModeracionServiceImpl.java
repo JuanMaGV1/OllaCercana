@@ -3,12 +3,33 @@ package com.ollacercana.core.services.impl;
 import com.ollacercana.controller.dtos.request.EjecutarDecisionDTO;
 import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.controller.handlers.exception.ResourceNotFoundException;
-import com.ollacercana.core.models.*;
-import com.ollacercana.core.models.enums.*;
+import com.ollacercana.core.models.DecisionModeracion;
+import com.ollacercana.core.models.Notificacion;
+import com.ollacercana.core.models.PerfilCocinera;
+import com.ollacercana.core.models.Reporte;
+import com.ollacercana.core.models.enums.EstadoCuenta;
+import com.ollacercana.core.models.enums.EstadoPlato;
+import com.ollacercana.core.models.enums.EstadoReporte;
+import com.ollacercana.core.models.enums.ObjetivoReporte;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.models.enums.TipoDecision;
+import com.ollacercana.core.models.enums.TipoNotificacion;
 import com.ollacercana.core.services.IModeracionService;
-import com.ollacercana.persistence.entities.*;
-import com.ollacercana.persistence.mappers.*;
-import com.ollacercana.persistence.repository.*;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
+import com.ollacercana.persistence.entities.PlatoEntity;
+import com.ollacercana.persistence.entities.ReporteEntity;
+import com.ollacercana.persistence.mappers.CuentaEntityMapper;
+import com.ollacercana.persistence.mappers.DecisionModeracionEntityMapper;
+import com.ollacercana.persistence.mappers.NotificacionDocumentMapper;
+import com.ollacercana.persistence.mappers.PerfilCocineraDomainMapper;
+import com.ollacercana.persistence.mappers.PlatoEntityMapper;
+import com.ollacercana.persistence.mappers.ReporteEntityMapper;
+import com.ollacercana.persistence.repository.CuentaRepository;
+import com.ollacercana.persistence.repository.DecisionModeracionRepository;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.repository.PlatoRepository;
+import com.ollacercana.persistence.repository.ReporteRepository;
 import com.ollacercana.persistence.repository.mongo.NotificacionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,25 +39,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * HU-19 — Panel de moderación para ADMIN.
- *
- * Reglas de negocio:
- * RN-22 — Ocultamiento preventivo tras 3 reportantes distintos
- * RN-23 — Toda decisión queda auditada con justificación
- * RN-09 — Reactivación de perfiles pausados por baja reputación
- *
- * @see OC-228 Entidad DecisionModeracion
- * @see OC-229 ModeracionService.resolver()
- * @see OC-230 Reactivación de perfiles pausados
- * @see OC-234 Notificación a los afectados por decisiones
- * @see OC-237 Endpoints admin de moderación
- * @see OC-238 Seeder de cuenta ADMIN
- * @see OC-239 Pruebas unitarias de moderación
- */
 @Service
 @RequiredArgsConstructor
 public class ModeracionServiceImpl implements IModeracionService {
@@ -69,12 +75,14 @@ public class ModeracionServiceImpl implements IModeracionService {
         return new PageImpl<>(dominios, pageable, pagina.getTotalElements());
     }
 
+    @Override
     public Reporte obtenerDetalle(UUID reporteId) {
         return reporteRepository.findById(reporteId)
                 .map(reporteMapper::toDomain)
                 .orElseThrow(() -> new ResourceNotFoundException("Reporte", reporteId));
     }
 
+    @Override
     @Transactional
     public void resolver(UUID reporteId, EjecutarDecisionDTO dto, Long administradorId) {
         Reporte reporte = obtenerDetalle(reporteId);
@@ -84,7 +92,7 @@ public class ModeracionServiceImpl implements IModeracionService {
                 .decision(dto.getDecision())
                 .justificacion(dto.getJustificacion())
                 .administradorId(administradorId)
-                .fecha(LocalDateTime.now())
+                .fecha(LocalDateTime.now(ZoneId.systemDefault()))
                 .build();
         decisionRepository.save(decisionMapper.toEntity(decision));
 
@@ -98,28 +106,31 @@ public class ModeracionServiceImpl implements IModeracionService {
 
     private void aplicarDecision(Reporte reporte, TipoDecision decision) {
         if (reporte.getObjetivo() == ObjetivoReporte.PLATO) {
-            PlatoEntity platoEntity = platoRepository.findById(reporte.getObjetivoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Plato", reporte.getObjetivoId()));
-
-            if (decision == TipoDecision.INHABILITAR_PUBLICACION) {
-                platoEntity.setEstado(EstadoPlato.OCULTO);
-                platoRepository.save(platoEntity);
-            } else if (decision == TipoDecision.RESTAURAR_PUBLICACION) {
-                int disponibles = (platoEntity.getPorcionesTotales() == null ? 0 : platoEntity.getPorcionesTotales()) - (platoEntity.getPorcionesComprometidas() == null ? 0 : platoEntity.getPorcionesComprometidas());
-                if (disponibles > 0) {
-                    platoEntity.setEstado(EstadoPlato.ACTIVO);
-                } else {
-                    platoEntity.setEstado(EstadoPlato.AGOTADO);
-                }
-                platoRepository.save(platoEntity);
-            }
-        } else if (reporte.getObjetivo() == ObjetivoReporte.CUENTA) {
-            if (decision == TipoDecision.SUSPENDER_CUENTA) {
-                CuentaEntity cuentaEntity = obtenerCuentaObjetivoEntity(reporte);
-                cuentaEntity.setEstado(EstadoCuenta.SUSPENDIDO);
-                cuentaRepository.save(cuentaEntity);
-            }
+            aplicarDecisionPlato(reporte, decision);
+        } else if (reporte.getObjetivo() == ObjetivoReporte.CUENTA && decision == TipoDecision.SUSPENDER_CUENTA) {
+            aplicarDecisionCuenta(reporte);
         }
+    }
+
+    private void aplicarDecisionPlato(Reporte reporte, TipoDecision decision) {
+        PlatoEntity platoEntity = platoRepository.findById(reporte.getObjetivoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Plato", reporte.getObjetivoId()));
+
+        if (decision == TipoDecision.INHABILITAR_PUBLICACION) {
+            platoEntity.setEstado(EstadoPlato.OCULTO);
+            platoRepository.save(platoEntity);
+        } else if (decision == TipoDecision.RESTAURAR_PUBLICACION) {
+            int totales = platoEntity.getPorcionesTotales() == null ? 0 : platoEntity.getPorcionesTotales();
+            int comprometidas = platoEntity.getPorcionesComprometidas() == null ? 0 : platoEntity.getPorcionesComprometidas();
+            platoEntity.setEstado((totales - comprometidas > 0) ? EstadoPlato.ACTIVO : EstadoPlato.AGOTADO);
+            platoRepository.save(platoEntity);
+        }
+    }
+
+    private void aplicarDecisionCuenta(Reporte reporte) {
+        CuentaEntity cuentaEntity = obtenerCuentaObjetivoEntity(reporte);
+        cuentaEntity.setEstado(EstadoCuenta.SUSPENDIDO);
+        cuentaRepository.save(cuentaEntity);
     }
 
     private void enviarNotificacionDecision(Reporte reporte, EjecutarDecisionDTO dto) {
@@ -153,31 +164,33 @@ public class ModeracionServiceImpl implements IModeracionService {
                 .compradorId(compradorId)
                 .cocineraId(cocineraId)
                 .rolDestinatario(rolDestinatario)
-                .fechaCreacion(LocalDateTime.now())
+                .fechaCreacion(LocalDateTime.now(ZoneId.systemDefault()))
                 .leida(false)
                 .build();
         notificacionRepository.save(notificacionMapper.toDocument(notif));
     }
 
     private CuentaEntity obtenerCuentaObjetivoEntity(Reporte reporte) {
-    if (reporte.getCuentaObjetivoId() != null) {
-        return cuentaRepository.findById(reporte.getCuentaObjetivoId())   // Long → Long ✅
-                .orElseThrow(() -> new ResourceNotFoundException("Cuenta", reporte.getCuentaObjetivoId()));
+        if (reporte.getCuentaObjetivoId() != null) {
+            return cuentaRepository.findById(reporte.getCuentaObjetivoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cuenta", reporte.getCuentaObjetivoId()));
+        }
+        PerfilCocineraEntity perfil = perfilRepository.findById(reporte.getObjetivoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil", reporte.getObjetivoId()));
+        if (perfil.getCuenta() == null) {
+            throw new ResourceNotFoundException("Cuenta", reporte.getObjetivoId());
+        }
+        return perfil.getCuenta();
     }
-    PerfilCocineraEntity perfil = perfilRepository.findById(reporte.getObjetivoId())  // UUID → UUID ✅
-            .orElseThrow(() -> new ResourceNotFoundException("Perfil", reporte.getObjetivoId()));
-    if (perfil.getCuenta() == null) {
-        throw new ResourceNotFoundException("Cuenta", reporte.getObjetivoId());
-    }
-    return perfil.getCuenta();
-}
 
+    @Override
     public List<PerfilCocinera> listarPerfilesPausados() {
         return perfilRepository.findByPausadaTrue().stream()
                 .map(perfilDomainMapper::toDomain)
                 .toList();
     }
 
+    @Override
     @Transactional
     public void reactivarPerfil(UUID cocineraId, String justificacion, Long administradorId) {
         PerfilCocineraEntity perfil = perfilRepository.findById(cocineraId)
@@ -188,14 +201,14 @@ public class ModeracionServiceImpl implements IModeracionService {
         }
 
         perfil.setPausada(false);
-        perfil.setFechaReactivacion(LocalDateTime.now());
+        perfil.setFechaReactivacion(LocalDateTime.now(ZoneId.systemDefault()));
         perfilRepository.save(perfil);
 
         DecisionModeracion decision = DecisionModeracion.builder()
                 .decision(TipoDecision.REACTIVAR_PERFIL)
                 .justificacion(justificacion)
                 .administradorId(administradorId)
-                .fecha(LocalDateTime.now())
+                .fecha(LocalDateTime.now(ZoneId.systemDefault()))
                 .build();
         decisionRepository.save(decisionMapper.toEntity(decision));
 
@@ -205,7 +218,7 @@ public class ModeracionServiceImpl implements IModeracionService {
                 .mensaje("Tu perfil ha sido reactivado. Razón: " + justificacion)
                 .cocineraId(cocineraId)
                 .rolDestinatario(Rol.COCINERA)
-                .fechaCreacion(LocalDateTime.now())
+                .fechaCreacion(LocalDateTime.now(ZoneId.systemDefault()))
                 .leida(false)
                 .build();
         notificacionRepository.save(notificacionMapper.toDocument(notif));

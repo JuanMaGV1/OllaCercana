@@ -47,7 +47,7 @@ public class CuentaEntity {
 
     @PrePersist
     protected void onCreate() {
-        if (this.fechaRegistro == null) this.fechaRegistro = LocalDateTime.now();
+        if (this.fechaRegistro == null) this.fechaRegistro = LocalDateTime.now(java.time.ZoneId.systemDefault());
         if (this.estado == null) this.estado = EstadoCuenta.ACTIVO;
         if (this.avisosActivos == null) this.avisosActivos = true;
         if (this.credenciales != null && this.credenciales.getCelularVerificado() == null) {

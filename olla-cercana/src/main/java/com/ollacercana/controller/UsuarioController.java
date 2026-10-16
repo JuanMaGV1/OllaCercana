@@ -24,6 +24,6 @@ public class UsuarioController implements UsuarioApi {
     @Override
     @GetMapping("/{id}/medallas")
     public ResponseEntity<List<MedallaUsuarioResponseDTO>> listarMedallas(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(medallaService.listarVigentes(id, LocalDateTime.now()));
+        return ResponseEntity.ok(medallaService.listarVigentes(id, LocalDateTime.now(java.time.ZoneId.systemDefault())));
     }
 }

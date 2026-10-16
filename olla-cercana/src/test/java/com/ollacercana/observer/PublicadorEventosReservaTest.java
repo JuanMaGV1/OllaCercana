@@ -24,7 +24,7 @@ class PublicadorEventosReservaTest {
                 UUID.randomUUID(),
                 1L,
                 UUID.randomUUID(),
-                LocalDateTime.now(),
+                LocalDateTime.now(java.time.ZoneId.systemDefault()),
                 Map.of());
     }
 

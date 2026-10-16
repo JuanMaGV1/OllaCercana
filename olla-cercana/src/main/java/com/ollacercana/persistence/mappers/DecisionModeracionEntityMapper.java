@@ -1,7 +1,6 @@
 package com.ollacercana.persistence.mappers;
 
 import com.ollacercana.core.models.DecisionModeracion;
-import com.ollacercana.core.models.Reporte;
 import com.ollacercana.persistence.entities.DecisionModeracionEntity;
 import org.springframework.stereotype.Component;
 

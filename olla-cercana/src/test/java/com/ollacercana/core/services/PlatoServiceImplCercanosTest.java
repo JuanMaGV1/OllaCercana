@@ -76,7 +76,7 @@ class PlatoServiceImplCercanosTest {
                 .porcionesTotales(5).porcionesComprometidas(0)
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(EstadoPlato.ACTIVO).tipoComida(tipo)
-                .fechaExpiracion(LocalDateTime.now().plusHours(3))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(3))
                 .build();
     }
 
@@ -88,7 +88,7 @@ class PlatoServiceImplCercanosTest {
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(EstadoPlato.ACTIVO).tipoComida(tipo)
                 .cocineraId(UUID.randomUUID())
-                .fechaExpiracion(LocalDateTime.now().plusHours(3))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(3))
                 .puntoEntrega("Torres del Parque")
                 .restricciones(restricciones)
                 .build();
@@ -309,7 +309,10 @@ class PlatoServiceImplCercanosTest {
             ConsultaPlatosRequest req = request();
             req.setRadioMetros(null);
 
-            service.consultarCercanos(req);
+            var resultado = service.consultarCercanos(req);
+            assertNotNull(resultado);
+            verify(platoRepository).buscarCercanosConDistancia(
+                    any(), any(), eq(2000), any(), any(), any(Pageable.class));
         }
 
         @Test
@@ -322,7 +325,10 @@ class PlatoServiceImplCercanosTest {
             ConsultaPlatosRequest req = request();
             req.setRadioMetros(100);
 
-            service.consultarCercanos(req);
+            var resultado = service.consultarCercanos(req);
+            assertNotNull(resultado);
+            verify(platoRepository).buscarCercanosConDistancia(
+                    any(), any(), eq(500), any(), any(), any(Pageable.class));
         }
 
         @Test
@@ -335,7 +341,10 @@ class PlatoServiceImplCercanosTest {
             ConsultaPlatosRequest req = request();
             req.setRadioMetros(50000);
 
-            service.consultarCercanos(req);
+            var resultado = service.consultarCercanos(req);
+            assertNotNull(resultado);
+            verify(platoRepository).buscarCercanosConDistancia(
+                    any(), any(), eq(2000), any(), any(), any(Pageable.class));
         }
     }
 }

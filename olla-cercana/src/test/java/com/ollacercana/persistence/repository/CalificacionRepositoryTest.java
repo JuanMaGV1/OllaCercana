@@ -30,7 +30,7 @@ class CalificacionRepositoryTest {
     }
 
     private CalificacionEntity crear(UUID reservaId, int estrellas, Long compradorId) {
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         return repo.save(CalificacionEntity.builder()
                 .reservaId(reservaId)
                 .compradorId(compradorId)

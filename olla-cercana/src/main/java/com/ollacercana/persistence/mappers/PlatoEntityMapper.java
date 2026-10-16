@@ -5,7 +5,6 @@ import com.ollacercana.persistence.entities.PlatoEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Mapper de persistencia — Dominio ↔ PlatoEntity (JPA).
@@ -69,6 +68,6 @@ public class PlatoEntityMapper {
 
     public List<Plato> toDomainList(List<PlatoEntity> entities) {
         if (entities == null) return List.of();
-        return entities.stream().map(this::toDomain).collect(Collectors.toList());
+        return entities.stream().map(this::toDomain).toList();
     }
 }

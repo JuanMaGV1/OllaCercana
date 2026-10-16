@@ -2,7 +2,6 @@ package com.ollacercana.controller.dtos.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.controller.dtos.response.PorcionesActualizadasResponseDTO;
 import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.models.enums.EstadoPorciones;

@@ -40,7 +40,7 @@ public class EventoReserva {
         this.platoId = platoId;
         this.compradorId = compradorId;
         this.cocineraId = cocineraId;
-        this.timestamp = (timestamp != null) ? timestamp : LocalDateTime.now();
+        this.timestamp = (timestamp != null) ? timestamp : LocalDateTime.now(java.time.ZoneId.systemDefault());
         this.payload = (payload != null) ? payload : Map.of();
     }
 
@@ -52,7 +52,7 @@ public class EventoReserva {
                 .platoId(reserva.getPlatoId())
                 .compradorId(reserva.getCompradorId())
                 .cocineraId(reserva.getCocineraId())
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .payload(payload)
                 .build();
     }

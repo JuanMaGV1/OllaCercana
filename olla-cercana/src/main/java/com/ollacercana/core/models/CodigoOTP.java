@@ -19,6 +19,6 @@ public class CodigoOTP {
     private boolean usado;
 
     public boolean esValido(String codigoIngresado) {
-        return !usado && this.codigo.equals(codigoIngresado) && LocalDateTime.now().isBefore(fechaExpiracion);
+        return !usado && this.codigo.equals(codigoIngresado) && LocalDateTime.now(java.time.ZoneId.systemDefault()).isBefore(fechaExpiracion);
     }
 }

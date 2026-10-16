@@ -7,7 +7,6 @@ import com.ollacercana.core.models.EventoReserva;
 import com.ollacercana.core.models.Reserva;
 import com.ollacercana.core.models.enums.TipoEvento;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;

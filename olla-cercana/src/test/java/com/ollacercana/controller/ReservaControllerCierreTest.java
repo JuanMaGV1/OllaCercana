@@ -1,7 +1,6 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.core.models.*;
 import com.ollacercana.core.models.enums.*;
 import com.ollacercana.controller.dtos.request.*;
 import com.ollacercana.persistence.entities.PlatoEntity;
@@ -71,8 +70,8 @@ class ReservaControllerCierreTest {
                 .porcionesComprometidas(2)
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(EstadoPlato.ACTIVO)
-                .fechaPublicacion(LocalDateTime.now().minusMinutes(20))
-                .fechaExpiracion(LocalDateTime.now().plusHours(3))
+                .fechaPublicacion(LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(20))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(3))
                 .puntoEntrega("Portería Torre 1")
                 .latitud(4.6789)
                 .longitud(-74.0567)
@@ -81,7 +80,7 @@ class ReservaControllerCierreTest {
 
         lenient().when(usuarioActual.getCocineraId()).thenReturn(plato.getCocineraId());
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         reserva = reservaRepository.save(ReservaEntity.builder()
                 .id(UUID.randomUUID())
                 .platoId(plato.getId())
@@ -153,7 +152,7 @@ class ReservaControllerCierreTest {
         .motivo(MotivoReporte.CONTENIDO_INAPROPIADO)
         .reportanteId(1L)
         .estado(EstadoReporte.ABIERTO)
-        .fechaCreacion(LocalDateTime.now())
+        .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
         .build());
 
         completar(reserva.getId(), cierreValido())
@@ -176,7 +175,7 @@ class ReservaControllerCierreTest {
         .motivo(MotivoReporte.CONTENIDO_INAPROPIADO)
         .reportanteId(1L)
         .estado(EstadoReporte.RESUELTO)
-        .fechaCreacion(LocalDateTime.now())
+        .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
         .build());
 
         completar(reserva.getId(), cierreValido())

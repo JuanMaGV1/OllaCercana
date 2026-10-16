@@ -28,7 +28,7 @@ public class MedallaObservador implements ObservadorReserva {
             return;
         }
         try {
-            medallaService.evaluarVecinoFiel(evento.compradorId(), evento.cocineraId(), LocalDateTime.now());
+            medallaService.evaluarVecinoFiel(evento.compradorId(), evento.cocineraId(), LocalDateTime.now(java.time.ZoneId.systemDefault()));
         } catch (RuntimeException e) {
             log.warn("No se pudo evaluar la insignia Vecino Fiel de la reserva {}: {}",
                     evento.reservaId(), e.getMessage());

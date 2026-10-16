@@ -59,7 +59,7 @@ public class PerfilCocineraServiceImpl implements IPerfilCocineraService {
         CodigoOTPEntity otp = CodigoOTPEntity.builder()
                 .perfilId(guardado.getId())
                 .codigo(codigo)
-                .fechaExpiracion(LocalDateTime.now().plusMinutes(10))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(10))
                 .usado(false)
                 .build();
         codigoOTPRepository.save(otp);

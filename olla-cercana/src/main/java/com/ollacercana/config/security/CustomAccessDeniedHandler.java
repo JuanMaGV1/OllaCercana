@@ -36,7 +36,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                 "No tienes permisos suficientes para realizar esta acción";
 
         ErrorResponseDTO error = ErrorResponseDTO.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("Forbidden")
                 .message(message)

@@ -16,20 +16,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
-/**
- * Servicio de generación y validación de JWT.
- *
- * FEAT-12 — Seguridad JWT y roles — OC-169
- * Claims emitidos: {@code correo}, {@code roles}, {@code cuentaId}, {@code cocineraId}
- * Algoritmo: HS256 (HMAC-SHA256), secret en {@code application.yml} Base64.
- *
- * @see OC-170 Dependencias y configuración JWT
- * @see OC-174 Implementación real de JwtService
- * @see OC-182 Integración con SesionController
- * @see OC-188 Pruebas unitarias de seguridad
- */
 @Slf4j
 @Service
 public class JwtService {
@@ -64,22 +51,19 @@ public class JwtService {
         claims.put("correo", correo);
 
         List<String> roles = (cuenta.getRoles() != null)
-                ? cuenta.getRoles().stream().map(Rol::name).collect(Collectors.toList())
+                ? cuenta.getRoles().stream().map(Rol::name).toList()
                 : Collections.emptyList();
         claims.put("roles", roles);
 
         if (cuenta.getId() != null) {
             claims.put("cuentaId", cuenta.getId());
             perfilCocineraRepository.findByCuentaId(cuenta.getId())
-            .ifPresent(perfilEntity -> claims.put("cocineraId", perfilEntity.getId().toString()));
+                    .ifPresent(perfilEntity -> claims.put("cocineraId", perfilEntity.getId().toString()));
         }
 
         Date ahora = new Date();
         Date fechaExpiracion = new Date(ahora.getTime() + expirationMs);
-
-        String subject = (cuenta.getId() != null)
-                ? cuenta.getId().toString()
-                : (correo != null ? correo : "usuario");
+        String subject = resolverSubject(cuenta, correo);
 
         return Jwts.builder()
                 .claims(claims)
@@ -88,6 +72,16 @@ public class JwtService {
                 .expiration(fechaExpiracion)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    private String resolverSubject(Cuenta cuenta, String correo) {
+        if (cuenta.getId() != null) {
+            return cuenta.getId().toString();
+        }
+        if (correo != null) {
+            return correo;
+        }
+        return "usuario";
     }
 
     public boolean validarToken(String token) {

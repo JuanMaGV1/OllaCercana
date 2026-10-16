@@ -31,7 +31,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -85,15 +84,15 @@ class MedallaServiceImplTest {
 
         MedallaUsuario domain = MedallaUsuario.builder()
                 .usuarioId(compradorId).medalla(medalla(CodigoMedalla.VECINO_FIEL))
-                .fechaOtorgada(LocalDateTime.now()).build();
+                .fechaOtorgada(LocalDateTime.now(java.time.ZoneId.systemDefault())).build();
         MedallaUsuarioEntity entity = MedallaUsuarioEntity.builder()
-                .usuarioId(compradorId).medalla(me).fechaOtorgada(LocalDateTime.now()).build();
+                .usuarioId(compradorId).medalla(me).fechaOtorgada(LocalDateTime.now(java.time.ZoneId.systemDefault())).build();
 
         when(medallaUsuarioMapper.toEntity(any(MedallaUsuario.class))).thenReturn(entity);
         when(medallaUsuarioRepository.save(entity)).thenReturn(entity);
         when(medallaUsuarioMapper.toDomain(entity)).thenReturn(domain);
 
-        Optional<MedallaUsuario> resultado = service.evaluarVecinoFiel(compradorId, cocineraId, LocalDateTime.now());
+        Optional<MedallaUsuario> resultado = service.evaluarVecinoFiel(compradorId, cocineraId, LocalDateTime.now(java.time.ZoneId.systemDefault()));
 
         assertTrue(resultado.isPresent());
         assertEquals(compradorId, resultado.get().getUsuarioId());
@@ -106,7 +105,7 @@ class MedallaServiceImplTest {
         when(medallaUsuarioRepository.existsByUsuarioIdAndMedallaCodigo(1L, CodigoMedalla.VECINO_FIEL))
                 .thenReturn(true);
 
-        assertTrue(service.evaluarVecinoFiel(1L, UUID.randomUUID(), LocalDateTime.now()).isEmpty());
+        assertTrue(service.evaluarVecinoFiel(1L, UUID.randomUUID(), LocalDateTime.now(java.time.ZoneId.systemDefault())).isEmpty());
         verify(reservaRepository, never()).contarCompletadasEnPeriodo(any(), any(), any(), any(), any());
     }
 
@@ -118,7 +117,7 @@ class MedallaServiceImplTest {
         when(reservaRepository.contarCompletadasEnPeriodo(any(), any(), any(), any(), any()))
                 .thenReturn(2L);
 
-        assertTrue(service.evaluarVecinoFiel(1L, UUID.randomUUID(), LocalDateTime.now()).isEmpty());
+        assertTrue(service.evaluarVecinoFiel(1L, UUID.randomUUID(), LocalDateTime.now(java.time.ZoneId.systemDefault())).isEmpty());
     }
 
     // ============ calcularBalanceSemanal ============
@@ -150,7 +149,7 @@ class MedallaServiceImplTest {
         when(medallaUsuarioRepository.save(any(MedallaUsuarioEntity.class)))
                 .thenReturn(MedallaUsuarioEntity.builder().build());
 
-        List<String> premiados = service.calcularBalanceSemanal(LocalDateTime.now());
+        List<String> premiados = service.calcularBalanceSemanal(LocalDateTime.now(java.time.ZoneId.systemDefault()));
 
         assertEquals(List.of("Torres del Sol"), premiados);
     }
@@ -163,7 +162,7 @@ class MedallaServiceImplTest {
         when(proj.getVendidas()).thenReturn(5L);
         when(platoRepository.balancePorConjunto(any(), any())).thenReturn(List.of(proj));
 
-        assertTrue(service.calcularBalanceSemanal(LocalDateTime.now()).isEmpty());
+        assertTrue(service.calcularBalanceSemanal(LocalDateTime.now(java.time.ZoneId.systemDefault())).isEmpty());
         }
     // ============ listarVigentes ============
 
@@ -175,10 +174,10 @@ class MedallaServiceImplTest {
         MedallaEntity me = medallaEntity(CodigoMedalla.VECINO_FIEL);
         MedallaUsuarioEntity entity = MedallaUsuarioEntity.builder()
                 .usuarioId(1L).medalla(me)
-                .fechaOtorgada(LocalDateTime.now()).build();
+                .fechaOtorgada(LocalDateTime.now(java.time.ZoneId.systemDefault())).build();
         when(medallaUsuarioRepository.findVigentes(eq(1L), any())).thenReturn(List.of(entity));
 
-        var result = service.listarVigentes(1L, LocalDateTime.now());
+        var result = service.listarVigentes(1L, LocalDateTime.now(java.time.ZoneId.systemDefault()));
 
         assertEquals(1, result.size());
         assertEquals("VECINO_FIEL", result.get(0).getCodigo());

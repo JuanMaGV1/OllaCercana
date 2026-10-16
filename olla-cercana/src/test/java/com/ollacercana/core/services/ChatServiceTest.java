@@ -170,12 +170,12 @@ class ChatServiceTest {
     @DisplayName("OC-264: Polling con cursor retorna sólo mensajes posteriores a la fecha dada")
     void listar_ConCursor_RetornaMensajesPosteriores() {
         // Arrange
-        LocalDateTime cursor = LocalDateTime.now().minusMinutes(5);
+        LocalDateTime cursor = LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(5);
         MensajeChatDocument mensaje = MensajeChatDocument.builder()
                 .id("doc-1")
                 .reservaId(reservaId)
                 .texto("Mensaje nuevo")
-                .fecha(LocalDateTime.now())
+                .fecha(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .autorRol(Rol.COCINERA)
                 .autorId(cocineraId.toString())
                 .build();
@@ -197,7 +197,7 @@ class ChatServiceTest {
     @DisplayName("OC-264: Polling con cursor retorna lista vacía si no hay mensajes nuevos")
     void listar_ConCursor_RetornaListaVaciaSiNoHay() {
         // Arrange
-        LocalDateTime cursor = LocalDateTime.now().minusMinutes(1);
+        LocalDateTime cursor = LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(1);
         when(usuarioActual.getCuentaId()).thenReturn(compradorId);
         when(usuarioActual.getCocineraIdOpt()).thenReturn(Optional.empty());
         when(mensajeChatRepository.findByReservaIdAndFechaAfterOrderByFechaAsc(reservaId, cursor))
@@ -226,7 +226,7 @@ class ChatServiceTest {
                 .id("doc-hist")
                 .reservaId(reservaId)
                 .texto("Mensaje histórico de la entrega")
-                .fecha(LocalDateTime.now().minusHours(2))
+                .fecha(LocalDateTime.now(java.time.ZoneId.systemDefault()).minusHours(2))
                 .autorRol(Rol.COCINERA)
                 .autorId(cocineraId.toString())
                 .build();
@@ -303,7 +303,7 @@ class ChatServiceTest {
         ReservaEntity reservaVieja = ReservaEntity.builder()
                 .id(reservaCerradaViejaId)
                 .estado(EstadoReserva.COMPLETADA)
-                .fechaCompletada(LocalDateTime.now().minusDays(31))
+                .fechaCompletada(LocalDateTime.now(java.time.ZoneId.systemDefault()).minusDays(31))
                 .build();
 
         when(reservaRepository.findByEstadoAndFechaCompletadaLessThanEqual(eq(EstadoReserva.COMPLETADA), any(LocalDateTime.class)))

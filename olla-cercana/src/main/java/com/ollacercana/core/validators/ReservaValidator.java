@@ -9,7 +9,6 @@ import com.ollacercana.core.models.Plato;
 import com.ollacercana.core.models.enums.EstadoPlato;
 import com.ollacercana.core.models.enums.EstadoReserva;
 import com.ollacercana.core.models.enums.MedioPago;
-import com.ollacercana.controller.handlers.exception.MedioPagoNoAceptadoException;
 import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.ReservaRepository;

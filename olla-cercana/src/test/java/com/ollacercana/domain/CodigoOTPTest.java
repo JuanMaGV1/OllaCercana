@@ -18,7 +18,7 @@ class CodigoOTPTest {
         CodigoOTP otp = CodigoOTP.builder()
                 .perfilId(UUID.randomUUID())
                 .codigo("123456")
-                .fechaExpiracion(LocalDateTime.now().plusMinutes(5))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(5))
                 .usado(false)
                 .build();
 
@@ -34,7 +34,7 @@ class CodigoOTPTest {
         otp.setUsado(false);
 
                    
-        otp.setFechaExpiracion(LocalDateTime.now().minusMinutes(1));
+        otp.setFechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(1));
         assertFalse(otp.esValido("123456"));
     }
 }

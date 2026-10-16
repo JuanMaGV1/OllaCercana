@@ -2,7 +2,6 @@ package com.ollacercana.core.services.impl;
 
 import com.ollacercana.controller.dtos.request.ReporteCrearDTO;
 import com.ollacercana.controller.dtos.response.ReporteDTO;
-import com.ollacercana.controller.handlers.exception.ReglaDeNegocioException;
 import com.ollacercana.controller.mappers.ReporteMapper;
 import com.ollacercana.core.models.Reporte;
 import com.ollacercana.core.models.enums.EstadoReporte;
@@ -42,7 +41,7 @@ public class ReporteServiceImpl implements IReporteService {
                 .reportanteId(reportanteId)
                 .reservaId(dto.getReservaId())
                 .estado(EstadoReporte.ABIERTO)
-                .fechaCreacion(LocalDateTime.now())
+                .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .build();
 
         ReporteEntity guardado = reporteRepository.save(reporteEntityMapper.toEntity(reporte));

@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * HU-18 / OC-034: implementación del módulo de reportes.
@@ -39,7 +38,7 @@ public class ReporteController implements ReporteApi {
     public ResponseEntity<List<String>> obtenerMotivos() {
         List<String> motivos = Arrays.stream(MotivoReporte.values())
                 .map(Enum::name)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(motivos);
     }
 }

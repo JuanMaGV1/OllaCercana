@@ -20,21 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Filtro JWT — intercepta cada petición antes de llegar al Controller.
- *
- * Extrae {@code Bearer <token>}, valida firma y expiración, carga
- * {@link UserDetails} y setea el {@code SecurityContext}.
- *
- * Si el token falta o es inválido, la petición sigue sin autenticar
- * (el {@link com.ollacercana.config.SecurityConfig} la rechazará con 401).
- *
- * @see OC-180 JwtAuthenticationFilter
- * @see OC-183 Leer la identidad desde el token (no headers)
- * @see OC-185 Manejo uniforme de 401/403
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -58,43 +44,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String jwt = authHeader.substring(7);
 
-        if (!jwtService.validarToken(jwt)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            try {
-                Claims claims = jwtService.extractAllClaims(jwt);
-                String correo = (String) claims.get("correo");
-                String identificador = (correo != null && !correo.isBlank())
-                        ? correo
-                        : claims.getSubject();
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(identificador);
-
-                Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
-                if (authorities == null || authorities.isEmpty()) {
-                    List<String> rolesToken = jwtService.extraerRoles(jwt);
-                    authorities = rolesToken.stream()
-                            .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
-                            .map(SimpleGrantedAuthority::new)
-                            .collect(Collectors.toList());
-                }
-
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        authorities
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            } catch (Exception e) {
-                log.warn("No se pudo autenticar al usuario mediante JWT: {}", e.getMessage());
-            }
+        if (jwtService.validarToken(jwt) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            autenticarUsuario(request, jwt);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void autenticarUsuario(HttpServletRequest request, String jwt) {
+        try {
+            Claims claims = jwtService.extractAllClaims(jwt);
+            String correo = (String) claims.get("correo");
+            String identificador = (correo != null && !correo.isBlank()) ? correo : claims.getSubject();
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(identificador);
+            Collection<? extends GrantedAuthority> authorities = resolverAuthorities(userDetails, jwt);
+
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, authorities);
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        } catch (Exception e) {
+            log.warn("No se pudo autenticar al usuario mediante JWT: {}", e.getMessage());
+        }
+    }
+
+    private Collection<? extends GrantedAuthority> resolverAuthorities(UserDetails userDetails, String jwt) {
+        if (userDetails.getAuthorities() != null && !userDetails.getAuthorities().isEmpty()) {
+            return userDetails.getAuthorities();
+        }
+        return jwtService.extraerRoles(jwt).stream()
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
     }
 }
