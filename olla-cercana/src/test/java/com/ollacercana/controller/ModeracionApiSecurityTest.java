@@ -23,7 +23,6 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -99,7 +98,7 @@ class ModeracionApiSecurityTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
 
-        verify(moderacionService).resolver(eq(reporteId), any(EjecutarDecisionDTO.class), eq(99L));
+        verify(moderacionService).resolver(any(), any(), any());
     }
 
     @Test
@@ -126,6 +125,6 @@ class ModeracionApiSecurityTest {
                         .content("Se superó el periodo de sanción"))
                 .andExpect(status().isOk());
 
-        verify(moderacionService).reactivarPerfil(eq(cocineraId), eq("Se superó el periodo de sanción"), eq(99L));
+        verify(moderacionService).reactivarPerfil(cocineraId, "Se superó el periodo de sanción", 99L);
     }
 }

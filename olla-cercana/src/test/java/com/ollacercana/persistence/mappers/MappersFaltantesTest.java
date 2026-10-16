@@ -1,7 +1,6 @@
 package com.ollacercana.persistence.mappers;
 
 import com.ollacercana.controller.dtos.request.CalificacionRequestDTO;
-import com.ollacercana.controller.dtos.request.ReporteCrearDTO;
 import com.ollacercana.controller.dtos.response.CalificacionResponseDTO;
 import com.ollacercana.controller.dtos.response.ReporteDTO;
 import com.ollacercana.controller.mappers.CalificacionMapper;
@@ -25,8 +24,6 @@ class MappersFaltantesTest {
     private final DecisionModeracionEntityMapper decisionMapper = new DecisionModeracionEntityMapper(new ReporteEntityMapper());
     private final CalificacionMapper calificacionMapper = new CalificacionMapper();
     private final ReporteMapper reporteMapper = new ReporteMapper();
-
-    // ──────────────── PerfilCocineraDomainMapper ────────────────
 
     @Test
     @DisplayName("PerfilCocineraDomainMapper: roundtrip completo y nulls")
@@ -74,8 +71,6 @@ class MappersFaltantesTest {
         assertNull(perfilDomainMapper.toEntity(null));
     }
 
-    // ──────────────── DecisionModeracionEntityMapper ────────────────
-
     @Test
     @DisplayName("DecisionModeracionEntityMapper: roundtrip y nulls")
     void decisionModeracionMapper_roundtrip() {
@@ -99,8 +94,6 @@ class MappersFaltantesTest {
         assertNull(decisionMapper.toEntity(null));
         assertNull(decisionMapper.toDomain(null));
     }
-
-    // ──────────────── CalificacionMapper & ReporteMapper ────────────────
 
     @Test
     @DisplayName("CalificacionMapper: toDomain y toResponse")

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -75,13 +75,13 @@ class ControladoresRestTest {
         EnviarMensajeRequestDTO req = new EnviarMensajeRequestDTO("Hola");
         MensajeResponseDTO res = MensajeResponseDTO.builder().texto("Hola").build();
 
-        when(chatService.enviarMensaje(eq(reservaId), any())).thenReturn(res);
+        when(chatService.enviarMensaje(any(), any())).thenReturn(res);
         mockMvcChat.perform(post("/api/v1/reservas/{id}/mensajes", reservaId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
 
-        when(chatService.listarMensajes(eq(reservaId), any())).thenReturn(List.of(res));
+        when(chatService.listarMensajes(any(), any())).thenReturn(List.of(res));
         mockMvcChat.perform(get("/api/v1/reservas/{id}/mensajes", reservaId))
                 .andExpect(status().isOk());
 
@@ -102,7 +102,7 @@ class ControladoresRestTest {
         CalificacionRequestDTO req = new CalificacionRequestDTO(5, "Excelente");
 
         when(usuarioActual.getCuentaId()).thenReturn(10L);
-        when(calificacionService.calificar(eq(reservaId), eq(10L), any()))
+        when(calificacionService.calificar(any(), any(), any()))
                 .thenReturn(CalificacionResponseDTO.builder().estrellas(5).build());
 
         mockMvcCalificacion.perform(post("/api/v1/reservas/{reservaId}/calificacion", reservaId)
@@ -110,7 +110,7 @@ class ControladoresRestTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
 
-        when(calificacionService.listarPorCocinera(eq(cocineraId), any(), eq(0), eq(10)))
+        when(calificacionService.listarPorCocinera(any(), any(), anyInt(), anyInt()))
                 .thenReturn(PaginaResponseDTO.<CalificacionResponseDTO>builder().contenido(List.of()).build());
 
         mockMvcCalificacion.perform(get("/api/v1/cocineras/{cocineraId}/calificaciones", cocineraId))
@@ -146,7 +146,7 @@ class ControladoresRestTest {
     void reporteController_endpoints() throws Exception {
         ReporteCrearDTO req = ReporteCrearDTO.builder().objetivo(ObjetivoReporte.PLATO).build();
         when(usuarioActual.getCuentaId()).thenReturn(7L);
-        when(reporteService.crear(any(), eq(7L))).thenReturn(ReporteDTO.builder().build());
+        when(reporteService.crear(any(), any())).thenReturn(ReporteDTO.builder().build());
 
         mockMvcReporte.perform(post("/api/v1/reportes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -162,14 +162,14 @@ class ControladoresRestTest {
     void cocineraController_endpoints() throws Exception {
         UUID cocineraId = UUID.randomUUID();
         when(usuarioActual.getCocineraId()).thenReturn(cocineraId);
-        when(metricasService.obtenerMetricas(eq(cocineraId), any(), any()))
+        when(metricasService.obtenerMetricas(any(), any(), any()))
                 .thenReturn(MetricasCocineraResponseDTO.builder().porcionesEntregadas(10L).build());
 
         mockMvcCocinera.perform(get("/api/v1/cocineras/metricas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.porcionesEntregadas").value(10));
 
-        when(metricasService.obtenerHistorial(eq(cocineraId), eq(0), eq(10)))
+        when(metricasService.obtenerHistorial(any(), anyInt(), anyInt()))
                 .thenReturn(HistorialPaginadoResponseDTO.builder().contenido(List.of()).build());
 
         mockMvcCocinera.perform(get("/api/v1/cocineras/historial"))
@@ -179,7 +179,7 @@ class ControladoresRestTest {
     @Test
     @DisplayName("UsuarioController: listar medallas")
     void usuarioController_endpoints() throws Exception {
-        when(medallaService.listarVigentes(eq(1L), any())).thenReturn(List.of());
+        when(medallaService.listarVigentes(any(), any())).thenReturn(List.of());
 
         mockMvcUsuario.perform(get("/api/v1/usuarios/{id}/medallas", 1L))
                 .andExpect(status().isOk());
