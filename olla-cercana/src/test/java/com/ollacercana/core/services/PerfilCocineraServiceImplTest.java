@@ -166,7 +166,7 @@ class PerfilCocineraServiceImplTest {
         CodigoOTPEntity otp = CodigoOTPEntity.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
-                .fechaExpiracion(LocalDateTime.now().plusMinutes(5))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(5))
                 .usado(false)
                 .build();
 
@@ -194,7 +194,7 @@ class PerfilCocineraServiceImplTest {
         CodigoOTPEntity otp = CodigoOTPEntity.builder()
                 .perfilId(perfilId)
                 .codigo("123456")
-                .fechaExpiracion(LocalDateTime.now().plusMinutes(5))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(5))
                 .usado(false)
                 .build();
 

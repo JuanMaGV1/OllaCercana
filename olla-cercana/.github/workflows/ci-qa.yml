@@ -1,0 +1,74 @@
+name: CI/CD Pipeline - QA
+
+on:
+  pull_request:
+    branches: [ develop ]
+  push:
+    branches: [ develop ]
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run Tests with Maven
+        run: mvn clean test
+
+  build-and-deploy-qa:
+    name: Build, Push & Deploy QA
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image (QA)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/olla-cercana:qa-latest
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure App Settings in Azure (QA)
+        run: |
+          az webapp config appsettings set \
+            --name ${{ secrets.AZURE_WEBAPP_NAME_QA }} \
+            --resource-group rg-ollacercana \
+            --settings \
+              WEBSITES_PORT=8080 \
+              DB_URL="${{ secrets.DB_URL }}" \
+              DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              MONGO_URI="${{ secrets.MONGO_URI }}" \
+              JWT_SECRET="${{ secrets.JWT_SECRET_QA }}"
+
+      - name: Deploy Container to Azure Web App (QA)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_QA }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/olla-cercana:qa-latest
+
+      - name: Azure Logout
+        run: az logout

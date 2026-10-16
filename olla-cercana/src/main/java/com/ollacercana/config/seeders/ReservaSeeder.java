@@ -64,7 +64,7 @@ public class ReservaSeeder implements CommandLineRunner {
             }
 
             PlatoEntity plato = platoDemoOpt.get();
-            LocalDateTime ahora = LocalDateTime.now();
+            LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
 
             ReservaEntity paraConfirmar = ReservaEntity.builder()
                     .id(RESERVA_PARA_CONFIRMAR)

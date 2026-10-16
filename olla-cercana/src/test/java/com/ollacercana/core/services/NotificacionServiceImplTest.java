@@ -44,7 +44,7 @@ class NotificacionServiceImplTest {
         NotificacionDocument doc = NotificacionDocument.builder()
                 .id("n1").compradorId(CUENTA_ID).rolDestinatario(Rol.COMPRADOR)
                 .titulo("X").mensaje("Y").tipo(TipoNotificacion.RESERVA_CONFIRMADA)
-                .fechaCreacion(LocalDateTime.now()).build();
+                .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault())).build();
 
         when(notificacionRepository.findByCompradorIdOrCocineraIdOrderByFechaCreacionDesc(
                 CUENTA_ID, CUENTA_ID)).thenReturn(List.of(doc));

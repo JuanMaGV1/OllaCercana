@@ -4,6 +4,8 @@ import com.ollacercana.controller.handlers.exception.AccesoDenegadoException;
 import com.ollacercana.core.models.enums.Rol;
 import com.ollacercana.persistence.repository.CuentaRepository;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -53,7 +55,7 @@ public class UsuarioActual {
             return Long.parseLong(username);
         } catch (NumberFormatException e) {
             return cuentaRepository.findByIdentificador(username)
-                    .map(cuentaEntity -> cuentaEntity.getId())
+                    .map(CuentaEntity::getId)
                     .orElseThrow(() -> new AccesoDenegadoException("No se pudo resolver el ID de cuenta del usuario actual"));
         }
     }
@@ -77,7 +79,7 @@ public class UsuarioActual {
         try {
             Long cuentaId = getCuentaId();
             return perfilCocineraRepository.findByCuentaId(cuentaId)
-                    .map(perfilEntity -> perfilEntity.getId());
+                    .map(PerfilCocineraEntity::getId);
         } catch (Exception e) {
             return Optional.empty();
         }

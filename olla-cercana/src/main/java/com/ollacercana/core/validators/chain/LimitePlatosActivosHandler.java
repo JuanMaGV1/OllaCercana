@@ -20,7 +20,7 @@ public class LimitePlatosActivosHandler extends AbstractValidadorPlatoHandler {
     @Override
     public void validar(Plato plato) {
         long activos = platoRepository.countByCocineraIdAndEstadoAndFechaExpiracionAfter(
-                plato.getCocineraId(), EstadoPlato.ACTIVO, LocalDateTime.now());
+                plato.getCocineraId(), EstadoPlato.ACTIVO, LocalDateTime.now(java.time.ZoneId.systemDefault()));
         if (activos >= MAX_PLATOS_ACTIVOS) {
             throw new LimitePlatosActivosExcedidoException(MAX_PLATOS_ACTIVOS);
         }

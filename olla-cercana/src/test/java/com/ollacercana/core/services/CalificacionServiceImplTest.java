@@ -94,7 +94,7 @@ class CalificacionServiceImplTest {
                 .cocineraId(COCINERA_ID)
                 .compradorId(COMPRADOR_ID)
                 .estrellas(5)
-                .fechaCreacion(LocalDateTime.now())
+                .fechaCreacion(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .build();
         when(calificacionEntityMapper.toEntity(any(Calificacion.class))).thenReturn(entityGuardada);
         when(calificacionRepository.save(entityGuardada)).thenReturn(entityGuardada);

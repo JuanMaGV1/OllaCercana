@@ -177,7 +177,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponseDTO> buildValidationResponse(Map<String, String> errores, String path) {
         ErrorResponseDTO body = ErrorResponseDTO.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(ERROR_VALIDACION)
                 .mensaje(MENSAJE_VALIDACION)
@@ -190,7 +190,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponseDTO> buildResponse(HttpStatus status, String mensaje, String path) {
         ErrorResponseDTO body = ErrorResponseDTO.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .status(status.value())
                 .error(status.getReasonPhrase())
                 .mensaje(mensaje)

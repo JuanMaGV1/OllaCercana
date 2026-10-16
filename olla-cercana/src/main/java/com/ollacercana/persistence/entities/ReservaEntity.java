@@ -4,7 +4,6 @@ import com.ollacercana.core.models.enums.EstadoChat;
 import com.ollacercana.core.models.enums.EstadoReserva;
 import com.ollacercana.core.models.enums.MedioPago;
 import com.ollacercana.core.models.enums.MotivoRechazo;
-import com.ollacercana.core.models.*;
 import jakarta.persistence.*;
 import lombok.*;
 

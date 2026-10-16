@@ -1,9 +1,13 @@
 package com.ollacercana.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ollacercana.core.models.enums.*;
-import com.ollacercana.controller.dtos.request.*;
 import com.ollacercana.config.security.UsuarioActual;
+import com.ollacercana.controller.dtos.request.AjusteDisponibilidadRequest;
+import com.ollacercana.controller.dtos.request.PlatoRequestDTO;
+import com.ollacercana.core.models.enums.RestriccionAlimentaria;
+import com.ollacercana.core.models.enums.Rol;
+import com.ollacercana.core.models.enums.TipoAjustePorciones;
+import com.ollacercana.core.models.enums.TipoComida;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,8 +26,12 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.Mockito.lenient;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,49 +46,29 @@ class PlatoControllerTest {
     private static final UUID COCINERA_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @BeforeEach
-    void asegurarCocineraSembrada() {
+    void setUp() {
+        // Limpia la tabla de platos para evitar acumulación entre tests
+        jdbcTemplate.execute("DELETE FROM plato_restricciones");
+        jdbcTemplate.execute("DELETE FROM platos");
+
         lenient().when(usuarioActual.getCocineraId()).thenReturn(COCINERA_ID);
         lenient().when(usuarioActual.getCuentaId()).thenReturn(1L);
         lenient().when(usuarioActual.tieneRol(Rol.ADMIN)).thenReturn(false);
 
         Integer existe = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM perfiles_cocinera WHERE id = ?", Integer.class, COCINERA_ID);
+                "SELECT COUNT(*) FROM perfiles_cocinera WHERE id = ?",
+                Integer.class, COCINERA_ID);
         if (existe == null || existe == 0) {
             jdbcTemplate.update(
                     "INSERT INTO perfiles_cocinera (id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     COCINERA_ID, "Torres del Parque", true, false, false, 0.0, 0);
         }
-        Integer countMedios = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM perfil_medios_pago WHERE perfil_id = ?", Integer.class, COCINERA_ID);
-        if (countMedios == null || countMedios == 0) {
-            jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'NEQUI')", COCINERA_ID);
-            jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'EFECTIVO')", COCINERA_ID);
-        }
+
+        // HU-14 (OC-254): la cocinera sembrada acepta NEQUI y EFECTIVO
+        jdbcTemplate.update("DELETE FROM perfil_medios_pago WHERE perfil_id = ?", COCINERA_ID);
+        jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'NEQUI')", COCINERA_ID);
+        jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'EFECTIVO')", COCINERA_ID);
     }
-    @BeforeEach
-void setUp() {
-    // Limpia la tabla de platos para evitar acumulación entre tests
-    jdbcTemplate.execute("DELETE FROM plato_restricciones");
-        jdbcTemplate.execute("DELETE FROM platos");
-
-    lenient().when(usuarioActual.getCocineraId()).thenReturn(COCINERA_ID);
-    lenient().when(usuarioActual.getCuentaId()).thenReturn(1L);
-    lenient().when(usuarioActual.tieneRol(Rol.ADMIN)).thenReturn(false);
-
-    Integer existe = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM perfiles_cocinera WHERE id = ?",
-            Integer.class, COCINERA_ID);
-    if (existe == null || existe == 0) {
-        jdbcTemplate.update(
-                "INSERT INTO perfiles_cocinera (id, conjunto_residencial, verificada, pausada, es_destacada, promedio_calificacion, resenas_positivas) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                COCINERA_ID, "Torres del Parque", true, false, false, 0.0, 0);
-    }
-
-    // HU-14 (OC-254): la cocinera sembrada acepta NEQUI y EFECTIVO
-    jdbcTemplate.update("DELETE FROM perfil_medios_pago WHERE perfil_id = ?", COCINERA_ID);
-    jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'NEQUI')", COCINERA_ID);
-    jdbcTemplate.update("INSERT INTO perfil_medios_pago (perfil_id, medio_pago) VALUES (?, 'EFECTIVO')", COCINERA_ID);
-}
 
     @Test
     void publicar_debeRetornar201() throws Exception {
@@ -89,7 +77,7 @@ void setUp() {
                 "http://foto.com/arroz.jpg", TipoComida.ALMUERZO,
                 List.of(RestriccionAlimentaria.SIN_GLUTEN),
                 10, new BigDecimal("12000.00"),
-                LocalDateTime.now().plusHours(2),
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2),
                 "Portería Torre 1", 4.6789, -74.0567
         );
 
@@ -133,7 +121,7 @@ void setUp() {
         PlatoRequestDTO request = new PlatoRequestDTO(
                 "Ajiaco", "Sopa con pollo y tres papas", "http://foto.com/a.jpg",
                 TipoComida.ALMUERZO, List.of(), 5, new BigDecimal("14000.00"),
-                LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2), "Portería", 4.6789, -74.0567
         );
 
         String json = mockMvc.perform(post("/api/v1/platos")
@@ -153,11 +141,11 @@ void setUp() {
     }
 
     @Test
-        void actualizarDisponibilidad_debeRetornar200() throws Exception {
+    void actualizarDisponibilidad_debeRetornar200() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
                 "Mondongo", "Sopa típica tradicional", "http://foto.com/m.jpg",
                 TipoComida.ALMUERZO, List.of(), 6, new BigDecimal("15000.00"),
-                LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2), "Portería", 4.6789, -74.0567
         );
 
         String json = mockMvc.perform(post("/api/v1/platos")
@@ -181,14 +169,14 @@ void setUp() {
                         .content(objectMapper.writeValueAsString(ajuste)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.porcionesTotales").value(8));
-        }
+    }
 
     @Test
     void eliminar_conPlatoExistente_debeRetornar204() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
                 "Postre Natas", "Dulce casero tradicional", "http://foto.com/p.jpg",
                 TipoComida.POSTRE, List.of(), 4, new BigDecimal("8000.00"),
-                LocalDateTime.now().plusHours(2), "Portería", 4.6789, -74.0567
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2), "Portería", 4.6789, -74.0567
         );
 
         String json = mockMvc.perform(post("/api/v1/platos")
@@ -204,14 +192,13 @@ void setUp() {
     }
 
     @Test
-        @DisplayName("HU-06: consulta platos cercanos con GPS → 200 y lista")
-        void cercanos_conGps_debeRetornar200() throws Exception {
-        // Primero publicar un plato con coordenadas
+    @DisplayName("HU-06: consulta platos cercanos con GPS → 200 y lista")
+    void cercanos_conGps_debeRetornar200() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
                 "Ajiaco cercano", "Sopa tradicional", "http://foto.com/a.jpg",
                 TipoComida.ALMUERZO, List.of(),
                 5, new BigDecimal("14000.00"),
-                LocalDateTime.now().plusHours(2),
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2),
                 "Portería Torre 1", 4.6789, -74.0567
         );
 
@@ -227,11 +214,11 @@ void setUp() {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenido").isArray())
                 .andExpect(jsonPath("$.page").value(0));
-        }
+    }
 
-        @Test
-        @DisplayName("HU-06 Escenario 3: sin platos cerca → 200 con contenido vacío")
-        void cercanos_sinResultados_debeRetornar200Vacio() throws Exception {
+    @Test
+    @DisplayName("HU-06 Escenario 3: sin platos cerca → 200 con contenido vacío")
+    void cercanos_sinResultados_debeRetornar200Vacio() throws Exception {
         mockMvc.perform(get("/api/v1/platos/cercanos")
                         .param("lat", "0.0")
                         .param("lng", "0.0")
@@ -239,24 +226,24 @@ void setUp() {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenido").isEmpty())
                 .andExpect(jsonPath("$.totalElementos").value(0));
-        }
+    }
 
-        @Test
-        @DisplayName("HU-06: sin lat → 400 Bad Request")
-        void cercanos_sinLat_debeRetornar400() throws Exception {
+    @Test
+    @DisplayName("HU-06: sin lat → 400 Bad Request")
+    void cercanos_sinLat_debeRetornar400() throws Exception {
         mockMvc.perform(get("/api/v1/platos/cercanos")
                         .param("lng", "-74.0567"))
                 .andExpect(status().isBadRequest());
-        }
+    }
 
-        @Test
-        @DisplayName("HU-07: filtrar por tipoComida")
-        void cercanos_porTipoComida() throws Exception {
+    @Test
+    @DisplayName("HU-07: filtrar por tipoComida")
+    void cercanos_porTipoComida() throws Exception {
         PlatoRequestDTO request = new PlatoRequestDTO(
                 "Postre de natas", "Dulce típico", "http://foto.com/p.jpg",
                 TipoComida.POSTRE, List.of(),
                 4, new BigDecimal("8000.00"),
-                LocalDateTime.now().plusHours(2),
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2),
                 "Portería", 4.6789, -74.0567
         );
 
@@ -271,26 +258,26 @@ void setUp() {
                         .param("tipoComida", "POSTRE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenido[0].tipoComida").value("POSTRE"));
-        }
+    }
 
-        @Test
-        @DisplayName("OC-214: tipoComida inválido en query → 400")
-        void cercanos_tipoComidaInvalido_debeRetornar400() throws Exception {
+    @Test
+    @DisplayName("OC-214: tipoComida inválido en query → 400")
+    void cercanos_tipoComidaInvalido_debeRetornar400() throws Exception {
         mockMvc.perform(get("/api/v1/platos/cercanos")
                         .param("lat", "4.6789")
                         .param("lng", "-74.0567")
                         .param("tipoComida", "BITCOIN"))
                 .andExpect(status().isBadRequest());
-        }
+    }
 
-        @Test
-        @WithMockUser
-        @DisplayName("OC-214: restricción inválida en query → 400")
-        void cercanos_restriccionInvalida_debeRetornar400() throws Exception {
+    @Test
+    @WithMockUser
+    @DisplayName("OC-214: restricción inválida en query → 400")
+    void cercanos_restriccionInvalida_debeRetornar400() throws Exception {
         mockMvc.perform(get("/api/v1/platos/cercanos")
                         .param("lat", "4.6789")
                         .param("lng", "-74.0567")
                         .param("restricciones", "PALEOLITICO"))
                 .andExpect(status().isBadRequest());
-        }
+    }
 }

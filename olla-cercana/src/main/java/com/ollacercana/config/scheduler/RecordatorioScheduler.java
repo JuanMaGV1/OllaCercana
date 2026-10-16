@@ -53,7 +53,7 @@ public class RecordatorioScheduler {
     public void recordatorioRecogida() {
         if (!tareasProgramadas) return;
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         for (UUID id : reservaService.buscarReservasParaRecordatorioRecogida(ahora)) {
             try {
                 Reserva r = reservaService.obtenerPorId(id);

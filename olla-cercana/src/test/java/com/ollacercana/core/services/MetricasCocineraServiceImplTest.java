@@ -132,7 +132,7 @@ class MetricasCocineraServiceImplTest {
                 .platoId(platoId)
                 .compradorId(1L)
                 .cantidadPorciones(2)
-                .fechaCompletada(LocalDateTime.now())
+                .fechaCompletada(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .calificacion(5)
                 .build();
 
@@ -141,7 +141,7 @@ class MetricasCocineraServiceImplTest {
                 .platoId(platoId)
                 .compradorId(1L)
                 .cantidadPorciones(2)
-                .fechaCompletada(LocalDateTime.now())
+                .fechaCompletada(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .calificacion(5)
                 .build();
 

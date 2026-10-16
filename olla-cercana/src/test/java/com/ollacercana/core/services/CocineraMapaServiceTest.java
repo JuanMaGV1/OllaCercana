@@ -65,7 +65,7 @@ class CocineraMapaServiceTest {
                 .porcionesTotales(5)
                 .porcionesComprometidas(0)
                 .estado(EstadoPlato.ACTIVO)
-                .fechaExpiracion(LocalDateTime.now().plusHours(2))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2))
                 .build();
 
         // Plato lejano: ~15km de distancia
@@ -80,7 +80,7 @@ class CocineraMapaServiceTest {
                 .porcionesTotales(8)
                 .porcionesComprometidas(1)
                 .estado(EstadoPlato.ACTIVO)
-                .fechaExpiracion(LocalDateTime.now().plusHours(3))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(3))
                 .build();
     }
 
@@ -173,7 +173,7 @@ class CocineraMapaServiceTest {
                 .porcionesTotales(4)
                 .porcionesComprometidas(0)
                 .estado(EstadoPlato.ACTIVO)
-                .fechaExpiracion(LocalDateTime.now().plusHours(2))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(2))
                 .build();
 
         when(platoRepository.findActivosVigentes(eq(EstadoPlato.ACTIVO), any(LocalDateTime.class)))

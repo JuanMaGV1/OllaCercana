@@ -37,7 +37,7 @@ public class MedallaScheduler {
     @Scheduled(cron = "${ollacercana.medallas.cron-balance:0 0 0 * * MON}")
     public void calcularBalanceSemanal() {
         try {
-            medallaService.calcularBalanceSemanal(LocalDateTime.now());
+            medallaService.calcularBalanceSemanal(LocalDateTime.now(java.time.ZoneId.systemDefault()));
         } catch (RuntimeException e) {
             log.error("Falló el balance semanal de conjuntos: {}", e.getMessage());
         }

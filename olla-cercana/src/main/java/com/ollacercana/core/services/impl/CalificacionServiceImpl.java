@@ -99,7 +99,7 @@ public class CalificacionServiceImpl implements CalificacionService {
         }
 
         // 5. Construir y persistir la calificación como PENDIENTE
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         Calificacion calificacion = Calificacion.builder()
                 .reservaId(reservaId)
                 .compradorId(compradorId)

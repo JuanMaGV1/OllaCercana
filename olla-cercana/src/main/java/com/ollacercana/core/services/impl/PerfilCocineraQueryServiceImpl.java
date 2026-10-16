@@ -3,13 +3,12 @@ package com.ollacercana.core.services.impl;
 import com.ollacercana.controller.handlers.exception.CocineraNoEncontradaException;
 import com.ollacercana.core.validators.CocineraQueryPort;
 import com.ollacercana.persistence.repository.PerfilCocineraRepository;
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class PerfilCocineraQueryServiceImpl implements CocineraQueryPort {
 

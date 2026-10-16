@@ -2,7 +2,6 @@ package com.ollacercana.persistence.mappers;
 
 import com.ollacercana.core.models.*;
 import com.ollacercana.core.models.enums.*;
-import com.ollacercana.persistence.document.NotificacionDocument;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -32,8 +31,8 @@ class DocumentMappersTest {
         MedallaUsuario mu = MedallaUsuario.builder()
                 .id(UUID.randomUUID()).usuarioId(1L)
                 .medalla(Medalla.builder().codigo(CodigoMedalla.VECINO_FIEL).nombre("x").requisito("y").build())
-                .fechaOtorgada(LocalDateTime.now())
-                .vigenteHasta(LocalDateTime.now().plusDays(7)).build();
+                .fechaOtorgada(LocalDateTime.now(java.time.ZoneId.systemDefault()))
+                .vigenteHasta(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusDays(7)).build();
         MedallaUsuario back = medallaUsuarioMapper.toDomain(medallaUsuarioMapper.toEntity(mu));
         assertEquals(mu.getUsuarioId(), back.getUsuarioId());
     }

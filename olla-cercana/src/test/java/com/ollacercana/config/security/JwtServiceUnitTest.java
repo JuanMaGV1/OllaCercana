@@ -1,6 +1,5 @@
 package com.ollacercana.config.security;
 
-import com.ollacercana.config.security.JwtService;
 import com.ollacercana.core.models.Cuenta;
 import com.ollacercana.core.models.Identidad;
 import com.ollacercana.core.models.enums.Rol;

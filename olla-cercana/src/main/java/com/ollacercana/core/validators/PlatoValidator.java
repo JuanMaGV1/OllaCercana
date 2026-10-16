@@ -49,10 +49,8 @@ public class PlatoValidator {
         if (plato.getEstado() == EstadoPlato.EXPIRADO) {
             throw new PlatoExpiradoException();
         }
-        if (tipo != TipoAjustePorciones.MARCAR_AGOTADO) {
-            if (cantidad == null || cantidad <= 0) {
-                throw new CantidadAjusteInvalidaException();
-            }
+        if (tipo != TipoAjustePorciones.MARCAR_AGOTADO && (cantidad == null || cantidad <= 0)) {
+            throw new CantidadAjusteInvalidaException();
         }
         if (tipo == TipoAjustePorciones.DISMINUIR) {
             int comprometidas = plato.getPorcionesComprometidas() == null ? 0 : plato.getPorcionesComprometidas();

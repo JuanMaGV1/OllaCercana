@@ -41,7 +41,7 @@ public class Cuenta {
      * RN-26  — Avisos activados por defecto (solo chat es configurable)
      */
     public void inicializar() {
-        if (this.fechaRegistro == null) this.fechaRegistro = LocalDateTime.now();
+        if (this.fechaRegistro == null) this.fechaRegistro = LocalDateTime.now(java.time.ZoneId.systemDefault());
         if (this.estado == null) this.estado = EstadoCuenta.ACTIVO;
         if (this.credenciales != null && this.credenciales.getCelularVerificado() == null) {
             this.credenciales.setCelularVerificado(false);

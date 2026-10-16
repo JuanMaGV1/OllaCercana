@@ -64,6 +64,6 @@ public class CuentaUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return this.enabled && isAccountNonExpired();
     }
 }

@@ -27,7 +27,7 @@ public class FabricaCocinera implements CuentaFactory {
                 .credenciales(new Credenciales(request.getContrasena(), null, false))
                 .roles(Set.of(Rol.COCINERA))
                 .estado(EstadoCuenta.ACTIVO)
-                .fechaRegistro(LocalDateTime.now())
+                .fechaRegistro(LocalDateTime.now(java.time.ZoneId.systemDefault()))
                 .avisosActivos(true)
                 .build();
     }

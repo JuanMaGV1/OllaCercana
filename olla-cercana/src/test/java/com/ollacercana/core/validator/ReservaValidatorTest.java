@@ -49,7 +49,7 @@ class ReservaValidatorTest {
                 .porcionesTotales(5)
                 .porcionesComprometidas(1)
                 .estado(EstadoPlato.ACTIVO)
-                .fechaExpiracion(LocalDateTime.now().plusHours(1))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(1))
                 .build();
     }
 

@@ -43,7 +43,7 @@ class PlatoTest {
     @Test
     void disponibles_debeSerCeroCuandoTodasEstanComprometidas() {
         plato.setPorcionesComprometidas(5);
-        assertThat(plato.getPorcionesDisponibles()).isEqualTo(0);
+        assertThat(plato.getPorcionesDisponibles()).isZero();
     }
 
     @Test
@@ -56,7 +56,7 @@ class PlatoTest {
     @Test
     void comprometerPorciones_debeMarcarAgotadoCuandoLlegaACero() {
         plato.comprometerPorciones(5);
-        assertThat(plato.getPorcionesDisponibles()).isEqualTo(0);
+        assertThat(plato.getPorcionesDisponibles()).isZero();
         assertThat(plato.getEstado()).isEqualTo(EstadoPlato.AGOTADO);
     }
 
@@ -93,7 +93,7 @@ class PlatoTest {
     void liberarPorciones_noDebeQuedarNegativo() {
         plato.comprometerPorciones(2);
         plato.liberarPorciones(10);
-        assertThat(plato.getPorcionesComprometidas()).isEqualTo(0);
+        assertThat(plato.getPorcionesComprometidas()).isZero();
     }
 
     @Test
@@ -135,10 +135,10 @@ class PlatoTest {
         plato.setFechaExpiracion(null);
         assertThat(plato.estaVigente()).isFalse();
 
-        plato.setFechaExpiracion(java.time.LocalDateTime.now().plusHours(1));
+        plato.setFechaExpiracion(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(1));
         assertThat(plato.estaVigente()).isTrue();
 
-        plato.setFechaExpiracion(java.time.LocalDateTime.now().minusHours(1));
+        plato.setFechaExpiracion(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()).minusHours(1));
         assertThat(plato.estaVigente()).isFalse();
     }
 }

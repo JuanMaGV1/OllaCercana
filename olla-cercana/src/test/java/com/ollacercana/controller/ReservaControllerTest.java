@@ -91,15 +91,15 @@ class ReservaControllerTest {
                 .porcionesComprometidas(2)
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(EstadoPlato.ACTIVO)
-                .fechaPublicacion(LocalDateTime.now().minusMinutes(20))
-                .fechaExpiracion(LocalDateTime.now().plusHours(3))
+                .fechaPublicacion(LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(20))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(3))
                 .puntoEntrega("Portería Torre 1")
                 .latitud(4.6789)
                 .longitud(-74.0567)
                 .version(0)
                 .build());
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
         reserva = reservaRepository.save(ReservaEntity.builder()
                 .id(UUID.randomUUID())
                 .platoId(plato.getId())
@@ -123,7 +123,7 @@ class ReservaControllerTest {
     }
 
     private DecisionReservaRequestDTO confirmar() {
-        return new DecisionReservaRequestDTO(DecisionReserva.CONFIRMAR, LocalDateTime.now().plusMinutes(45), null, null);
+        return new DecisionReservaRequestDTO(DecisionReserva.CONFIRMAR, LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(45), null, null);
     }
 
     private DecisionReservaRequestDTO rechazar(MotivoRechazo motivo, String comentario) {

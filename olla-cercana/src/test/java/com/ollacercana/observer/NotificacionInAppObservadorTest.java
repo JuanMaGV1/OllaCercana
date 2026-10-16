@@ -63,7 +63,7 @@ class NotificacionInAppObservadorTest {
                 UUID.randomUUID(),
                 COMPRADOR_ID,
                 COCINERA_ID,
-                LocalDateTime.now(),
+                LocalDateTime.now(java.time.ZoneId.systemDefault()),
                 payload);
     }
 

@@ -78,7 +78,7 @@ public class Plato {
         }
         this.estado = EstadoPlato.ACTIVO;
         this.porcionesComprometidas = 0;
-        this.fechaPublicacion = LocalDateTime.now();
+        this.fechaPublicacion = LocalDateTime.now(java.time.ZoneId.systemDefault());
         this.fechaExpiracion = this.fechaPublicacion.plusHours(4);
     }
 
@@ -172,6 +172,6 @@ public class Plato {
 
     /** RN-02: un plato solo está vigente si no ha expirado. */
     public boolean estaVigente() {
-        return this.fechaExpiracion != null && LocalDateTime.now().isBefore(this.fechaExpiracion);
+        return this.fechaExpiracion != null && LocalDateTime.now(java.time.ZoneId.systemDefault()).isBefore(this.fechaExpiracion);
     }
 }

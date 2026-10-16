@@ -271,10 +271,11 @@ class GlobalExceptionHandlerTest {
         assertFalse(cuerpo.getMensaje().contains("secreto"));
     }
 
-                                                                                          
+
     private static class ControladorFalso {
         @SuppressWarnings("unused")
         void crear(Object cuerpo) {
+            // Método intencionalmente vacío para reflexión de MethodParameter
         }
     }
 }

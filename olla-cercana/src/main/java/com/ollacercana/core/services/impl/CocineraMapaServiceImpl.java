@@ -57,7 +57,7 @@ public class CocineraMapaServiceImpl implements CocineraMapaService {
                 request.getLatitud(), request.getLongitud(), request.getRadio());
 
         // OC-232: Reutiliza findActivosVigentes para asegurar platos activos, no expirados y con porciones disponibles > 0
-        List<PlatoEntity> platosActivos = platoRepository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now());
+        List<PlatoEntity> platosActivos = platoRepository.findActivosVigentes(EstadoPlato.ACTIVO, LocalDateTime.now(java.time.ZoneId.systemDefault()));
 
         // Mapa auxiliar para seleccionar la mejor oferta (la más cercana) por cocinera dentro del radio
         Map<UUID, OfertaCocineraCandidata> mejoresOfertasPorCocinera = new LinkedHashMap<>();

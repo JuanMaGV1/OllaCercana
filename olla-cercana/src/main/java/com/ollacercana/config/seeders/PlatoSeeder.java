@@ -55,7 +55,7 @@ public class PlatoSeeder implements CommandLineRunner {
         UUID cocinera1 = UUID.fromString("11111111-1111-1111-1111-111111111111");
         UUID cocinera2 = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(java.time.ZoneId.systemDefault());
 
         List<Plato> catalogo = List.of(
                 // ==================== COCINERA 1 ====================

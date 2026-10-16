@@ -186,7 +186,7 @@ class ReservaServiceImplTest {
                 .porcionesComprometidas(comprometidas)
                 .precioPorcion(new BigDecimal("16000"))
                 .estado(estado)
-                .fechaExpiracion(LocalDateTime.now().plusHours(1))
+                .fechaExpiracion(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(1))
                 .version(0)
                 .build();
     }
@@ -225,7 +225,7 @@ class ReservaServiceImplTest {
 
     private Reserva reservaPendiente(Plato plato, int porciones, int minutosDesdeCreacion) {
         Reserva reserva = Reserva.crear(plato, COMPRADOR_ID, porciones, MedioPago.NEQUI, null,
-                LocalDateTime.now().minusMinutes(minutosDesdeCreacion));
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(minutosDesdeCreacion));
         ReservaEntity entidad = reservaEntityDe(reserva);
         lenient().when(reservaRepository.findById(reserva.getId())).thenReturn(Optional.of(entidad));
         lenient().when(reservaEntityMapper.toDomain(entidad)).thenReturn(reserva);
@@ -387,7 +387,7 @@ class ReservaServiceImplTest {
     void confirmar_debeCambiarAConfirmadaConservarPorcionesYHabilitarChat() {
         Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
         Reserva reserva = reservaPendiente(plato, 2, 1);
-        LocalDateTime horaEstimada = LocalDateTime.now().plusMinutes(40);
+        LocalDateTime horaEstimada = LocalDateTime.now(java.time.ZoneId.systemDefault()).plusMinutes(40);
 
         Reserva confirmada = reservaService.confirmar(reserva.getId(), horaEstimada);
 
@@ -413,7 +413,7 @@ class ReservaServiceImplTest {
         when(reservaRepository.findById(reserva.getId())).thenReturn(Optional.of(entidad));
         when(reservaEntityMapper.toDomain(entidad)).thenReturn(reserva);
 
-        LocalDateTime hora = LocalDateTime.now().plusHours(1);
+        LocalDateTime hora = LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(1);
 
         assertThrows(ReservaNoPendienteException.class,
                 () -> reservaService.confirmar(reserva.getId(), hora));
@@ -424,7 +424,7 @@ class ReservaServiceImplTest {
     void confirmar_despuesDeLos10Minutos_debeLanzarReservaVencida() {
         Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
         Reserva reserva = reservaPendiente(plato, 2, 11);
-        LocalDateTime hora = LocalDateTime.now().plusHours(1);
+        LocalDateTime hora = LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(1);
 
         assertThrows(ReservaVencidaException.class,
                 () -> reservaService.confirmar(reserva.getId(), hora));
@@ -457,7 +457,7 @@ class ReservaServiceImplTest {
         Reserva reserva = reservaPendiente(plato, 2, 1);
         UUID otraCocinera = UUID.randomUUID();
         var request = new DecisionReservaRequestDTO(
-                DecisionReserva.CONFIRMAR, LocalDateTime.now().plusHours(1), null, null);
+                DecisionReserva.CONFIRMAR, LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(1), null, null);
 
         assertThrows(AccesoDenegadoException.class,
                 () -> reservaService.decidir(reserva.getId(), otraCocinera, request));
@@ -497,9 +497,9 @@ class ReservaServiceImplTest {
     void listarPendientesDeCocinera_debeOmitirLasQueYaVencieron() {
         Plato plato = plato(6, 3, EstadoPlato.ACTIVO);
         Reserva vigente = Reserva.crear(plato, COMPRADOR_ID, 1, MedioPago.NEQUI, null,
-                LocalDateTime.now().minusMinutes(2));
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(2));
         Reserva vencida = Reserva.crear(plato, COMPRADOR_ID, 1, MedioPago.NEQUI, null,
-                LocalDateTime.now().minusMinutes(15));
+                LocalDateTime.now(java.time.ZoneId.systemDefault()).minusMinutes(15));
 
         ReservaEntity vigenteE = reservaEntityDe(vigente);
         ReservaEntity vencidaE = reservaEntityDe(vencida);
@@ -529,7 +529,7 @@ class ReservaServiceImplTest {
     void decidir_confirmar_debeConfirmar() {
         Plato plato = plato(5, 2, EstadoPlato.ACTIVO);
         Reserva reserva = reservaPendiente(plato, 2, 1);
-        LocalDateTime hora = LocalDateTime.now().plusHours(1);
+        LocalDateTime hora = LocalDateTime.now(java.time.ZoneId.systemDefault()).plusHours(1);
 
         Reserva confirmada = reservaService.decidir(reserva.getId(), COCINERA_ID,
                 new DecisionReservaRequestDTO(DecisionReserva.CONFIRMAR, hora, null, null));
