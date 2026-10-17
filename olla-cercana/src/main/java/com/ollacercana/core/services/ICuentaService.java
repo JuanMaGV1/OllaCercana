@@ -9,4 +9,6 @@ public interface ICuentaService {
     Cuenta autenticar(String identificador, String password);
     
     void cambiarAvisos(Long cuentaId, boolean activos, Long solicitanteId);
+
+    void registrarTokenDispositivo(Long cuentaId, String tokenFCM);
 }

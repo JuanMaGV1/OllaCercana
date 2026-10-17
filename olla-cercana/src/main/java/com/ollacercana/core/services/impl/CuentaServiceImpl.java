@@ -7,6 +7,7 @@ import com.ollacercana.core.models.Cuenta;
 import com.ollacercana.core.models.enums.EstadoCuenta;
 import com.ollacercana.core.services.ICuentaService;
 import com.ollacercana.core.validators.ICuentaValidator;
+import com.ollacercana.persistence.entities.CredencialesEmbeddable;
 import com.ollacercana.persistence.entities.CuentaEntity;
 import com.ollacercana.persistence.mappers.CuentaEntityMapper;
 import com.ollacercana.persistence.repository.CuentaRepository;
@@ -35,18 +36,18 @@ public class CuentaServiceImpl implements ICuentaService {
         log.info("Registrando cuenta para correo: {}",
                 cuenta.getIdentidad() != null ? cuenta.getIdentidad().getCorreo() : "N/A");
 
-            // 1) validaciones previas
-            cuentaValidator.validarCorreoUnico(cuenta.getIdentidad().getCorreo());
-            cuentaValidator.validarCelularUnico(cuenta.getIdentidad().getCelular());
-            cuentaValidator.validarPasswordSegura(cuenta.getCredenciales().getContrasenaHash());
+        // 1) validaciones previas
+        cuentaValidator.validarCorreoUnico(cuenta.getIdentidad().getCorreo());
+        cuentaValidator.validarCelularUnico(cuenta.getIdentidad().getCelular());
+        cuentaValidator.validarPasswordSegura(cuenta.getCredenciales().getContrasenaHash());
 
-            // 2) hash
-            String hasheada = passwordEncoder.encode(cuenta.getCredenciales().getContrasenaHash());
-            cuenta.getCredenciales().setContrasenaHash(hasheada);
+        // 2) hash
+        String hasheada = passwordEncoder.encode(cuenta.getCredenciales().getContrasenaHash());
+        cuenta.getCredenciales().setContrasenaHash(hasheada);
 
-            cuenta.inicializar();
-            return entityMapper.toDomain(cuentaRepository.save(entityMapper.toEntity(cuenta)));
-        }
+        cuenta.inicializar();
+        return entityMapper.toDomain(cuentaRepository.save(entityMapper.toEntity(cuenta)));
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -65,6 +66,7 @@ public class CuentaServiceImpl implements ICuentaService {
         }
         return cuenta;
     }
+
     @Override
     @Transactional
     public void cambiarAvisos(Long cuentaId, boolean activos, Long solicitanteId) {
@@ -76,5 +78,18 @@ public class CuentaServiceImpl implements ICuentaService {
         entity.setAvisosActivos(activos);
         cuentaRepository.save(entity);
         log.info("Cuenta {} cambió avisos a {}", cuentaId, activos);
+    }
+
+    @Override
+    @Transactional
+    public void registrarTokenDispositivo(Long cuentaId, String tokenFCM) {
+        CuentaEntity entity = cuentaRepository.findById(cuentaId)
+                .orElseThrow(() -> new CuentaNoEncontradaException(cuentaId));
+        if (entity.getCredenciales() == null) {
+            entity.setCredenciales(new CredencialesEmbeddable());
+        }
+        entity.getCredenciales().setTokenFCM(tokenFCM);
+        cuentaRepository.save(entity);
+        log.info("Token push actualizado exitosamente para la cuenta ID {}", cuentaId);
     }
 }

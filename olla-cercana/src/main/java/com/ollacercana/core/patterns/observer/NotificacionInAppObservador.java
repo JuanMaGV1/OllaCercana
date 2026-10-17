@@ -4,13 +4,14 @@ import com.ollacercana.core.models.EventoReserva;
 import com.ollacercana.core.models.Notificacion;
 import com.ollacercana.core.models.enums.Rol;
 import com.ollacercana.core.models.enums.TipoNotificacion;
+import com.ollacercana.persistence.entities.CuentaEntity;
 import com.ollacercana.persistence.mappers.NotificacionDocumentMapper;
+import com.ollacercana.persistence.repository.CuentaRepository;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.mongo.NotificacionRepository;
-
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,13 +20,26 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class NotificacionInAppObservador implements ObservadorReserva {
 
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final NotificacionRepository notificacionRepository;
     private final NotificacionDocumentMapper notificacionMapper;
+    private final CuentaRepository cuentaRepository;
+    private final PerfilCocineraRepository perfilCocineraRepository;
+
+    @Autowired
+    public NotificacionInAppObservador(
+            NotificacionRepository notificacionRepository,
+            NotificacionDocumentMapper notificacionMapper,
+            @Autowired(required = false) CuentaRepository cuentaRepository,
+            @Autowired(required = false) PerfilCocineraRepository perfilCocineraRepository) {
+        this.notificacionRepository = notificacionRepository;
+        this.notificacionMapper = notificacionMapper;
+        this.cuentaRepository = cuentaRepository;
+        this.perfilCocineraRepository = perfilCocineraRepository;
+    }
 
     @Override
     public void notificar(EventoReserva evento) {
@@ -49,7 +63,6 @@ public class NotificacionInAppObservador implements ObservadorReserva {
                             "Tu pedido está por recogerse",
                             "Tu pedido está por recogerse en 15 minutos. Acércate al punto de entrega."));
                 } else {
-                    // Recordatorio a la cocinera por solicitud sin responder (RN-25)
                     yield List.of(paraCocinera(evento, TipoNotificacion.RECORDATORIO,
                             "Tienes una solicitud sin responder",
                             "Te quedan " + evento.payload().getOrDefault("minutosRestantes", "pocos")
@@ -69,11 +82,48 @@ public class NotificacionInAppObservador implements ObservadorReserva {
 
         if (notificacionRepository != null) {
             try {
-                notificaciones.forEach(n -> notificacionRepository.save(notificacionMapper.toDocument(n)));
+                for (Notificacion n : notificaciones) {
+                    // 1. Siempre se guarda en MongoDB (Historial in-app)
+                    notificacionRepository.save(notificacionMapper.toDocument(n));
+
+                    // 2. Regla OC-294: Respetar si el usuario tiene activos los avisos para la push
+                    despacharPushSiActivo(n);
+                }
             } catch (Exception e) {
                 log.warn("No se pudo persistir la notificación en Mongo: {}", e.getMessage());
             }
         }
+    }
+
+    private void despacharPushSiActivo(Notificacion n) {
+        if (cuentaRepository == null) {
+            return;
+        }
+
+        Long destinatarioId = (n.getRolDestinatario() == Rol.COMPRADOR)
+                ? n.getCompradorId()
+                : resolverCuentaIdDeCocinera(n.getCocineraId());
+
+        if (destinatarioId != null) {
+            boolean avisosActivos = cuentaRepository.findById(destinatarioId)
+                    .map(CuentaEntity::getAvisosActivos)
+                    .orElse(true);
+
+            if (avisosActivos) {
+                log.info("[PUSH DISPATCHER] Enviando notificación push a usuario {}: '{}'", destinatarioId, n.getTitulo());
+            } else {
+                log.info("[PUSH OMITIDA - OC-294] Usuario {} tiene avisos desactivados. Notificación guardada solo en historial.", destinatarioId);
+            }
+        }
+    }
+
+    private Long resolverCuentaIdDeCocinera(UUID cocineraId) {
+        if (cocineraId == null || perfilCocineraRepository == null) {
+            return null;
+        }
+        return perfilCocineraRepository.findById(cocineraId)
+                .map(p -> p.getCuenta() != null ? p.getCuenta().getId() : null)
+                .orElse(null);
     }
 
     private String mensajeCierre(EventoReserva evento) {
