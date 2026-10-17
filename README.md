@@ -153,36 +153,34 @@ Se aplican conjuntamente para el catálogo de platos. **Composite** permite trat
 
 ---
 
-## Matriz de Roles y Permisos
-
-La API implementa autenticación stateless mediante **JWT** y control de acceso basado en roles (`@PreAuthorize`). La identidad (`cuentaId`, `cocineraId` y `roles`) se extrae de forma segura a partir de los claims del token Bearer.
+Aquí tienes la tabla corregida. Se eliminaron todas las referencias a reglas inexistentes (como RN-01, RN-02, RN-04, RN-10, RN-16, RN-17, RN-19, RN-20, RN-26, RN-27, RN-28, RN-31 y RN-32), manteniendo únicamente las reglas de negocio reales definidas en tu documento (**RN-03, RN-05, RN-09, RN-14, RN-15, RN-22 y RN-23**):
 
 | Endpoint | Método | Roles Permitidos | Descripción / Regla |
 |:---------|:-------|:-----------------|:--------------------|
 | `/api/v1/sesiones` | `POST` | *Público* | Inicio de sesión, retorna JWT y lista de roles |
 | `/api/v1/cuentas` | `POST` | *Público* | Registro de nueva cuenta (`COMPRADOR` o `COCINERA`) |
-| `/api/v1/cuentas/{id}/avisos` | `PATCH` | `COMPRADOR`, `COCINERA` | Activar o desactivar avisos in-app (RN-26) |
+| `/api/v1/cuentas/{id}/avisos` | `PATCH` | `COMPRADOR`, `COCINERA` | Activar o desactivar avisos in-app |
 | `/api/v1/perfiles` | `POST` | `COCINERA`, `ADMIN` | Creación de perfil con conjunto, especialidades y medios de pago |
 | `/api/v1/perfiles/{id}` | `PUT` | `COCINERA`, `ADMIN` | Actualización de perfil de cocinera |
-| `/api/v1/perfiles/{id}/verificar-telefono` | `POST` | `COCINERA`, `ADMIN` | Verificación de teléfono mediante código OTP (RN-01) |
+| `/api/v1/perfiles/{id}/verificar-telefono` | `POST` | `COCINERA`, `ADMIN` | Verificación de teléfono mediante código OTP |
 | `/api/v1/perfiles/cuenta/{cuentaId}` | `GET` | `Autenticado` | Consulta de perfil asociado a una cuenta |
-| `/api/v1/perfiles/destacadas` | `GET` | *Público* | Listado de cocineras destacadas (RN-10) |
+| `/api/v1/perfiles/destacadas` | `GET` | *Público* | Listado de cocineras destacadas |
 | `/api/v1/platos/cercanos` | `GET` | *Público* | Catálogo geolocalizado con filtros de menú y restricciones (RN-05) |
 | `/api/v1/platos/{id}` | `GET` | *Público* | Detalle del plato con medios de pago y nota contra entrega |
-| `/api/v1/platos` | `POST` | `COCINERA` | Publicar nuevo plato del día (HU-04, RN-02, RN-27, RN-28) |
-| `/api/v1/platos/{id}/disponibilidad` | `PATCH` | `COCINERA` | Ajustar porciones con bloqueo optimista (HU-24, RN-16, RN-27) |
+| `/api/v1/platos` | `POST` | `COCINERA` | Publicar nuevo plato del día (HU-04) |
+| `/api/v1/platos/{id}/disponibilidad` | `PATCH` | `COCINERA` | Ajustar porciones con bloqueo optimista (HU-24) |
 | `/api/v1/platos/{id}` | `DELETE` | `COCINERA`, `ADMIN` | Eliminar plato (solo cocinera titular o admin) |
 | `/api/v1/cocineras/mapa` | `GET` | *Público* | Mapa de cocineras activas con coordenadas ofuscadas a 100m (HU-09, RN-05) |
 | `/api/v1/reservas` | `POST` | `COMPRADOR` | Crear reserva de porciones (HU-11, RN-03, RN-14, RN-15) |
-| `/api/v1/reservas/pendientes` | `GET` | `COCINERA` | Listar solicitudes pendientes vigentes de su cocina (RN-04) |
+| `/api/v1/reservas/pendientes` | `GET` | `COCINERA` | Listar solicitudes pendientes vigentes de su cocina |
 | `/api/v1/reservas/{id}` | `GET` | `Autenticado` | Consultar reserva (solo comprador, cocinera titular o admin) |
-| `/api/v1/reservas/{id}/decision` | `PATCH` | `COCINERA` | Confirmar o rechazar reserva (HU-12, RN-04) |
-| `/api/v1/reservas/{id}/completar` | `POST` | `COMPRADOR`, `COCINERA` | Cerrar transacción con entrega y pago (HU-23, RN-32) |
-| `/api/v1/reservas/{id}/mensajes` | `POST` | `COMPRADOR`, `COCINERA` | Enviar mensaje en el chat de la reserva activa (HU-13, RN-17) |
+| `/api/v1/reservas/{id}/decision` | `PATCH` | `COCINERA` | Confirmar o rechazar reserva (HU-12) |
+| `/api/v1/reservas/{id}/completar` | `POST` | `COMPRADOR`, `COCINERA` | Cerrar transacción con entrega y pago (HU-23) |
+| `/api/v1/reservas/{id}/mensajes` | `POST` | `COMPRADOR`, `COCINERA` | Enviar mensaje en el chat de la reserva activa (HU-13) |
 | `/api/v1/reservas/{id}/mensajes` | `GET` | `COMPRADOR`, `COCINERA` | Historial de chat con cursor (`?desde`) para polling (HU-13) |
 | `/api/v1/reservas/{id}/mensajes/leidos` | `PATCH` | `COMPRADOR`, `COCINERA` | Marcar como leídos los mensajes de la contraparte |
 | `/api/v1/reservas/{id}/mensajes/no-leidos` | `GET` | `COMPRADOR`, `COCINERA` | Conteo de mensajes no leídos de la reserva |
-| `/api/v1/reservas/{reservaId}/calificacion` | `POST` | `COMPRADOR` | Calificar reserva completada (HU-15, RN-19, RN-20, RN-31) |
+| `/api/v1/reservas/{reservaId}/calificacion` | `POST` | `COMPRADOR` | Calificar reserva completada (HU-15) |
 | `/api/v1/cocineras/{cocineraId}/calificaciones` | `GET` | *Público* | Listado paginado de reseñas públicas de la cocinera (HU-22) |
 | `/api/v1/cocineras/{cocineraId}/calificaciones/resumen` | `GET` | *Público* | Resumen de reputación: promedio, total y positivas (HU-22) |
 | `/api/v1/cocineras/metricas` | `GET` | `COCINERA` | Ingresos referenciales, porciones y plato más pedido (HU-20) |
@@ -198,6 +196,7 @@ La API implementa autenticación stateless mediante **JWT** y control de acceso 
 | `/api/v1/admin/moderacion/reportes/{reporteId}/decision` | `POST` | `ADMIN` | Ejecutar decisión auditada sobre un reporte (HU-19, RN-23) |
 | `/api/v1/admin/moderacion/perfiles/pausados` | `GET` | `ADMIN` | Listar perfiles pausados por baja reputación (HU-19, RN-09) |
 | `/api/v1/admin/moderacion/perfiles/{cocineraId}/reactivar` | `POST` | `ADMIN` | Reactivar perfil pausado con justificación auditada (HU-19, RN-23) |
+
 ---
 
 ## Reglas de negocio
