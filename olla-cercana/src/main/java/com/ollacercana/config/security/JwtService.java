@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -38,7 +39,7 @@ public class JwtService {
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(secret);
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
         return Keys.hmacShaKeyFor(keyBytes);
@@ -61,15 +62,15 @@ public class JwtService {
                     .ifPresent(perfilEntity -> claims.put("cocineraId", perfilEntity.getId().toString()));
         }
 
-        Date ahora = new Date();
-        Date fechaExpiracion = new Date(ahora.getTime() + expirationMs);
+        Instant ahora = Instant.now();
+        Instant fechaExpiracion = ahora.plusMillis(expirationMs);
         String subject = resolverSubject(cuenta, correo);
 
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)
-                .issuedAt(ahora)
-                .expiration(fechaExpiracion)
+                .issuedAt(Date.from(ahora))
+                .expiration(Date.from(fechaExpiracion))
                 .signWith(getSigningKey())
                 .compact();
     }

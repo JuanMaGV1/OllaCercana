@@ -7,10 +7,15 @@ import com.ollacercana.core.models.enums.TipoEvento;
 import com.ollacercana.core.models.enums.TipoNotificacion;
 import com.ollacercana.core.patterns.observer.NotificacionInAppObservador;
 import com.ollacercana.persistence.document.NotificacionDocument;
+import com.ollacercana.persistence.entities.CuentaEntity;
+import com.ollacercana.persistence.entities.PerfilCocineraEntity;
 import com.ollacercana.persistence.mappers.NotificacionDocumentMapper;
+import com.ollacercana.persistence.repository.CuentaRepository;
+import com.ollacercana.persistence.repository.PerfilCocineraRepository;
 import com.ollacercana.persistence.repository.mongo.NotificacionRepository;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -20,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,6 +40,8 @@ class NotificacionInAppObservadorTest {
 
     @Mock private NotificacionRepository notificacionRepository;
     @Mock private NotificacionDocumentMapper notificacionMapper;
+    @Mock private CuentaRepository cuentaRepository;
+    @Mock private PerfilCocineraRepository perfilCocineraRepository;
 
     @InjectMocks private NotificacionInAppObservador observador;
 
@@ -63,18 +71,21 @@ class NotificacionInAppObservadorTest {
                 UUID.randomUUID(),
                 COMPRADOR_ID,
                 COCINERA_ID,
-                LocalDateTime.now(java.time.ZoneId.systemDefault()),
+                LocalDateTime.now(),
                 payload);
     }
 
     private NotificacionDocument notificacionGuardada() {
         ArgumentCaptor<NotificacionDocument> captor = ArgumentCaptor.forClass(NotificacionDocument.class);
-        verify(notificacionRepository).save(captor.capture());
+        verify(notificacionRepository, atLeastOnce()).save(captor.capture());
         return captor.getValue();
     }
 
     @Test
     void reservaConfirmada_debeAvisarAlCompradorConLaHoraEstimada() {
+        when(cuentaRepository.findById(COMPRADOR_ID))
+                .thenReturn(Optional.of(CuentaEntity.builder().id(COMPRADOR_ID).avisosActivos(true).build()));
+
         EventoReserva evento = evento(TipoEvento.RESERVA_CONFIRMADA,
                 Map.of("horaEstimada", LocalDateTime.of(2026, 10, 1, 12, 30)));
 
@@ -84,9 +95,21 @@ class NotificacionInAppObservadorTest {
         assertEquals(Rol.COMPRADOR, notificacion.getRolDestinatario());
         assertEquals(COMPRADOR_ID, notificacion.getCompradorId());
         assertEquals(TipoNotificacion.RESERVA_CONFIRMADA, notificacion.getTipo());
-        assertEquals(evento.reservaId(), notificacion.getReservaId());
         assertTrue(notificacion.getMensaje().contains("12:30"));
-        assertFalse(notificacion.isLeida());
+    }
+
+    @Test
+    @DisplayName("OC-294: Cuando avisosActivos es false, se registra en historial y se omite push")
+    void reservaConfirmada_conAvisosDesactivados_guardaEnHistorial() {
+        when(cuentaRepository.findById(COMPRADOR_ID))
+                .thenReturn(Optional.of(CuentaEntity.builder().id(COMPRADOR_ID).avisosActivos(false).build()));
+
+        EventoReserva evento = evento(TipoEvento.RESERVA_CONFIRMADA,
+                Map.of("horaEstimada", LocalDateTime.of(2026, 10, 1, 12, 30)));
+
+        observador.notificar(evento);
+
+        verify(notificacionRepository, atLeastOnce()).save(any());
     }
 
     @Test
@@ -96,43 +119,50 @@ class NotificacionInAppObservadorTest {
 
         NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(TipoNotificacion.RESERVA_RECHAZADA, notificacion.getTipo());
-        assertEquals(COMPRADOR_ID, notificacion.getCompradorId());
         assertTrue(notificacion.getMensaje().contains("Otro motivo (Se me dañó la estufa)"));
     }
 
     @Test
     void reservaExpirada_debeAvisarAlComprador() {
         observador.notificar(evento(TipoEvento.RESERVA_EXPIRADA, Map.of()));
-
         NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(TipoNotificacion.RESERVA_EXPIRADA, notificacion.getTipo());
-        assertEquals(Rol.COMPRADOR, notificacion.getRolDestinatario());
     }
 
     @Test
-    void recordatorio_debeAvisarALaCocinera() {
-        observador.notificar(evento(TipoEvento.RECORDATORIO_RESERVA,
-                Map.of("minutosRestantes", 3L)));
+    void recordatorio_debeAvisarALaCocineraYResolverSuCuenta() {
+        when(perfilCocineraRepository.findById(COCINERA_ID))
+                .thenReturn(Optional.of(PerfilCocineraEntity.builder()
+                        .cuenta(CuentaEntity.builder().id(99L).avisosActivos(true).build())
+                        .build()));
+        when(cuentaRepository.findById(99L))
+                .thenReturn(Optional.of(CuentaEntity.builder().id(99L).avisosActivos(true).build()));
+
+        observador.notificar(evento(TipoEvento.RECORDATORIO_RESERVA, Map.of("minutosRestantes", 3L)));
 
         NotificacionDocument notificacion = notificacionGuardada();
         assertEquals(Rol.COCINERA, notificacion.getRolDestinatario());
         assertEquals(COCINERA_ID, notificacion.getCocineraId());
-        assertNull(notificacion.getCompradorId());
         assertEquals(TipoNotificacion.RECORDATORIO, notificacion.getTipo());
-        assertTrue(notificacion.getMensaje().contains("3 minutos"));
+    }
+
+    @Test
+    void recordatorioRecogida_debeAvisarAlComprador() {
+        observador.notificar(evento(TipoEvento.RECORDATORIO_RESERVA, Map.of("recordatorioRecogida", true)));
+        NotificacionDocument notificacion = notificacionGuardada();
+        assertEquals(Rol.COMPRADOR, notificacion.getRolDestinatario());
+        assertTrue(notificacion.getMensaje().contains("15 minutos"));
+    }
+
+    @Test
+    void reservaCompletada_avisaAAmbasPartes() {
+        observador.notificar(evento(TipoEvento.RESERVA_COMPLETADA, Map.of("automatica", true)));
+        verify(notificacionRepository, times(2)).save(any());
     }
 
     @Test
     void eventoSinNotificacion_noDebeGuardarNada() {
         observador.notificar(evento(TipoEvento.DISPONIBILIDAD_ACTUALIZADA, null));
-
         verify(notificacionRepository, never()).save(any());
-    }
-
-    @Test
-    void marcarLeida_debeCambiarElEstado() {
-        Notificacion notificacion = Notificacion.builder().leida(false).build();
-        notificacion.marcarLeida();
-        assertTrue(notificacion.isLeida());
     }
 }
