@@ -187,7 +187,7 @@ Flujo de entrega continua desde GitHub hacia Docker Hub y ejecución en ambiente
 
 ### 5. Diagrama de Base de Datos y Persistencia
 Modelo relacional estructurado para consistencia ACID en transacciones financieras y de reservas, complementado con colecciones documentales para trazabilidad y chat:
-![Diagrama de Base de Datos](olla-cercana/docs/uml/DiagramaBaseDatos.png)
+![Diagrama de Base de Datos](olla-cercana/docs/uml/DiagramaEntidadRelacion.png)
 
 ---
 
