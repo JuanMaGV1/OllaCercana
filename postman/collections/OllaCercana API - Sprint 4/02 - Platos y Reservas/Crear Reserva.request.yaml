@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{base_url}}/reservas"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"platoId\": \"{{plato_id}}\",\r
+
+    \    \"cantidad\": 2,\r
+
+    \    \"medioPago\": \"EFECTIVO\",\r
+
+    \    \"nota\": \"Prueba\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_comprador}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });\r
+
+      pm.environment.set(\"reserva_id\", pm.response.json().id);"
+    language: text/javascript
+order: 1460

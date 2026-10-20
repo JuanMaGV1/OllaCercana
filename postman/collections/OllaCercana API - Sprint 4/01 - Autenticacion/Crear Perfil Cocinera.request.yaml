@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/perfiles"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"cuentaId\": {{id_cocinera}},\r
+
+    \    \"presentacion\": \"Prueba\",\r
+
+    \    \"conjuntoResidencial\": \"Torres\",\r
+
+    \    \"especialidades\": [\"Ajiaco\"],\r
+
+    \    \"mediosPago\": [\"EFECTIVO\", \"NEQUI\"],\r
+
+    \    \"numeroNequi\": \"{{celular_cocinera}}\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_cocinera}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });\r
+
+      pm.environment.set(\"cocinera_uuid\", pm.response.json().id); // El ID del perfil"
+    language: text/javascript
+order: 3000

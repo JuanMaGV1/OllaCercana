@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/sesiones"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"identificador\": \"{{correo_comprador}}\",\r
+
+    \    \"contrasena\": \"Password123!\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });\r
+
+      var json = pm.response.json();\r
+
+      pm.environment.set(\"token_comprador\", json.token);"
+    language: text/javascript
+order: 6000

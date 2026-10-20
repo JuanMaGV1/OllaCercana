@@ -1,0 +1,32 @@
+name: Azure - Prod
+values:
+  - key: base_url
+    value: ''
+  - key: reserva_id
+    value: ''
+  - key: plato_id
+    value: ''
+  - key: cuenta_id
+    value: ''
+  - key: token_admin
+    value: ''
+  - key: token_cocinera
+    value: ''
+  - key: token_comprador
+    value: ''
+  - key: id_cocinera
+    value: ''
+  - key: id_comprador
+    value: ''
+  - key: cocinera_uuid
+    value: ''
+  - key: correo_comprador
+    value: ''
+  - key: celular_comprador
+    value: ''
+  - key: correo_cocinera
+    value: ''
+  - key: celular_cocinera
+    value: ''
+  - key: otp_codigo
+    value: ''

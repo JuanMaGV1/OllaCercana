@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/platos/cercanos?lat=4.6789&lng=-74.0567&radioMetros=1000"
+method: GET
+queryParams:
+  lat: "4.6789"
+  lng: "-74.0567"
+  radioMetros: "1000"
+scripts:
+  - type: afterResponse
+    code: pm.test("200 OK", function () { pm.response.to.have.status(200); });
+    language: text/javascript
+order: 2000

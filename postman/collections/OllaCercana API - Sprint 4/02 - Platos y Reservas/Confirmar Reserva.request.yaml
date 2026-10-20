@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/reservas/{{reserva_id}}/decision"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"decision\": \"CONFIRMAR\",\r
+
+    \    \"horaEstimada\": \"2027-12-31T14:00:00\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_cocinera}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("200 OK", function () { pm.response.to.have.status(200); });
+    language: text/javascript
+order: 1923
