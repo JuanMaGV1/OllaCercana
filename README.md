@@ -187,7 +187,7 @@ Flujo de entrega continua desde GitHub hacia Docker Hub y ejecución en ambiente
 
 ### 5. Diagrama de Base de Datos y Persistencia
 Modelo relacional estructurado para consistencia ACID en transacciones financieras y de reservas, complementado con colecciones documentales para trazabilidad y chat:
-![Diagrama de Base de Datos](olla-cercana/docs/uml/DiagramaBaseDatos.png)
+![Diagrama de Base de Datos](olla-cercana/docs/uml/DiagramaEntidadRelacion.png)
 
 ---
 
@@ -313,29 +313,11 @@ El repositorio cuenta con flujos automatizados de **GitHub Actions**:
 
 ##  Equipo de Desarrollo
 
-* **Líder Técnico & Backend Developer:** Integrante 1 — Arquitectura de software, persistencia y seguridad.
-* **Backend Developer:** Integrante 2 — Implementación de servicios, validadores y pruebas unitarias.
-* **DevOps & Cloud Engineer:** Integrante 3 — Dockerización, pipelines de CI/CD y despliegues en Azure.
-* **Frontend & UX/UI Designer:** Integrante 4 — Prototipo en Figma, flujos de pantalla y diseño de identidad.
-* **Frontend & Product Analyst:** Integrante 5 — Documentación de requerimientos, diseño de mascota y pruebas funcionales.
+* **Integrante 1:** Kevin Andrey Angel Acevedo
+* **Integrante 2:** Julian Felipe Morales Zambrano
+* **Integrante 3:** Santiago Andres Garcia Almario
+* **Integrante 4:** Juan Manuel Garzon Viracacha
+* **Integrante 5:** Daniel Camilo Mosquera Martinez
 
 ---
 *Escuela Colombiana de Ingeniería Julio Garavito — Desarrollo de Operaciones de Software (DOSW)*
-```
-
----
-
-### Recomendaciones sobre tus diagramas (para que queden de 10 en la Feria):
-
-1. **Diagrama de Clases:** Ya tienes uno en `docs/uml/`. Solo verifica que las clases tengan exactamente los métodos que tienes en tu código (los métodos de `Plato` como `comprometerPorciones()`, `recalcularEstado()`, los handlers de la cadena y los servicios).
-2. **Diagrama de Despliegue (Nuevo):** Ábrete una hoja en **draw.io** y replica el flujo que tienes en tus pipelines de GitHub Actions:
-   * Cajita 1: **Desarrollador / GitHub Repo** (ramas `develop` y `main`).
-   * Cajita 2: **GitHub Actions Runner** (`ci-qa.yml` y `ci-prod.yml`).
-   * Cajita 3: **Docker Hub** (repositorio de imágenes).
-   * Cajita 4: **Nube de Azure**:
-     * App Service QA (`ollacercana-qa-...`) conectado a su base de datos PostgreSQL y MongoDB.
-     * App Service PROD (`ollacercana-prod-...`) conectado a sus bases de datos productivas.
-   * Guarda ese diagrama como `DiagramaDespliegue.png` en `docs/uml/`.
-3. **Diagrama de Base de Datos:** Puedes exportar el ERD directamente desde DBeaver o pgAdmin conectándote a tu base de datos de PostgreSQL, o dibujarlo en draw.io mostrando las tablas principales (`cuentas`, `perfiles_cocinera`, `platos`, `reservas`, `calificaciones`, `reportes`) y una sección al lado indicando las colecciones de MongoDB (`mensajes_chat`, `eventos_reserva`, `notificaciones`). Guarda como `DiagramaBaseDatos.png`.
-
-Con este README y los archivos de despliegue que ya tienes funcionando, **tu Backend y Sprint 3 quedan 100% listos y blindados para afrontar el Sprint 4 y la Feria**.
