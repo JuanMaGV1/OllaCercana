@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ollacercana-postgres
+    environment:
+      POSTGRES_DB: ollacercana
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ollacercana-net
+
+  mongodb:
+    image: mongo:7.0
+    container_name: ollacercana-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ollacercana-net
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollacercana-api
+    depends_on:
+      - postgres
+      - mongodb
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/ollacercana
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgrespassword
+      MONGO_URI: mongodb://mongodb:27017/ollacercana
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      SERVER_PORT: 8080
+    networks:
+      - ollacercana-net
+
+volumes:
+  postgres_data:
+  mongo_data:
+
+networks:
+  ollacercana-net:
+    driver: bridge
