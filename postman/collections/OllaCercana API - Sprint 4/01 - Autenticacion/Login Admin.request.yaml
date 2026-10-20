@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/sesiones"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"identificador\": \"admin@ollacercana.com\",\r
+
+    \    \"contrasena\": \"Admin123!\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });\r
+
+      pm.environment.set(\"token_admin\", pm.response.json().token);"
+    language: text/javascript
+order: 7000

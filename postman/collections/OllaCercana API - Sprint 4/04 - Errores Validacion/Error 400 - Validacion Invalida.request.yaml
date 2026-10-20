@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/platos"
+method: POST
+body:
+  type: json
+  content: '{ "nombre": "", "precioPorcion": -5 }'
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_cocinera}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("400 Bad Request", function () { pm.response.to.have.status(400); });
+    language: text/javascript
+order: 3000

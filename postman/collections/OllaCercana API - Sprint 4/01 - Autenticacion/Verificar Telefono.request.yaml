@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/perfiles/{{cocinera_uuid}}/verificar-telefono"
+method: POST
+body:
+  type: json
+  content: '{ "codigo": "311893" } //cambiar segun generado en la BD'
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_cocinera}}"
+scripts:
+  - type: afterResponse
+    code: "// Si tienes el código real, esto pasará.\r
+
+      pm.test(\"200 OK - Teléfono verificado\", function () { pm.response.to.have.status(200); });"
+    language: text/javascript
+order: 4000

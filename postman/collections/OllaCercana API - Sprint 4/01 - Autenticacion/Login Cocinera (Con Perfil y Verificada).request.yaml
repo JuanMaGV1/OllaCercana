@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/sesiones"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"identificador\": \"{{correo_cocinera}}\",\r
+
+    \    \"contrasena\": \"Password123!\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: pm.environment.set("token_cocinera", pm.response.json().token);
+    language: text/javascript
+order: 4613

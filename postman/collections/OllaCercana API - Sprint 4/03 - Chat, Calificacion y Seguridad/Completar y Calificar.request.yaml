@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/reservas/{{reserva_id}}/completar"
+method: POST
+body:
+  type: json
+  content: '{ "confirmacionEntrega": true, "confirmacionPago": true }'
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_comprador}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("200 OK", function () { pm.response.to.have.status(200); });
+    language: text/javascript
+order: 2000

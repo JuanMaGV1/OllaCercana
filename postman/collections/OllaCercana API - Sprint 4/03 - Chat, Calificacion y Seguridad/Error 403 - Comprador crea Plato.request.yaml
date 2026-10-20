@@ -1,0 +1,39 @@
+$kind: http-request
+url: "{{base_url}}/platos"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"nombre\": \"Ajiaco Test\",\r
+
+    \    \"descripcion\": \"Plato para pruebas\",\r
+
+    \    \"fotoUrl\": \"http://foto.com/aji.jpg\",\r
+
+    \    \"tipoComida\": \"ALMUERZO\",\r
+
+    \    \"restricciones\": [\"SIN_GLUTEN\"],\r
+
+    \    \"porcionesTotales\": 5,\r
+
+    \    \"precioPorcion\": 15000,\r
+
+    \    \"horaDisponibilidad\": \"2027-12-31T12:00:00\",\r
+
+    \    \"puntoEntrega\": \"Porteria\",\r
+
+    \    \"latitud\": 4.6789,\r
+
+    \    \"longitud\": -74.0567\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_comprador}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("403 Forbidden", function () { pm.response.to.have.status(403); });
+    language: text/javascript
+order: 4000

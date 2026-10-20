@@ -1,0 +1,40 @@
+$kind: http-request
+url: "{{base_url}}/cuentas"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"nombre\": \"Cocinera Azure\",\r
+
+    \    \"correo\": \"{{correo_cocinera}}\",\r
+
+    \    \"celular\": \"{{celular_cocinera}}\",\r
+
+    \    \"contrasena\": \"Password123!\",\r
+
+    \    \"rol\": \"COCINERA\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });\r
+
+      pm.environment.set(\"id_cocinera\", pm.response.json().id);"
+    language: text/javascript
+  - type: beforeRequest
+    code: "// 1. Genera un correo dinámico\r
+
+      let rand = Math.floor(Math.random() * 100000);\r
+
+      pm.environment.set(\"correo_cocinera\", `cocinera_${rand}@test.com`);\r
+
+      \r
+
+      // 2. Genera un celular EXACTO de 10 dígitos (Empieza con 3 y rellena con ceros a la izquierda)\r
+
+      let numeroAleatorio = Math.floor(Math.random() * 9999999).toString().padStart(7, '0');\r
+
+      pm.environment.set(\"celular_cocinera\", \"300\" + numeroAleatorio);"
+    language: text/javascript
+order: 1000

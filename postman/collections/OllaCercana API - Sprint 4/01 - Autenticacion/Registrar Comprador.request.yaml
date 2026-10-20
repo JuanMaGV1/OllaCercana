@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{base_url}}/cuentas"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"nombre\": \"Comprador\",\r
+
+    \    \"correo\": \"{{correo_comprador}}\",\r
+
+    \    \"celular\": \"3000000002\",\r
+
+    \    \"contrasena\": \"Password123!\",\r
+
+    \    \"rol\": \"COMPRADOR\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });\r
+
+      pm.environment.set(\"cuenta_id\", pm.response.json().id);"
+    language: text/javascript
+  - type: beforeRequest
+    code: "let rand = Math.floor(Math.random() * 1000000);\r
+
+      pm.environment.set(\"correo_comprador\", \"comprador_\" + Math.floor(Math.random() * 100000) + \"@test.com\");\r
+
+      pm.environment.set(\"celular_comprador\", \"310\"+rand);"
+    language: text/javascript
+order: 5000
